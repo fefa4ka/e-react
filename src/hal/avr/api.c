@@ -1,0 +1,142 @@
+#include "api.h"
+
+static void in(void *pin);
+static void out(void *pin);
+static void on(void *pin);
+static void off(void *pin);
+static void flip(void *pin);
+static void pullup(void *pin);
+static bool get(void *pin);
+
+static void adc_mount(void *prescaler);
+static void adc_selectChannel(void *channel);
+static void adc_startConvertion(void *channel);
+static bool adc_isConvertionReady(void *channel);
+static int adc_readConvertion(void *channel);
+
+// static void uart_init(void *baudrate);
+// static void uart_puts(char *string);
+// static void uart_gets(char *buffer, unsigned char bufferlimit);
+// static void uart_getln(char *buffer, unsigned char bufferlimit);
+
+const HAL AVR_HAL = {
+    .io = {
+        .in = in,
+        .out = out,
+        .on = on,
+        .off = off,
+        .flip = flip,
+        .get = get,
+        .pullup = pullup
+    },
+    .adc = {
+        .mount = adc_mount,
+        .selectChannel = adc_selectChannel,
+        .startConvertion = adc_startConvertion,
+        .isConvertionReady = adc_isConvertionReady,
+        .readConvertion = adc_readConvertion
+    },
+    .uart = {
+        .init = uart0_init,
+        .stream = &uart0_io,
+        // .puts = uart0_puts,
+        // .gets = uart0_gets,
+        // .getln = uart0_getln
+    }
+};
+
+static void
+in(void *pin)
+{
+    AVRPin *Pin = (AVRPin *)pin;
+
+    *(Pin->port.ddr) &= ~(1 << (Pin->number));
+}
+
+static void 
+out(void *pin) {
+    AVRPin *Pin = (AVRPin *)pin;
+
+    *(Pin->port.ddr) |= (1 << (Pin->number));
+}
+
+
+static void 
+on(void *pin) {
+    AVRPin *Pin = (AVRPin *)pin;
+
+    *(Pin->port.port) |= (1 << (Pin->number));
+}
+
+static void 
+off(void *pin) {
+    AVRPin *Pin = (AVRPin *)pin;
+
+    *(Pin->port.port) &= ~(1 << (Pin->number));
+}
+
+static void 
+flip(void *pin) {
+    AVRPin *Pin = (AVRPin *)pin;
+
+    *(Pin->port.port) ^= (1 << (Pin->number));
+}
+
+static void 
+pullup(void *pin) {
+    on(pin);
+}
+
+static bool
+get(void *pin) {
+    AVRPin *Pin = (AVRPin *)pin;
+
+    return *(Pin->port.pin) & (1 << (Pin->number));
+}
+
+
+// ADC 
+
+static void
+adc_mount(void *prescaler) {
+    // AREF = AVcc
+    ADMUX = (1<<REFS0);
+ 
+    // ADC Enable and prescaler of 128
+    // 16000000/128 = 125000
+    ADCSRA = (1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
+}
+
+static void
+adc_selectChannel(void *channel) {
+    char ch = *(char *)channel;
+    // char ch = 2;
+    // select the corresponding channel 0~7
+    // ANDing with ’7′ will always keep the value
+    // of ‘ch’ between 0 and 7
+    ch &= 0b00000111;  // AND operation with 7
+    ADMUX = (ADMUX & 0xF8) | ch; // clears the bottom 3 bits before ORing
+}
+
+static void
+adc_startConvertion(void *channel) {
+  // start single convertion
+  // write ’1′ to ADSC
+  ADCSRA |= (1<<ADSC);
+}
+
+static bool 
+adc_isConvertionReady(void *channel) {
+    return (ADCSRA & (1 << ADSC)) == 0;
+}
+
+static int
+adc_readConvertion(void *channel) {
+    return (ADC);
+}
+
+
+// UART
+// static void uart_init(void *baudrate) {
+//     uart0_init(BAUD_CALC(UART_BAUDRATE));
+// }
