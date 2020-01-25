@@ -2,7 +2,7 @@
 #define hal_api_h
 
 #include "../macros/types.h"
-#include <stdlib.h>
+//#include <stdio.h>
 
 typedef struct {
     void (*in)(void *pin);
@@ -24,17 +24,19 @@ typedef struct {
 
 typedef struct {
     void (*init)(void *baudrate);
-    FILE *stream;
-    void (*puts)(char *string);
-    void (*gets)(char *buffer, unsigned char bufferlimit);
-    void (*getln)(char *buffer, unsigned char bufferlimit);
+    bool (*isDataReceived)();
+    bool (*isTransmitReady)();
+    void (*transmit)(unsigned char data);
+    unsigned char (*receive)();
 } uart_handler;
 
 typedef struct
 {
-    io_handler io;
-    adc_handler adc;
-    uart_handler uart;
+    unsigned int  (*time)();
+
+    io_handler    io;
+    adc_handler   adc;
+    uart_handler  uart;
 } HAL;
 
 #endif

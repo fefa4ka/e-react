@@ -1,5 +1,8 @@
 #include "component.h"
 
+void React_Mount(Component *instance);
+void React_Release(Component *instance);
+
 void React_Mount(Component *instance)
 {
     instance->componentWillMount(instance);
@@ -14,3 +17,5 @@ void React_Release(Component *instance)
     instance->componentDidUpdate(instance);
     instance->stage = released;
 }
+
+

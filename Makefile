@@ -18,13 +18,13 @@
 #                   default_serial = "avrdoper"
 # FUSES ........ Parameters for avrdude to flash the fuses appropriately.
 
-DEVICE     = atmega8
+DEVICE     = atmega168p
 CLOCK      = 16000000
 PROGRAMMER = -c usbasp
-FUSES      = -U lfuse:w:0xff:m -U hfuse:w:0xc9:m
+FUSES      = -U lfuse:w:0xee:m -U hfuse:w:0xdf:m
 
 # Source
-SOURCES=$(wildcard src/main.c) $(wildcatd src/config/*.c) $(wildcard src/hal/avr/*.c) $(wildcard src/react/*.c) $(wildcard src/***/IO/*.c) $(wildcard src/***/ADC/*.c)
+SOURCES=$(wildcard src/main.c) $(wildcatd src/config/*.c) $(wildcard src/hal/avr/*.c) $(wildcard src/react/*.c) $(wildcard src/***/IO/*.c) $(wildcard src/***/ADC/*.c) $(wildcard src/***/UART/*.c) $(wildcard src/utils/*.c) #$(wildcard src/***/utils/*.c) #$(wildcard src/***/Button/*.c)
 OBJECTS=$(patsubst %c, %o, $(SOURCES))
 
 # rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
@@ -34,7 +34,7 @@ OBJECTS=$(patsubst %c, %o, $(SOURCES))
 TARGET=build/firmware
 
 
-# ATMega8 fuse bits used above (fuse bits for other devices are different!):
+#* ATMega8 fuse bits used above (fuse bits for other devices are different!):
 # Example for 8 MHz internal oscillator
 # Fuse high byte:
 # 0xd9 = 1 1 0 1   1 0 0 1 <-- BOOTRST (boot reset vector at 0x0000)
@@ -60,7 +60,7 @@ TARGET=build/firmware
 # Tune the lines below only if you know what you are doing:
 
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
-COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) --std=gnu99
+COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) --std=gnu99 -Wl,--gc-sections -fdata-sections -ffunction-sections
 
 # symbolic targets:
 all:	main.hex
@@ -98,10 +98,14 @@ clean:
 main.elf: $(OBJECTS)
 	$(COMPILE) -o ${TARGET}.elf $(OBJECTS)
 
-main.hex: main.elf
+main.hex: main.elf main.map
 	rm -f ${TARGET}.hex
 	avr-objcopy -j .text -j .data -O ihex ${TARGET}.elf ${TARGET}.hex
 	avr-size --format=avr --mcu=$(DEVICE) ${TARGET}.elf
+
+main.map: 
+	avr-gcc -g -mmcu=$(DEVICE) -Wl,-Map,${TARGET}.map -o ${TARGET}.elf $(OBJECTS)
+	avr-objdump -h -S ${TARGET}.elf > ${TARGET}.lst 
 # If you have an EEPROM section, you must also create a hex file for the
 # EEPROM and add it to the "flash" target.
 

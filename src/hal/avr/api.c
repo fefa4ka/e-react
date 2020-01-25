@@ -14,12 +14,16 @@ static void adc_startConvertion(void *channel);
 static bool adc_isConvertionReady(void *channel);
 static int adc_readConvertion(void *channel);
 
-// static void uart_init(void *baudrate);
-// static void uart_puts(char *string);
-// static void uart_gets(char *buffer, unsigned char bufferlimit);
-// static void uart_getln(char *buffer, unsigned char bufferlimit);
+static void uart_init(void *baudrate);
+static bool uart_isDataReceived();
+static bool uart_isTransmitReady();
+static void uart_transmit(unsigned char data);
+static unsigned char uart_receive();
 
-const HAL AVR_HAL = {
+static unsigned int time();
+
+
+HAL AVR_HAL = {
     .io = {
         .in = in,
         .out = out,
@@ -37,19 +41,20 @@ const HAL AVR_HAL = {
         .readConvertion = adc_readConvertion
     },
     .uart = {
-        .init = uart0_init,
-        .stream = &uart0_io,
-        // .puts = uart0_puts,
-        // .gets = uart0_gets,
-        // .getln = uart0_getln
-    }
+        .init = uart_init,
+        .isDataReceived = uart_isDataReceived,
+        .isTransmitReady = uart_isTransmitReady,
+        .transmit = uart_transmit,
+        .receive = uart_receive
+    },
+    .time = time
 };
 
 static void
 in(void *pin)
 {
     AVRPin *Pin = (AVRPin *)pin;
-
+    
     *(Pin->port.ddr) &= ~(1 << (Pin->number));
 }
 
@@ -137,6 +142,43 @@ adc_readConvertion(void *channel) {
 
 
 // UART
-// static void uart_init(void *baudrate) {
-//     uart0_init(BAUD_CALC(UART_BAUDRATE));
-// }
+static void 
+uart_init(void *baudrate) {
+    unsigned int baud = *(unsigned int *)baudrate;
+
+    /* Set baud rate */
+    UBRR0H = (unsigned char)(baud>>8);
+    UBRR0L = (unsigned char)baud;
+
+    UCSR0A |= (1 << U2X0);
+    /* Enable receiver and transmitter */
+    UCSR0B = (1 << RXEN0) | (1 << TXEN0);
+    UCSR0C = (1 << UCSZ01) | (3 << UCSZ00);
+}
+
+static bool 
+uart_isDataReceived() {
+    return (UCSR0A & (1 << RXC0));
+}
+
+static bool 
+uart_isTransmitReady() {
+    return (UCSR0A & (1 << UDRE0));
+}
+
+static void 
+uart_transmit(unsigned char data) {
+    UDR0 = data;
+}
+
+static unsigned char 
+uart_receive() {
+    return UDR0;
+}
+
+
+/* Time */
+static unsigned int
+time() {
+    return TCNT1 >> 4;
+}

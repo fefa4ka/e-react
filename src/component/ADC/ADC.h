@@ -2,6 +2,7 @@
 #ifndef blocks_ADC_h
 #define blocks_ADC_h
 
+#include <stddef.h>
 #include "../../react/component.h"
 #include "../../hal/api.h"
 
@@ -20,6 +21,7 @@ typedef struct {
     bool loading;
 } ADC_blockState;
 
-Component ADC_block(ADC_blockProps *props, ADC_blockState *state);
+React_Header(ADC);
+//Component ADC_block(ADC_blockProps *props, ADC_blockState *state);
 
 #endif

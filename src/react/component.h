@@ -6,8 +6,7 @@
 #include "../macros/log.h"
 
 typedef struct {
-    enum
-    {
+    enum {
         defined,
         prepared,
         released
@@ -29,8 +28,11 @@ typedef struct {
 } Component;
 
 
+void React_Mount(Component *instance);
+void React_Release(Component *instance);
 
 // Component Creation
+#define React_Header(name) Component name##_block(name##_blockProps *props, name##_blockState *state)
 
 #define React_Self(Type, instance)                   \
     Component *self = (Component *)instance;         \
@@ -106,25 +108,39 @@ typedef struct {
     do { \
         Type##Props nextProps =
 
+// Difficult to realize in function. 
 #define to(name)                                                                       \
     ;                                                                                         \
-    if (name.stage == defined)                                                                \
-    {                                                                                         \
-        name##Props = nextProps;                                                              \
-        React_Mount(&name);                                                                   \
-    }                                                                                         \
     if (name.stage == released && name.componentShouldUpdate(&name, &nextProps, &name##State)) \
     {                                                                                         \
         name.componentWillUpdate(&name, &nextProps, &name##State);                            \
         name##Props = nextProps;                                                              \
         name.stage = prepared;                                                                \
     }                                                                                         \
-    if (name.stage == prepared)                                                               \
+    else if (name.stage == prepared)                                                               \
     {                                                                                         \
         React_Release(&name);                                                                 \
+    }                                                                                         \
+    else if (name.stage == defined)                                                                \
+    {                                                                                         \
+        name##Props = nextProps;                                                              \
+        React_Mount(&name);                                                                   \
     }                                                                                         \
     }                                                                                         \
     while (0)                                                                                 \
         ;
+
+#define React_Local(Type, ref) \
+    do { \
+        Component local = Type(&props->ref, &state->ref); \
+        local.stage = state->ref##_stage; \
+        Type##State localState = state->ref; \
+        Type##Props localProps = props->ref; \
+        Type##Props *localNextProps = &nextProps->ref; \
+        React(Type) (*localNextProps) to(local); \
+        state->ref = localState; \
+        props->ref = localProps; \
+    } while(0) \
+    ;
 
 #endif

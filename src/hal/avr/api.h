@@ -4,7 +4,7 @@
 #include <avr/io.h>
 
 #include "../../config/device.h"
-#include "usart.h"
+//#include "usart.h"
 #include "../../macros/log.h"
 #include "../api.h"
 
@@ -17,6 +17,6 @@ typedef struct {
     unsigned char number;
 } AVRPin;
 
-extern const HAL AVR_HAL;
+HAL AVR_HAL;
 
 #endif

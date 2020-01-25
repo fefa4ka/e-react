@@ -26,9 +26,8 @@ release(ADC_block) {
 
         if (state->value != value) {
             state->value = value;
-            if(props->onChange) {
-                props->onChange(self);
-            }
+
+            if(props->onChange) props->onChange(self);
         }
     }
 }
