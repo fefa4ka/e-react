@@ -12,6 +12,7 @@
 #include "component/ADC/ADC.h"
 #include "component/IO/IO.h"
 #include "component/UART/UART.h"
+#include "component/Time/Time.h"
 //#include "component/Button/Button.h"
 
 enum eCommunicationSystem {
@@ -27,45 +28,60 @@ void String_transmitted(Component *trigger);
 
 typedef struct
 {
-    unsigned int     time;
+    rtc_datetime_24h_t time;
 
     bool             led_power;
     unsigned short   brightness;
-    char             light_sensor_channel;
+    unsigned short   strength;
+    char             analog_sensor_channel;
+
+    void             *log_stdout;
 
     struct sCircularBuffer 
                      buffer;
 } DeviceState;
 
-#define BUFFER_SIZE 255
+enum eAdcChannels {
+    potentiomenter = 1,
+    solar_panel = 2
+};
+
+#define BUFFER_SIZE 128 
 unsigned char buffer[BUFFER_SIZE];
-unsigned char buffer_owner[BUFFER_SIZE];
+void *buffer_owner[BUFFER_SIZE];
 
 DeviceState State = {
     .led_power = true,
+    .analog_sensor_channel = potentiomenter,
     .brightness = 0,
-    .light_sensor_channel = 2,
-    .time = 0,
+    .strength = 0,
     .buffer = { 
         .size = BUFFER_SIZE,
         .owner = buffer_owner,
-        .data = buffer,
-        .read = 0,
-        .write = 0 
-    }
+        .data = buffer
+    },
+    .time = {0}
 };
 
 int main(void) {
-    TCCR1B |= (1 << CS11) | (1 << CS10);
 
     React_Define(IO_block, LED_Pin);
     //React_Define(Button_block, LED_Button);
     React_Define(IO_block, LED_Button);
     React_Define(ADC_block, Sensor_Light);
     React_Define(UART_block, Serial);
+    React_Define(Time_block, Time);
+
+    State.log_stdout = &Serial;
+    
+
+    Log(common, info, "\r\nApplication loaded\r\n");
 
     while (true) { //(State.time = AVR_HAL.time())) {
-        State.time = AVR_HAL.time(); 
+        React (Time_block) {
+            .timer = &(AVR_HAL.timer),
+            .time = &State.time
+        } to(Time);
 
         React (IO_block) {
             .io = &(AVR_HAL.io),
@@ -78,17 +94,20 @@ int main(void) {
         
         
         // UART Sender
-        if(CBReadOwner(&State.buffer, uart) != eErrorBufferBusy)
+        if(CBReadOwner(&State.buffer, &Serial) != eErrorBufferBusy)
             React (UART_block) {
                 .uart = &(AVR_HAL.uart),
                 .baudrate = UBRR_VALUE,
                 .mode = transmiter,
                 .buffer = &State.buffer
             } to(Serial);
-     
+    
+        React (ADC_block) {
+            .adc = &(AVR_HAL.adc),
+            .channel = &(State.analog_sensor_channel),
+            .onChange = Sensor_Light_readed
+        } to(Sensor_Light);
 
-
-        
         React (IO_block) {
             .io = &(AVR_HAL.io),
             .pin = &LED_Button_HAL,
@@ -97,11 +116,7 @@ int main(void) {
         } to(LED_Button);
         
 
-        React (ADC_block) {
-            .adc = &(AVR_HAL.adc),
-            .channel = &(State.light_sensor_channel),
-            .onChange = Sensor_Light_readed
-        } to(Sensor_Light);
+      
     }
 
     return 0;
@@ -113,23 +128,39 @@ void LED_toggle(Component *trigger) {
   
     Log(common, info, "\r\n- LED Toggle\r\n");
     Log(common, info, "Time: ");
-    Log(common, info, utoa(State.time));
-
-    LogWithNum(common, info, " | Sensor: ", State.brightness);
+    Log(common, info, utoa(State.time.second));
+    Log(common, info, " s ");
+    Log(common, info, utoa(State.time.millisecond));
+    Log(common, info, " ms ");
+    Log(common, info, utoa(State.time.microsecond));
+    LogWithNum(common, info, " us | Sensor: ", State.brightness);
+    LogWithNum(common, info, " | POT: ", State.strength);
     Log(common, info, "\r\n");
 }
 
 void Sensor_Light_readed(Component *trigger) {
     ADC_blockState *state = (ADC_blockState *)trigger->state;
+    
+    if(State.analog_sensor_channel == potentiomenter) {
+        State.analog_sensor_channel = solar_panel;
+        State.strength = state->value;
+    } else if(State.analog_sensor_channel == solar_panel) {
+        State.brightness = state->value;
+        State.analog_sensor_channel = potentiomenter;
+    }
+}
 
-    State.brightness = state->value;  // 255;
+void POT_strength_readed(Component *trigger) {
+    ADC_blockState *state = (ADC_blockState *)trigger->state;
+
+    State.strength = state->value;  // 255;
 }
 
 
 /* Logging routines */
 void Log(enum eLogSubSystem system, enum eLogLevel level, char *message) {
     while(*message) {
-        CBWriteOwner(&State.buffer, *(message++), uart);
+        CBWriteOwner(&State.buffer, *(message++), State.log_stdout);
     }; 
 
 }

@@ -30,13 +30,18 @@ typedef struct {
     unsigned char (*receive)();
 } uart_handler;
 
+typedef struct {
+    void (*init)(void *config);
+    unsigned int (*getTimer)();
+    unsigned int (*usFromTicks)(unsigned int ticks);
+} timer_handler;
+
 typedef struct
 {
-    unsigned int  (*time)();
-
     io_handler    io;
     adc_handler   adc;
     uart_handler  uart;
+    timer_handler timer;
 } HAL;
 
 #endif

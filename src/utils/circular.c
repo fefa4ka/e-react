@@ -2,9 +2,9 @@
 
 unsigned int CBLengthData(struct sCircularBuffer *cb);
 enum eError CBWrite(struct sCircularBuffer *cb, unsigned char data);
-enum eError CBWriteOwner(struct sCircularBuffer *cb, unsigned char data, unsigned char owner);
+enum eError CBWriteOwner(struct sCircularBuffer *cb, unsigned char data, void *owner);
 enum eError CBRead(struct sCircularBuffer *cb, unsigned char *data);
-enum eError CBReadOwner(struct sCircularBuffer *cb, unsigned char owner);
+enum eError CBReadOwner(struct sCircularBuffer *cb, void *owner);
 
 unsigned int CBLengthData(struct sCircularBuffer *cb) {
 /* Slower version */
@@ -22,12 +22,12 @@ enum eError CBWrite(struct sCircularBuffer *cb, unsigned char data){
     
     cb->data[cb->write] = data;
 
-    cb->write++; // = (cb->write + 1) & (cb->size - 1); // must be atomic } The modification
+    cb->write = (cb->write + 1) & (cb->size - 1); // must be atomic } The modification
     
     return eErrorNone;
 }
 
-enum eError CBWriteOwner(struct sCircularBuffer *cb, unsigned char data, unsigned char owner){
+enum eError CBWriteOwner(struct sCircularBuffer *cb, unsigned char data, void *owner){
     cb->owner[cb->write] = owner;
 
     return CBWrite(cb, data);
@@ -36,12 +36,12 @@ enum eError CBWriteOwner(struct sCircularBuffer *cb, unsigned char data, unsigne
 enum eError CBRead(struct sCircularBuffer *cb, unsigned char *data) {
     if (CBLengthData(cb) == 0) { return eErrorBufferEmpty; }
     *data = cb->data[cb->read];
-    cb->read++; // = (cb->read + 1) & ( cb->size - 1);
+    cb->read = (cb->read + 1) & ( cb->size - 1);
 
     return eErrorNone;
 }
 
-enum eError CBReadOwner(struct sCircularBuffer *cb, unsigned char owner) {
+enum eError CBReadOwner(struct sCircularBuffer *cb, void *owner) {
     if(cb->owner[cb->read] == owner) {
         return eErrorNone;
     }

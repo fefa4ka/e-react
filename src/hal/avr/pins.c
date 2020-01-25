@@ -2,18 +2,18 @@
 
 AVRPin LED_Pin_HAL = {
     .port = {
-        .port = &PORTC,
-        .ddr = &DDRC,
-        .pin = &PINC
+        .port = &PORTB,
+        .ddr = &DDRB,
+        .pin = &PINB
     },
-    .number = 4
+    .number = 2
 };
 
 AVRPin LED_Button_HAL = {
     .port = {
-        .port = &PORTC,
-        .ddr = &DDRC,
-        .pin = &PINC
+        .port = &PORTB,
+        .ddr = &DDRB,
+        .pin = &PINB
     },
-    .number = 5
+    .number = 1
 };

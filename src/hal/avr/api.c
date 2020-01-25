@@ -20,7 +20,9 @@ static bool uart_isTransmitReady();
 static void uart_transmit(unsigned char data);
 static unsigned char uart_receive();
 
-static unsigned int time();
+static void timer_init(void *config);
+static unsigned int timer_get();
+static unsigned int timer_usFromTicks(unsigned int ticks);
 
 
 HAL AVR_HAL = {
@@ -47,7 +49,11 @@ HAL AVR_HAL = {
         .transmit = uart_transmit,
         .receive = uart_receive
     },
-    .time = time
+    .timer = {
+        .init = timer_init,
+        .getTimer = timer_get,
+        .usFromTicks = timer_usFromTicks
+    }
 };
 
 static void
@@ -178,7 +184,17 @@ uart_receive() {
 
 
 /* Time */
+static void
+timer_init(void *config) {
+    TCCR1B |= (1 << CS11);// | (1 << CS10);
+}
+
 static unsigned int
-time() {
+timer_get() {
     return TCNT1 >> 4;
 }
+
+static unsigned int timer_usFromTicks(unsigned int ticks) {
+    return ticks >> 1;
+}
+

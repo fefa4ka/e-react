@@ -7,14 +7,14 @@ struct sCircularBuffer {
     unsigned int write;
     unsigned int size;
     unsigned char  *data;
-    unsigned char  *owner;
+    void         **owner;
 };
 
 unsigned int CBLengthData(struct sCircularBuffer *cb);
 enum eError CBWrite(struct sCircularBuffer *cb, unsigned char data);
-enum eError CBWriteOwner(struct sCircularBuffer *cb, unsigned char data, unsigned char owner);
+enum eError CBWriteOwner(struct sCircularBuffer *cb, unsigned char data, void *owner);
 enum eError CBRead(struct sCircularBuffer *cb, unsigned char *data);
-enum eError CBReadOwner(struct sCircularBuffer *cb, unsigned char owner);
+enum eError CBReadOwner(struct sCircularBuffer *cb, void *owner);
 
 #endif
 

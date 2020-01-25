@@ -24,7 +24,7 @@ PROGRAMMER = -c usbasp
 FUSES      = -U lfuse:w:0xee:m -U hfuse:w:0xdf:m
 
 # Source
-SOURCES=$(wildcard src/main.c) $(wildcatd src/config/*.c) $(wildcard src/hal/avr/*.c) $(wildcard src/react/*.c) $(wildcard src/***/IO/*.c) $(wildcard src/***/ADC/*.c) $(wildcard src/***/UART/*.c) $(wildcard src/utils/*.c) #$(wildcard src/***/utils/*.c) #$(wildcard src/***/Button/*.c)
+SOURCES=$(wildcard src/main.c) $(wildcatd src/config/*.c) $(wildcard src/hal/avr/*.c) $(wildcard src/react/*.c) $(wildcard src/***/IO/*.c) $(wildcard src/***/ADC/*.c)  $(wildcard src/***/Time/*.c) $(wildcard src/***/UART/*.c) $(wildcard src/utils/*.c) #$(wildcard src/***/utils/*.c) #$(wildcard src/***/Button/*.c)
 OBJECTS=$(patsubst %c, %o, $(SOURCES))
 
 # rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
