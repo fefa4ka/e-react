@@ -10,6 +10,7 @@ enum eLogLevel {
 };
 
 void Log(enum eLogSubSystem, enum eLogLevel, char *message);
+void LogWithList(enum eLogSubSystem, enum eLogLevel, char *message[]);
 void LogWithNum(enum eLogSubSystem, enum eLogLevel, char *message, int number);
 
 #endif

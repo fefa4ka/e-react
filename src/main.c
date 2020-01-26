@@ -13,7 +13,7 @@
 #include "component/IO/IO.h"
 #include "component/UART/UART.h"
 #include "component/Time/Time.h"
-//#include "component/Button/Button.h"
+#include "component/Button/Button.h"
 
 enum eCommunicationSystem {
     uart,
@@ -66,8 +66,8 @@ DeviceState State = {
 int main(void) {
 
     React_Define(IO_block, LED_Pin);
-    //React_Define(Button_block, LED_Button);
-    React_Define(IO_block, LED_Button);
+    React_Define(Button_block, LED_Button);
+    //React_Define(IO_block, LED_Button);
     React_Define(ADC_block, Sensor_Light);
     React_Define(UART_block, Serial);
     React_Define(Time_block, Time);
@@ -77,7 +77,7 @@ int main(void) {
 
     Log(common, info, "\r\nApplication loaded\r\n");
 
-    while (true) { //(State.time = AVR_HAL.time())) {
+    while (true) { 
         React (Time_block) {
             .timer = &(AVR_HAL.timer),
             .time = &State.time
@@ -108,14 +108,23 @@ int main(void) {
             .onChange = Sensor_Light_readed
         } to(Sensor_Light);
 
+        /*
         React (IO_block) {
             .io = &(AVR_HAL.io),
             .pin = &LED_Button_HAL,
             .mode = input,
             .onHigh = LED_toggle
         } to(LED_Button);
-        
+        */
 
+        React (Button_block) {
+            .io = &(AVR_HAL.io),
+            .pin = &LED_Button_HAL,
+            .type = push,
+            .time = &State.time,
+            .bounce_delay_ms = 50,
+            .onToggle = LED_toggle
+        } to(LED_Button);
       
     }
 
@@ -126,14 +135,10 @@ int main(void) {
 void LED_toggle(Component *trigger) {
     State.led_power = !State.led_power;
   
-    Log(common, info, "\r\n- LED Toggle\r\n");
-    Log(common, info, "Time: ");
-    Log(common, info, utoa(State.time.second));
-    Log(common, info, " s ");
-    Log(common, info, utoa(State.time.millisecond));
-    Log(common, info, " ms ");
-    Log(common, info, utoa(State.time.microsecond));
-    LogWithNum(common, info, " us | Sensor: ", State.brightness);
+    char *time[] = { "\r\n- LED Toggle\r\nTime: ", utoa(State.time.second), " s ", utoa(State.time.millisecond), " ms ", utoa(State.time.microsecond), " m", NULL};
+    
+    LogWithList(common, info, time);
+    LogWithNum(common, info, " | Sensor: ", State.brightness);
     LogWithNum(common, info, " | POT: ", State.strength);
     Log(common, info, "\r\n");
 }
@@ -170,3 +175,11 @@ void LogWithNum(enum eLogSubSystem system, enum eLogLevel level, char *message, 
     Log(system, level, itoa(number));
 } 
 
+void LogWithList(enum eLogSubSystem system, enum eLogLevel level, char *messages[]) {
+    while(*messages) {
+        char *message = *messages++;
+        while(*message) {
+            CBWriteOwner(&State.buffer, *(message++), State.log_stdout);
+        }
+    }
+}

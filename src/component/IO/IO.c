@@ -23,13 +23,6 @@ willMount(IO_block) {
 }
 
 shouldUpdate(IO_block) {
-    if (props->mode != nextProps->mode
-            || props->pin != nextProps->pin) {
-        self->stage = defined;
-
-        return false;
-    }
-
     if (props->mode == input)
     {
         return true;
