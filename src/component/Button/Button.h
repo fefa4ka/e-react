@@ -23,9 +23,9 @@ typedef struct {
 } Button_blockProps;
 
 typedef struct {
-    bool level; 
-    unsigned short tick;
-    bool pressed;
+    bool level : 4;
+    bool pressed : 4;
+    unsigned long tick;
 } Button_blockState;
 
 Component Button_block(Button_blockProps *props, Button_blockState *state);

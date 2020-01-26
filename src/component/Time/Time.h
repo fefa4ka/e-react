@@ -13,8 +13,10 @@ typedef struct _rtc_datetime_24h_t
   unsigned char  minute;
   unsigned char  second;
   unsigned int   millisecond;
-  unsigned char  day_of_week;
   unsigned int   microsecond;
+  unsigned char  day_of_week;
+  unsigned int   time_ms;
+  unsigned long  time_us;
 } rtc_datetime_24h_t;
 
 typedef struct {

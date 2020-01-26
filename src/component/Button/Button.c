@@ -1,30 +1,32 @@
 #include "Button.h"
 
+
+
 willMount(Button_block) {
     props->io->in(props->pin);
 }
 
 shouldUpdate(Button_block) {
     bool level = props->io->get(props->pin); 
-    
+
+    unsigned int passed = props->time->time_ms - state->tick;
+
     // First high event
     if(state->level == 0 && level != 0 && state->tick == 0) {
         return true;
     }
     
     // Second check agter bounce_delay_ms
-    if(state->tick && props->time->millisecond - state->tick > props->bounce_delay_ms) {
+    if(state->tick && passed >= props->bounce_delay_ms) {
         return true;
     }
 
     state->level = level;
 
     // Another checks after pressed
-    if(state->pressed && level == 0) {
+    if(props->type == push && state->pressed && level == 0) {
         // Push button unpressed after release
-        if(props->type == push) {
-            return true;
-        }
+        return true;
     }
 
     return false;
@@ -36,19 +38,15 @@ willUpdate(Button_block) {
 
     // Set initial tick to start count delay
     if(!state->tick && state->level) {
-        state->tick = props->time->millisecond;
+        state->tick = props->time->time_ms;
     }
 }
 
 release(Button_block) {
+    unsigned int passed = props->time->time_ms - state->tick;
     bool pressed = props->type == toggle 
                 ? state->pressed 
                 : false;
-
-    int passed = props->time->millisecond - state->tick;
-    if(passed < 0) {
-        passed = 1000 - state->tick + props->time->millisecond;
-    }
 
     if(state->tick && passed > props->bounce_delay_ms) {
         if(state->level) {

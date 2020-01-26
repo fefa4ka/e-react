@@ -14,6 +14,7 @@
 #include "component/UART/UART.h"
 #include "component/Time/Time.h"
 #include "component/Button/Button.h"
+#include "component/PWM/PWM.h"
 
 enum eCommunicationSystem {
     uart,
@@ -22,7 +23,7 @@ enum eCommunicationSystem {
 };
 
 void LED_toggle(Component *trigger);
-void Sensor_Light_readed(Component *trigger);
+void ADC_readed(Component *trigger);
 void Serial_transmit_completed(Component *trigger);
 void String_transmitted(Component *trigger);
 
@@ -64,8 +65,8 @@ DeviceState State = {
 };
 
 int main(void) {
-
-    React_Define(IO_block, LED_Pin);
+    React_Define(PWM_block, LED_Pin);
+    //React_Define(IO_block, LED_Pin);
     React_Define(Button_block, LED_Button);
     //React_Define(IO_block, LED_Button);
     React_Define(ADC_block, Sensor_Light);
@@ -83,6 +84,7 @@ int main(void) {
             .time = &State.time
         } to(Time);
 
+        /*
         React (IO_block) {
             .io = &(AVR_HAL.io),
             .pin = &LED_Pin_HAL,
@@ -91,6 +93,16 @@ int main(void) {
                 ? high
                 : low
         } to(LED_Pin);
+        */
+        
+        if(State.led_power)
+            React (PWM_block) {
+                .io = &(AVR_HAL.io),
+                .pin = &LED_Pin_HAL,
+                .time = &State.time,
+                .frequency = 50,
+                .duty_cycle = State.strength 
+            } to(LED_Pin);
         
         
         // UART Sender
@@ -105,7 +117,7 @@ int main(void) {
         React (ADC_block) {
             .adc = &(AVR_HAL.adc),
             .channel = &(State.analog_sensor_channel),
-            .onChange = Sensor_Light_readed
+            .onChange = ADC_readed 
         } to(Sensor_Light);
 
         /*
@@ -120,9 +132,9 @@ int main(void) {
         React (Button_block) {
             .io = &(AVR_HAL.io),
             .pin = &LED_Button_HAL,
-            .type = push,
+            .type = toggle,
             .time = &State.time,
-            .bounce_delay_ms = 50,
+            .bounce_delay_ms = 1000,
             .onToggle = LED_toggle
         } to(LED_Button);
       
@@ -135,15 +147,24 @@ int main(void) {
 void LED_toggle(Component *trigger) {
     State.led_power = !State.led_power;
   
-    char *time[] = { "\r\n- LED Toggle\r\nTime: ", utoa(State.time.second), " s ", utoa(State.time.millisecond), " ms ", utoa(State.time.microsecond), " m", NULL};
-    
-    LogWithList(common, info, time);
+
+    Log(common, info, "Time: ");
+    Log(common, info, "timestamp: ");
+    Log(common, info, utoa(State.time.time_us));
+    Log(common, info, " us | ");
+    Log(common, info, utoa(State.time.second));
+    Log(common, info, " s ");
+    Log(common, info, utoa(State.time.millisecond));
+    Log(common, info, " ms ");
+    Log(common, info, utoa(State.time.microsecond));
+    Log(common, info, " us");
+
     LogWithNum(common, info, " | Sensor: ", State.brightness);
     LogWithNum(common, info, " | POT: ", State.strength);
     Log(common, info, "\r\n");
 }
 
-void Sensor_Light_readed(Component *trigger) {
+void ADC_readed(Component *trigger) {
     ADC_blockState *state = (ADC_blockState *)trigger->state;
     
     if(State.analog_sensor_channel == potentiomenter) {
@@ -154,13 +175,6 @@ void Sensor_Light_readed(Component *trigger) {
         State.analog_sensor_channel = potentiomenter;
     }
 }
-
-void POT_strength_readed(Component *trigger) {
-    ADC_blockState *state = (ADC_blockState *)trigger->state;
-
-    State.strength = state->value;  // 255;
-}
-
 
 /* Logging routines */
 void Log(enum eLogSubSystem system, enum eLogLevel level, char *message) {

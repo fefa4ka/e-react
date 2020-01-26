@@ -56,7 +56,7 @@ HAL AVR_HAL = {
     }
 };
 
-static void
+static inline void
 in(void *pin)
 {
     AVRPin *Pin = (AVRPin *)pin;
@@ -64,7 +64,7 @@ in(void *pin)
     *(Pin->port.ddr) &= ~(1 << (Pin->number));
 }
 
-static void 
+static inline void 
 out(void *pin) {
     AVRPin *Pin = (AVRPin *)pin;
 
@@ -72,33 +72,33 @@ out(void *pin) {
 }
 
 
-static void 
+static inline void 
 on(void *pin) {
     AVRPin *Pin = (AVRPin *)pin;
 
     *(Pin->port.port) |= (1 << (Pin->number));
 }
 
-static void 
+static inline void 
 off(void *pin) {
     AVRPin *Pin = (AVRPin *)pin;
 
     *(Pin->port.port) &= ~(1 << (Pin->number));
 }
 
-static void 
+static inline void 
 flip(void *pin) {
     AVRPin *Pin = (AVRPin *)pin;
 
     *(Pin->port.port) ^= (1 << (Pin->number));
 }
 
-static void 
+static inline void 
 pullup(void *pin) {
     on(pin);
 }
 
-static bool
+static inline bool
 get(void *pin) {
     AVRPin *Pin = (AVRPin *)pin;
 
@@ -118,7 +118,7 @@ adc_mount(void *prescaler) {
     ADCSRA = (1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
 }
 
-static void
+static inline void
 adc_selectChannel(void *channel) {
     char ch = *(char *)channel;
     // char ch = 2;
@@ -129,19 +129,19 @@ adc_selectChannel(void *channel) {
     ADMUX = (ADMUX & 0xF8) | ch; // clears the bottom 3 bits before ORing
 }
 
-static void
+static inline void
 adc_startConvertion(void *channel) {
   // start single convertion
   // write ’1′ to ADSC
   ADCSRA |= (1<<ADSC);
 }
 
-static bool 
+static inline bool 
 adc_isConvertionReady(void *channel) {
     return (ADCSRA & (1 << ADSC)) == 0;
 }
 
-static int
+static inline int
 adc_readConvertion(void *channel) {
     return (ADC);
 }
@@ -162,22 +162,22 @@ uart_init(void *baudrate) {
     UCSR0C = (1 << UCSZ01) | (3 << UCSZ00);
 }
 
-static bool 
+static inline bool 
 uart_isDataReceived() {
     return (UCSR0A & (1 << RXC0));
 }
 
-static bool 
+static inline bool 
 uart_isTransmitReady() {
     return (UCSR0A & (1 << UDRE0));
 }
 
-static void 
+static inline void 
 uart_transmit(unsigned char data) {
     UDR0 = data;
 }
 
-static unsigned char 
+static inline unsigned char 
 uart_receive() {
     return UDR0;
 }
@@ -189,12 +189,12 @@ timer_init(void *config) {
     TCCR1B |= (1 << CS11);// | (1 << CS10);
 }
 
-static unsigned int
+static inline unsigned int
 timer_get() {
-    return TCNT1 >> 4;
+    return TCNT1;
 }
 
-static unsigned int timer_usFromTicks(unsigned int ticks) {
+static inline unsigned int timer_usFromTicks(unsigned int ticks) {
     return ticks >> 1;
 }
 

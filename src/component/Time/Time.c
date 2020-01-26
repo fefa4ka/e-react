@@ -23,13 +23,14 @@ willUpdate(Time_block) {
 
 release(Time_block) {
     unsigned int us_passed = props->timer->usFromTicks(state->passed);
-
     props->time->microsecond += us_passed; // state->passed;//134;//ms_passed;
+    props->time->time_us += us_passed;
     
     if(props->time->microsecond > 1000) {
         unsigned int ms_passed = props->time->microsecond / 1000;
-
+        props->time->time_ms += ms_passed;
         props->time->millisecond += ms_passed; 
+        props->time->microsecond -= ms_passed * 1000;
 
         if(props->time->millisecond > 1000) {
             unsigned int s_passed = props->time->millisecond / 1000;
@@ -57,7 +58,6 @@ release(Time_block) {
             }
         }
 
-        props->time->microsecond -= ms_passed * 1000;
     }
 }
 
