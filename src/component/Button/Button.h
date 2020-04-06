@@ -14,7 +14,7 @@ typedef struct {
     } type;
     
     
-    rtc_datetime_24h_t *time;
+    rtc_datetime *time;
     int  bounce_delay_ms;
 
     void (*onPress)(Component *instance);

@@ -2,7 +2,6 @@
 #define hal_api_h
 
 #include "../macros/types.h"
-//#include <stdio.h>
 
 typedef struct {
     void (*in)(void *pin);
@@ -13,6 +12,12 @@ typedef struct {
     void (*pullup)(void *pin);
     bool (*get)(void *pin);
 } io_handler;
+
+
+enum eCommunicationMode {
+    eCommunicationModeTransceiver,
+    eCommunicationModeReceiver
+}; 
 
 typedef struct {
     void              (*mount)(void *prescaler);
@@ -31,8 +36,10 @@ typedef struct {
 } uart_handler;
 
 typedef struct {
-    void (*init)(void *config);
-    unsigned int (*getTimer)();
+    void         (*init)(void *config);
+    unsigned int (*get)();
+    void         (*set)(unsigned int ticks, void(*callback)(void *args), void *args);
+    void         (*off)();
     unsigned int (*usFromTicks)(unsigned int ticks);
 } timer_handler;
 
@@ -41,6 +48,7 @@ typedef struct
     io_handler    io;
     adc_handler   adc;
     uart_handler  uart;
+    uart_handler  spi;
     timer_handler timer;
 } HAL;
 

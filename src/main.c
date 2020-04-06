@@ -15,6 +15,10 @@
 #include "component/Time/Time.h"
 #include "component/Button/Button.h"
 #include "component/PWM/PWM.h"
+#include "component/Servo/Servo.h"
+
+//VERSION = (x << 24) + (y << 16) + (z << 8) + 0;
+static const int version = 1; 
 
 enum eCommunicationSystem {
     uart,
@@ -29,11 +33,12 @@ void String_transmitted(Component *trigger);
 
 typedef struct
 {
-    rtc_datetime_24h_t time;
+    rtc_datetime     time;
+    event_queue      scheduler; 
 
     bool             led_power;
     unsigned short   brightness;
-    unsigned short   strength;
+    unsigned short   angle;
     char             analog_sensor_channel;
 
     void             *log_stdout;
@@ -55,36 +60,58 @@ DeviceState State = {
     .led_power = true,
     .analog_sensor_channel = potentiomenter,
     .brightness = 0,
-    .strength = 0,
+    .angle = 0,
     .buffer = { 
         .size = BUFFER_SIZE,
         .owner = buffer_owner,
         .data = buffer
     },
+    .scheduler = {
+        .capacity = 5 
+    },
     .time = {0}
 };
 
 int main(void) {
-    React_Define(PWM_block, LED_Pin);
-    //React_Define(IO_block, LED_Pin);
+    // Define React components
+    React_Define(IO_block, LED_Pin);
+    React_Define(IO_block, Debug_Pin);
     React_Define(Button_block, LED_Button);
+    //React_Define(PWM_block, LED_Pin);
     //React_Define(IO_block, LED_Button);
     React_Define(ADC_block, Sensor_Light);
     React_Define(UART_block, Serial);
     React_Define(Time_block, Time);
+    React_Define(Servo_block, Servo);
+    React_Define(Servo_block, Servo_9g);
 
+    // Allocate memeory for events
+    rtc_event events[State.scheduler.capacity];
+    State.scheduler.events = events;
+
+    // Log direction
     State.log_stdout = &Serial;
     
+    // Welcom log
+    LogWithNum(common, info, "\r\ne-react ver. 0.", version);
+    LogWithNum(common, info, ".", BUILD_NUM);
+    Log(common, info, "\r\n"); 
 
-    Log(common, info, "\r\nApplication loaded\r\n");
+    // Debug step
+    bool step = true;
 
+    // Event-loop
     while (true) { 
+        // Debug Step
+        step = !step;
+
+        // Timer component, for event management and time counting
         React (Time_block) {
             .timer = &(AVR_HAL.timer),
-            .time = &State.time
+            .time = &State.time,
+            .scheduler = &State.scheduler
         } to(Time);
 
-        /*
         React (IO_block) {
             .io = &(AVR_HAL.io),
             .pin = &LED_Pin_HAL,
@@ -93,27 +120,34 @@ int main(void) {
                 ? high
                 : low
         } to(LED_Pin);
-        */
         
-        if(State.led_power)
-            React (PWM_block) {
-                .io = &(AVR_HAL.io),
-                .pin = &LED_Pin_HAL,
-                .time = &State.time,
-                .frequency = 50,
-                .duty_cycle = State.strength 
-            } to(LED_Pin);
+        React (IO_block) {
+            .io = &(AVR_HAL.io),
+            .pin = &Debug_Pin_HAL,
+            .mode = output,
+            .level = step
+        } to(Debug_Pin);
+
         
-        
+        React (Servo_block) {
+            .io = &(AVR_HAL.io),
+            .pin = &Servo_Pin_HAL,
+            .time = &State.time,
+            .timer = &Time,
+            .speed = 10,
+            .angle = State.angle  
+        } to(Servo);
+
+
         // UART Sender
-        if(CBReadOwner(&State.buffer, &Serial) != eErrorBufferBusy)
+        if(CBReadOwner(&State.buffer, &Serial) == eErrorNone)
             React (UART_block) {
                 .uart = &(AVR_HAL.uart),
                 .baudrate = UBRR_VALUE,
-                .mode = transmiter,
+                .mode = eCommunicationModeTransceiver,
                 .buffer = &State.buffer
             } to(Serial);
-    
+        
         React (ADC_block) {
             .adc = &(AVR_HAL.adc),
             .channel = &(State.analog_sensor_channel),
@@ -137,7 +171,8 @@ int main(void) {
             .bounce_delay_ms = 1000,
             .onToggle = LED_toggle
         } to(LED_Button);
-      
+
+ 
     }
 
     return 0;
@@ -160,7 +195,7 @@ void LED_toggle(Component *trigger) {
     Log(common, info, " us");
 
     LogWithNum(common, info, " | Sensor: ", State.brightness);
-    LogWithNum(common, info, " | POT: ", State.strength);
+    LogWithNum(common, info, " | POT: ", State.angle);
     Log(common, info, "\r\n");
 }
 
@@ -169,7 +204,9 @@ void ADC_readed(Component *trigger) {
     
     if(State.analog_sensor_channel == potentiomenter) {
         State.analog_sensor_channel = solar_panel;
-        State.strength = state->value;
+        // NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+        State.angle = state->value * 45 / 256; 
+
     } else if(State.analog_sensor_channel == solar_panel) {
         State.brightness = state->value;
         State.analog_sensor_channel = potentiomenter;

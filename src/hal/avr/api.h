@@ -2,6 +2,7 @@
 #define hal_avr_h
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 #include "../../config/device.h"
 //#include "usart.h"

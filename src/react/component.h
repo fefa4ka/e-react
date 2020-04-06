@@ -2,8 +2,9 @@
 #ifndef void_h
 #define void_h
 
+#include "../hal/avr/api.h" // TODO: REMOVE
 #include "../macros/types.h"
-#include "../macros/log.h"
+#include "../utils/log.h"
 
 typedef struct {
     enum {
@@ -46,7 +47,7 @@ void React_Release(Component *instance);
         React_Self(Type, instance);                                                   \
         Type##stage(self, props, state);                                              \
     }                                                                                 \
-    static void Type##stage(Component *self, Type##Props *props, Type##State *state)
+    static inline void Type##stage(Component *self, Type##Props *props, Type##State *state)
 
 #define React_SelfNext(Type, instance)                   \
     Type##Props *nextProps = (Type##Props *)nextProps_p; \
@@ -60,7 +61,7 @@ void React_Release(Component *instance);
         React_SelfNext(Type, instance);                                                                                                 \
         return Type##stage(self, props, state, nextProps, nextState);                                                                          \
     }                                                                                                                                   \
-    static returnType Type##stage(Component *self, Type##Props *props, Type##State *state, Type##Props *nextProps, Type##State *nextState)
+    static inline returnType Type##stage(Component *self, Type##Props *props, Type##State *state, Type##Props *nextProps, Type##State *nextState)
 
 #define willMount(Type) React_LifeCycle(Type, willMount)
 #define release(Type) React_LifeCycle(Type, release)
@@ -98,6 +99,10 @@ void React_Release(Component *instance);
 
 #define React_Define(Type, name) React_Define_WithProps(Type, name, {0})
 
+#define React_Load(Type, instance) \
+    Type##_blockProps *Type##Props = (instance)->props; \
+    Type##_blockState *Type##State = (instance)->state;
+
 #define React_Init(Type, name, props) \
     React_Define_WithProps(Type, name, props);  \
     React_Mount(&name)
@@ -113,9 +118,9 @@ void React_Release(Component *instance);
     ;                                                                                         \
     if (name.stage == released && name.componentShouldUpdate(&name, &nextProps, &name##State)) \
     {                                                                                         \
+        name.stage = prepared;                                                                \
         name.componentWillUpdate(&name, &nextProps, &name##State);                            \
         name##Props = nextProps;                                                              \
-        name.stage = prepared;                                                                \
     }                                                                                         \
     else if (name.stage == prepared)                                                               \
     {                                                                                         \

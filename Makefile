@@ -23,8 +23,10 @@ CLOCK      = 16000000
 PROGRAMMER = -c usbasp
 FUSES      = -U lfuse:w:0xee:m -U hfuse:w:0xdf:m
 
+BUILD_NUMBER=$(shell cat BUILD.num)
+
 # Source
-SOURCES=$(wildcard src/main.c) $(wildcatd src/config/*.c) $(wildcard src/hal/avr/*.c) $(wildcard src/react/*.c) $(wildcard src/***/IO/*.c) $(wildcard src/***/ADC/*.c)  $(wildcard src/***/Time/*.c) $(wildcard src/***/UART/*.c) $(wildcard src/utils/*.c) #$(wildcard src/***/utils/*.c) #$(wildcard src/***/Button/*.c)
+SOURCES=$(wildcard src/main.c) $(wildcatd src/config/*.c) $(wildcard src/hal/avr/*.c) $(wildcard src/react/*.c) $(wildcard src/***/IO/*.c) $(wildcard src/***/ADC/*.c)  $(wildcard src/***/Time/*.c) $(wildcard src/***/UART/*.c) $(wildcard src/***/PWM/*.c) $(wildcard src/***/Servo/*.c) $(wildcard src/***/Button/*.c)  $(wildcard src/utils/*.c) #$(wildcard src/***/utils/*.c) #
 OBJECTS=$(patsubst %c, %o, $(SOURCES))
 
 # rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
@@ -60,7 +62,7 @@ TARGET=build/firmware
 # Tune the lines below only if you know what you are doing:
 
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
-COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) --std=gnu99 -Wl,--gc-sections -fdata-sections -ffunction-sections
+COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -DBUILD_NUM=$(BUILD_NUMBER) -mmcu=$(DEVICE) --std=gnu99 -Wl,--gc-sections -fdata-sections -ffunction-sections
 
 # symbolic targets:
 all:	main.hex
@@ -114,4 +116,4 @@ disasm:	main.elf
 	avr-objdump -d ${TARGET}.elf
 
 cpp:
-	$(COMPILE) -E main.c
+	$(COMPILE) -E src/main.c

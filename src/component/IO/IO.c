@@ -1,6 +1,6 @@
 #include "IO.h"
 
-static void
+static inline void
 IO_setPinMode(IO_blockProps *props) {
     if(props->mode == input) {
         props->io->in(props->pin);
@@ -9,7 +9,7 @@ IO_setPinMode(IO_blockProps *props) {
     }
 }
 
-static void
+static inline void
 IO_setPinState(IO_blockProps *props) {
     if(props->level == high) {
         props->io->on(props->pin);

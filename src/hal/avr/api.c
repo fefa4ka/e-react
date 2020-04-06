@@ -1,5 +1,10 @@
 #include "api.h"
 
+#define log_pin(port, pin) \
+    DDR##port |= (1 << pin); \
+    PORT##port ^= (1 << pin); \
+    PORT##port ^= (1 << pin);
+
 static void in(void *pin);
 static void out(void *pin);
 static void on(void *pin);
@@ -22,6 +27,8 @@ static unsigned char uart_receive();
 
 static void timer_init(void *config);
 static unsigned int timer_get();
+static void timer_set(unsigned int ticks, void(*callback)(void *args), void *args);
+static void timer_off();
 static unsigned int timer_usFromTicks(unsigned int ticks);
 
 
@@ -51,7 +58,9 @@ HAL AVR_HAL = {
     },
     .timer = {
         .init = timer_init,
-        .getTimer = timer_get,
+        .get = timer_get,
+        .set = timer_set,
+        .off = timer_off,
         .usFromTicks = timer_usFromTicks
     }
 };
@@ -183,10 +192,65 @@ uart_receive() {
 }
 
 
+// SPI 
+#define SPI_DDR		DDRB
+#define SPI_PORT	PORTB
+#define SPI_MISO	PORTB4
+#define SPI_MOSI	PORTB3
+#define SPI_SCK		PORTB5
+#define SPI_SS		PORTB2
+
+#define SPI_SPCR	SPCR
+#define SPI_SPDR	SPDR
+#define SPI_SPSR	SPSR
+#define SPI_SPIF	SPIF
+#define SPI_SPE		SPE
+#define SPI_MSTR	MSTR
+#define SPI_SPR0	SPR0
+#define SPI_SPR1	SPR1
+static void 
+spi_init(void *config) {
+	// make the MOSI, SCK, and SS pins outputs
+	SPI_DDR |= ( 1 << SPI_MOSI ) | ( 1 << SPI_SCK ) | ( 1 << SPI_SS );
+
+	// make sure the MISO pin is input
+	SPI_DDR &= ~( 1 << SPI_MISO );
+
+	// set up the SPI module: SPI enabled, MSB first, master mode,
+	//  clock polarity and phase = 0, F_osc/16
+	SPI_SPCR = ( 1 << SPI_SPE ) | ( 1 << SPI_MSTR );// | ( 1 << SPI_SPR0 );
+	SPI_SPSR = 1;     // set double SPI speed for F_osc/2
+}
+
+static inline bool 
+spi_isDataReceived() {
+    if(!(SPI_SPSR & (1 << SPI_SPIF))) {
+        SPI_SPDR = 0xFF;
+    } else {
+        return true;
+    }
+}
+
+static inline bool 
+spi_isTransmitReady() {
+    return !(SPI_SPSR & (1 << SPI_SPIF));
+}
+
+static inline void 
+spi_transmit(unsigned char data) {
+    SPI_SPDR = data;
+}
+
+static inline unsigned char 
+spi_receive() {
+    return SPI_SPDR;
+}
+
+
 /* Time */
 static void
 timer_init(void *config) {
-    TCCR1B |= (1 << CS11);// | (1 << CS10);
+    TCCR1B |= (1 << CS11);// | (1 << WGM12);// | (1 << CS10);
 }
 
 static inline unsigned int
@@ -194,7 +258,34 @@ timer_get() {
     return TCNT1;
 }
 
-static inline unsigned int timer_usFromTicks(unsigned int ticks) {
+void (*_timer_func)(void *args);
+void *_timer_func_args = 0;
+
+ISR(TIMER1_COMPA_vect) {
+	_timer_func(_timer_func_args);
+}
+
+static void
+timer_set(unsigned int ticks, void(*callback)(void *args), void *args) {
+    cli();
+    TIMSK1 &= ~(1 << OCIE1A); // Disable interrupts
+
+    _timer_func = callback;
+    _timer_func_args = args;
+    
+    OCR1A = ticks;
+
+    TIMSK1 |= 1 << OCIE1A;
+    TIFR1 = (1 << OCF1A);
+    sei();
+}
+
+static void 
+timer_off() {
+    TIMSK1 &= ~(1 << OCIE1A); // Disable interrupts
+}
+
+static unsigned int timer_usFromTicks(unsigned int ticks) {
     return ticks >> 1;
 }
 

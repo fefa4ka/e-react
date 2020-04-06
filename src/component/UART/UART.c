@@ -5,21 +5,30 @@ willMount(UART_block) {
 }
 
 shouldUpdate(UART_block) {
-    if(props->mode == transmiter
+    unsigned char sending;
+    if(props->mode == eCommunicationModeTransceiver 
             && props->uart->isTransmitReady()) {
-        unsigned char sending;
+        state->mode = eCommunicationModeTransceiver;
 
         if(CBRead(props->buffer, &sending) == eErrorBufferEmpty) {
             return false;
         } else {
-            
             state->sending = sending;
+
+            if(sending == NULL) {
+                CBRead(props->buffer, &sending);
+                state->mode = eCommunicationModeReceiver;
+            } else {
+                return true;
+            }
+
             return true;
         }
     }
 
-    if(props->mode == receiver
+    if((props->mode == eCommunicationModeReceiver|| state->mode == eCommunicationModeReceiver)
             && props->uart->isDataReceived()) {
+        state->mode = eCommunicationModeReceiver;
         return true;
     }
 
@@ -29,12 +38,12 @@ shouldUpdate(UART_block) {
 willUpdate(UART_block) { }
 
 release(UART_block) {
-    if(props->mode == transmiter) {
+    if(state->mode == eCommunicationModeTransceiver) {
         props->uart->transmit(state->sending);
 
         if(props->onTransmit) props->onTransmit(self);
 
-    } else if(props->mode == receiver) {
+    } else if(state->mode == eCommunicationModeReceiver) {
         state->sending = props->uart->receive();
         CBWrite(props->buffer, state->sending); 
 
@@ -47,7 +56,7 @@ didUnmount(UART_block) { }
 
 didUpdate(UART_block) {
     if(state->sending == '\n') {
-        if(props->mode == receiver) {
+        if(props->mode == eCommunicationModeReceiver) {
             if(props->onReceiveLine) props->onReceiveLine(self);
         } else {
             if(props->onTransmitLine) props->onTransmitLine(self);

@@ -10,13 +10,17 @@ shouldUpdate(Button_block) {
     bool level = props->io->get(props->pin); 
 
     unsigned int passed = props->time->time_ms - state->tick;
+    
+    if(state->level == 1 && level == 1 && state->pressed) {
+        return false;
+    }
 
     // First high event
     if(state->level == 0 && level != 0 && state->tick == 0) {
         return true;
     }
     
-    // Second check agter bounce_delay_ms
+    // Second check after bounce_delay_ms
     if(state->tick && passed >= props->bounce_delay_ms) {
         return true;
     }

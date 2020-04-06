@@ -9,7 +9,7 @@ typedef struct {
     void           *pin;
     unsigned int   frequency;
     unsigned char  duty_cycle;
-    rtc_datetime_24h_t *time;
+    rtc_datetime   *time;
 } PWM_blockProps;
 
 typedef struct {

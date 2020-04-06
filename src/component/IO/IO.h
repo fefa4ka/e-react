@@ -2,6 +2,7 @@
 #ifndef blocks_IO_h
 #define blocks_IO_h
 
+
 #include "../../react/component.h"
 #include "../../hal/api.h"
 
@@ -14,12 +15,12 @@ typedef struct
     enum {
         output,
         input
-    } mode;
+    } mode : 4;
 
     enum {
         low,
         high
-    } level;
+    } level : 4;
 
     void (*onChange)(Component *instance);
     void (*onLow)(Component *instance); 

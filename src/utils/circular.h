@@ -1,5 +1,5 @@
-#ifndef utils_h
-#define utils_h 
+#ifndef circular_h 
+#define circular_h 
 #include "common.h"
 
 struct sCircularBuffer {

@@ -42,6 +42,7 @@ enum eError CBRead(struct sCircularBuffer *cb, unsigned char *data) {
 }
 
 enum eError CBReadOwner(struct sCircularBuffer *cb, void *owner) {
+    if (CBLengthData(cb) == 0) { return eErrorBufferEmpty; }
     if(cb->owner[cb->read] == owner) {
         return eErrorNone;
     }

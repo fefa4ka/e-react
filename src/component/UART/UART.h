@@ -9,12 +9,9 @@ typedef struct {
     uart_handler        *uart;
     unsigned int        baudrate;
 
-    enum {
-        transmiter,
-        receiver
-    } mode; 
-        
-    struct sCircularBuffer *buffer;
+    enum eCommunicationMode     mode; 
+    struct sCircularBuffer     *buffer;
+    
 
     void (*onReceive)(Component *instance);
     void (*onReceiveLine)(Component *instance);
@@ -23,7 +20,8 @@ typedef struct {
 } UART_blockProps;
 
 typedef struct {
-    unsigned char  sending;
+    enum eCommunicationMode  mode; 
+    unsigned char            sending;
 } UART_blockState;
 
 
