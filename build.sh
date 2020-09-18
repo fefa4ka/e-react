@@ -21,7 +21,7 @@ done
 DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/[^/]*/\.\./|/|' -e 't a'`
 
 if [ "$ARCH" == "AVR" ]; then
-    make "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
+    make "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
     make flash TARGET=${TARGET}.hex ARCH=$ARCH
 else
     make "${TARGET}.elf" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH

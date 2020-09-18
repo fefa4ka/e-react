@@ -34,6 +34,7 @@ TARGET_OBJECTS = $(patsubst %.c, %.o, \
 			   $(TARGET_SOURCES))
 TARGET ?= $(patsubst %.c, %, \
 		 	$(TARGET_SOURCES))
+PRODUCT_NAME ?= undefined 
 
 COMPONENTS_SOURCES = $(shell find $(COMPONENTS_DIR) -name "*.c" -or -name "*.s")
 COMPONENTS = $(patsubst %.c, %.o, \
@@ -46,7 +47,7 @@ ifeq ($(ARCH), AVR)
 else
 	MACHINE_FLAGS = -DF_CPU=$(CLOCK)
 endif
-DEFINE_FLAGS = -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 
+DEFINE_FLAGS = -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME)
 CFLAGS ?= $(INCLUDE_FLAGS) $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu99 
 COMPILE = $(CC) $(CFLAGS)
 
@@ -62,9 +63,6 @@ COMPILE = $(CC) $(CFLAGS)
 	rm -f $@
 	avr-objcopy -j .text -j .data -O ihex $*.elf $@
 	avr-size --format=avr --mcu=$(DEVICE) $*.elf
-
-%: %.o $(OBJECTS)
-	$(COMPILE) -o $@ $(OBJECTS)
 
 flash: $(TARGET)
 	$(AVRDUDE) -U flash:w:${TARGET}:i

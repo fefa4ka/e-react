@@ -10,7 +10,7 @@ typedef struct {
     unsigned int        baudrate;
 
     enum eCommunicationMode     mode; 
-    struct sCircularBuffer     *buffer;
+    struct ring_buffer_s        *buffer;
     
 
     void (*onReceive)(Component *instance);

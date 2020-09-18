@@ -1,112 +1,128 @@
 #include "config/device.h"
 
-#include <ADC.h>
+#include <AtDC.h>
 #include <IO.h>
 #include <PWM.h>
+#include <UART.h>
 
-#ifdef ARCH_AVR
 #include "hal/avr/api.h"
 
-AVRPin LED_Pin_HW = {
-    .port = {
-        .port = &PORTB,
-        .ddr = &DDRB,
-        .pin = &PINB
-    },
-    .number = 2
-};
-
-AVRPin LED_Button_HW = {
+AVRPin led_pin_hw = {
     .port = {
         .port = &PORTB,
         .ddr = &DDRB,
         .pin = &PINB
     },
     .number = 1
+};
+
+AVRPin button_pin_hw = {
+    .port = {
+        .port = &PORTB,
+        .ddr = &DDRB,
+        .pin = &PINB
+    },
+    .number = 2
 };
 
 #define HW AVR_HAL
-#endif
 
-#ifdef ARCH_x86
-#include "hal/virtual.h"
-VirtualPin LED_Pin_HW = {
-    .port = 'B',
-    .number = 2
+
+enum sensor_channel_e {
+    potentiomenter = 0,
+    solar_panel = 1
 };
 
-VirtualPin LED_Button_HW = {
-    .port = 'B',
-    .number = 1
-};
-#define HW Virtual_HAL
-#endif
-
-enum eSensorChannels {
-    potentiomenter = 1,
-    solar_panel = 2
-};
-
+#define BUFFER_SIZE 128 
+unsigned char buffer[BUFFER_SIZE];
 typedef struct
 {
-    rtc_datetime     time;
-    enum eSensorChannels sensor;
+    rtc_datetime_t   time;
+    enum sensor_channel_e 
+                     sensor;
     unsigned short   brightness;
     unsigned short   angle;
-} DeviceState;
+    struct ring_buffer_s 
+                     buffer;
+} device_state_t ;
 
-DeviceState State = {
+device_state_t state = {
     .time = {0},
     .sensor = potentiomenter,
     .brightness = 0,
-    .angle = 0
+    .angle = 0,
+    .buffer = { 
+        .size = BUFFER_SIZE,
+        .data = buffer
+    },
 };
 
 /* Application handlers */
-void Sensor_readed(Component *trigger) {
-    ADC_blockState *state = (ADC_blockState *)trigger->state;
-    
-    if(State.sensor == potentiomenter) {
-        State.sensor = solar_panel;
-        // NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        State.angle = state->value * 45 / 256; 
+void log(char *message) {
+    while(*message) {
+        rb_write(&state.buffer, *(message++));
+    }; 
+}
 
-    } else if(State.sensor == solar_panel) {
-        State.brightness = state->value;
-        State.sensor = potentiomenter;
+void log_num(char *message, int number) {
+    log(message);
+    log(itoa(number));
+} 
+void sensor_readed(Component *trigger) {
+    AtDC_blockState *adc_state = (AtDC_blockState *)trigger->state;
+    
+    if(state.sensor == potentiomenter) {
+        state.sensor = solar_panel;
+        // NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+        state.angle = adc_state->value * 45 / 256; 
+        log_num("\r\nAngle: ", state.angle);
+
+    } else if(state.sensor == solar_panel) {
+        state.brightness = 255 - adc_state->value;
+        state.sensor = potentiomenter;
+        log_num("\r\nLight: ", state.brightness);
     }
 }
 
 
 
+
 int main(void) {
     // Define React components
-    React_Define(Time_block, Time);
-    React_Define(PWM_block, LED_Pin);
-    React_Define(ADC_block, Sensor);
+    react_define(Time, datetime);
+    react_define(PWM, led);
+    react_define(AtDC, sensor);
 
+    react_define(UART, serial);
 
     // Event-loop
     while (true) { 
         // Timer component, for event management and time counting
-        React (Time_block) {
+        react (Time) {
             .timer = &(HW.timer),
-            .time = &State.time,
-        } to(Time);
+            .time = &state.time,
+        } to (datetime);
 
-        React (ADC_block) {
+        react (UART) {
+            .uart = &(HW.uart),
+            .baudrate = UBRR_VALUE,
+            .mode = eCommunicationModeTransceiver,
+            .buffer = &state.buffer
+        } to (serial);
+
+        react (AtDC) {
             .adc = &(HW.adc),
-            .channel = &(State.sensor),
-            .onChange = Sensor_readed 
-        } to(Sensor);
+            .channel = &(state.sensor),
+            .onChange = sensor_readed 
+        } to (sensor);
 
-        React (PWM_block) {
+        react (PWM) {
             .io = &(HW.io),
-            .pin = &LED_Pin_HW,
+            .pin = &led_pin_hw,
             .frequency = 20,
-            .duty_cycle = State.brightness,
-            .time = &State.time
-        } to(LED_Pin);
+            .duty_cycle = state.brightness,
+            .time = &state.time
+        } to (led);
     }
 
     return 0;

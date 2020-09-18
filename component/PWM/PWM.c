@@ -1,10 +1,10 @@
 #include "PWM.h"
 
-willMount(PWM_block) {
+willMount(PWM) {
     props->io->out(props->pin);
 }
 
-shouldUpdate(PWM_block) {
+shouldUpdate(PWM) {
     if(props->time->time_us >= state->tick) {
         return true;
     } 
@@ -12,7 +12,7 @@ shouldUpdate(PWM_block) {
     return false;
 }
 
-willUpdate(PWM_block) { 
+willUpdate(PWM) { 
     if(state->on_duty) {
         state->tick = props->time->time_us + (1000000L / props->frequency / 255) * (255 - props->duty_cycle);
         state->on_duty = false;
@@ -22,7 +22,7 @@ willUpdate(PWM_block) {
     }
 }
 
-release(PWM_block) {
+release(PWM) {
     if(state->on_duty) {
         props->io->on(props->pin);
     } else {
@@ -30,12 +30,12 @@ release(PWM_block) {
     }
 }
 
-didMount(PWM_block) { }
-didUnmount(PWM_block) { }
+didMount(PWM) { }
+didUnmount(PWM) { }
 
-didUpdate(PWM_block) {
+didUpdate(PWM) {
  
 }
 
 
-React_Constructor(PWM_block);
+React_Constructor(PWM);

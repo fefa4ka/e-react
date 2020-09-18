@@ -11,6 +11,7 @@ struct ring_buffer_s {
 
 unsigned int rb_length(struct ring_buffer_s *cb);
 enum eError rb_write(struct ring_buffer_s *cb, unsigned char data);
+enum eError rb_write_string(struct ring_buffer_s *cb, unsigned char *data);
 enum eError rb_read(struct ring_buffer_s *cb, unsigned char *data);
 
 #endif
