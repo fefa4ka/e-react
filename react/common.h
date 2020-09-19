@@ -10,7 +10,7 @@ enum eLogSubSystem {
 };
 
 
-enum error_e {
+enum eError {
     eErrorNone = 0,
     eErrorBufferFull,
     eErrorBufferEmpty,

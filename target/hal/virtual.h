@@ -1,8 +1,6 @@
-#ifndef hal_virtual_h
-#define hal_virtual_h
+#pragma once 
 
 #include "api.h"
-
 typedef struct {
     char port;
     short number;
@@ -10,4 +8,3 @@ typedef struct {
 
 HAL Virtual_HAL;
 
-#endif

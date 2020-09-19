@@ -16,14 +16,6 @@ AVRPin led_pin_hw = {
     .number = 1
 };
 
-AVRPin button_pin_hw = {
-    .port = {
-        .port = &PORTB,
-        .ddr = &DDRB,
-        .pin = &PINB
-    },
-    .number = 2
-};
 
 #define HW AVR_HAL
 
@@ -58,16 +50,15 @@ device_state_t state = {
 };
 
 /* Application handlers */
-void log(char *message) {
-    while(*message) {
-        rb_write(&state.buffer, *(message++));
-    }; 
+void log_string(char *message) {
+    rb_write_string(&state.buffer, message);
 }
 
 void log_num(char *message, int number) {
-    log(message);
-    log(itoa(number));
+    rb_write_string(&state.buffer, message);
+    rb_write_string(&state.buffer, itoa(number));
 } 
+
 void sensor_readed(Component *trigger) {
     AtDC_blockState *adc_state = (AtDC_blockState *)trigger->state;
     
@@ -75,16 +66,18 @@ void sensor_readed(Component *trigger) {
         state.sensor = solar_panel;
         // NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
         state.angle = adc_state->value * 45 / 256; 
-        log_num("\r\nAngle: ", state.angle);
 
     } else if(state.sensor == solar_panel) {
-        state.brightness = 255 - adc_state->value;
+        state.brightness = adc_state->value;
         state.sensor = potentiomenter;
-        log_num("\r\nLight: ", state.brightness);
     }
 }
 
-
+void log_sensors(Component *trigger)
+{
+    log_num("\r\nLight: ", state.brightness);
+    log_num("\r\nPOT: ", state.angle);
+}
 
 
 int main(void) {
@@ -92,7 +85,6 @@ int main(void) {
     react_define(Time, datetime);
     react_define(PWM, led);
     react_define(AtDC, sensor);
-
     react_define(UART, serial);
 
     // Event-loop
@@ -101,6 +93,7 @@ int main(void) {
         react (Time) {
             .timer = &(HW.timer),
             .time = &state.time,
+            .onSecond = log_sensors
         } to (datetime);
 
         react (UART) {

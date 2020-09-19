@@ -1,5 +1,6 @@
 #include "virtual.h"
 #include <stdio.h>
+#include <time.h>
 
 static void in(void *pin);
 static void out(void *pin);
@@ -188,19 +189,22 @@ uart_receive() {
 /* Time */
 static void
 timer_init(void *config) {
+    srand(time(NULL));
     printf("Timer init\n"); 
 }
 
 
 static inline unsigned int
 timer_get() {
-    printf("Timer get\n");
-    return 0; 
+    unsigned int second = (unsigned int)clock();
+    printf("Timer get: %d\n", second);
+    return second; 
 }
 
 static void
 timer_set(unsigned int ticks, void(*callback)(void *args), void *args) {
-    printf("Timer set\n"); 
+    printf("Timer set: %d\n", ticks); 
+    callback(args);
 }
 
 static void 

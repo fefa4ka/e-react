@@ -1,5 +1,4 @@
-#ifndef Time_block_h
-#define Time_block_h
+#pragma once
 
 #include <component.h>
 #include <hal.h>
@@ -40,4 +39,3 @@ typedef struct {
 React_Header(Time);
 
 
-#endif

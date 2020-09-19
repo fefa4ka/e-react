@@ -57,6 +57,15 @@ void button_release(Component *trigger)
     log("Button release\r\n");
 }
 
+void second_tick(Component *trigger)
+{
+    print_time();
+}
+
+void minute_tick(Component *trigger)
+{
+    log("Next minute\r\n");
+}
 
 int main(void)
 {
@@ -68,13 +77,14 @@ int main(void)
     // Welcom log
     print_version();
 
-    unsigned char lastSecond = 0;
     // Event-loop
     while (true) { 
         // Timer component, for event management and time counting
         react (Time) {
             .timer = &(HW.timer),
             .time = &state.time,
+            .onSecond = second_tick,
+            .onMinute = minute_tick
         } to (datetime);
 
         react (UART) {
@@ -94,11 +104,6 @@ int main(void)
             .onPress = button_press,
             .onRelease = button_release
         } to (button);
-
-        if (state.time.second != lastSecond) {
-            print_time();
-            lastSecond = state.time.second;
-        }
     }
 
     return 0;

@@ -100,8 +100,8 @@ void React_Release(Component *instance);
 #define react_define React_Define
 
 #define React_Load(Type, instance) \
-    Type##_blockProps *Type##_blockProps = (instance)->props; \
-    Type##_blockState *Type##_blockState = (instance)->state;
+    Type##_blockProps *Type##Props = (instance)->props; \
+    Type##_blockState *Type##State = (instance)->state;
 
 #define React_Init(Type, name, props) \
     React_Define_WithProps(Type, name, props);  \

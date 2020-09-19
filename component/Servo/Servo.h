@@ -10,6 +10,7 @@ typedef struct {
     void           *pin;
     unsigned char  speed;
     unsigned int   angle;
+    bool           enabled;
     Component      *scheduler;
 } Servo_blockProps;
 
@@ -17,6 +18,7 @@ typedef struct {
     unsigned int           duty_cycle;
     unsigned int           remain_time;
     bool                   on_duty;
+    bool                   scheduled;
 } Servo_blockState;
 
 React_Header(Servo);

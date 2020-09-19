@@ -16,7 +16,7 @@ ARCH ?= x86
 ifeq ($(ARCH), AVR)
 	CC = avr-gcc
 else
-	CC = gcc
+	CC = clang 
 endif
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
 
@@ -34,35 +34,37 @@ TARGET_OBJECTS = $(patsubst %.c, %.o, \
 			   $(TARGET_SOURCES))
 TARGET ?= $(patsubst %.c, %, \
 		 	$(TARGET_SOURCES))
-PRODUCT_NAME ?= undefined 
+PRODUCT_NAME ?= unnamed
 
 COMPONENTS_SOURCES = $(shell find $(COMPONENTS_DIR) -name "*.c" -or -name "*.s")
 COMPONENTS = $(patsubst %.c, %.o, \
 			 	$(COMPONENTS_SOURCES))
 
-DEBUG_FLAGS = -Wall
-OPTIMIZATION_FLAGS = -Os
 ifeq ($(ARCH), AVR)
+	OPTIMIZATION_FLAGS = -Os
 	MACHINE_FLAGS = -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 else
 	MACHINE_FLAGS = -DF_CPU=$(CLOCK)
 endif
 DEFINE_FLAGS = -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME)
-CFLAGS ?= $(INCLUDE_FLAGS) $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu99 
+CFLAGS ?= -g $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu99 
 COMPILE = $(CC) $(CFLAGS)
 
-%.elf: $(OBJECTS) 
+$(TARGET): $(OBJECTS) 
 	@echo $(DEPENDENCIES)
 	$(COMPILE) -o $@ $(OBJECTS)
 
-%.map: %.elf $(OBJECTS)
-	$(CC) -g -mmcu=$(DEVICE) -Wl,-Map,$@ -o $*.elf $(OBJECTS)
-	avr-objdump -h -S $*.elf > $*.lst 
+%.map: % $(OBJECTS)
+	$(CC) -g -mmcu=$(DEVICE) -Wl,-Map,$@ -o $* $(OBJECTS)
+	avr-objdump -h -S $* > $*.lst
 
-%.hex: %.elf %.map
+%.hex: % %.map
 	rm -f $@
-	avr-objcopy -j .text -j .data -O ihex $*.elf $@
-	avr-size --format=avr --mcu=$(DEVICE) $*.elf
+	avr-objcopy -j .text -j .data -O ihex $* $@
+	avr-size --format=avr --mcu=$(DEVICE) $*
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $*.c -o $@ $(INCLUDE_FLAGS)
 
 flash: $(TARGET)
 	$(AVRDUDE) -U flash:w:${TARGET}:i
@@ -70,11 +72,8 @@ flash: $(TARGET)
 read: $(TARGET)
 	$(AVRDUDE) -U read:w:${TARGET}:i
 
-.o:
-	$(COMPILE) -c $< -o $@
-
 %.d: %.c
-	$(CC) $(CFLAGS) $< -MM > $@
+	$(CC) $(CFLAGS) $< -MM $(INCLUDE_FLAGS) > $@
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS) $(DEPENDENCIES)

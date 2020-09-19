@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e -x
 TARGET="target/$1"
 ARCH="$2"
 echo "Building $1"
@@ -22,8 +23,8 @@ DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/
 
 if [ "$ARCH" == "AVR" ]; then
     make "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
-    make flash TARGET=${TARGET}.hex ARCH=$ARCH
+    make flash TARGET="${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
 else
-    make "${TARGET}.elf" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
+    make "${TARGET}" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
 fi
 

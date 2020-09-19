@@ -1,7 +1,6 @@
-#ifndef Scheduler_block_h
-#define Scheduler_block_h
+#pragma once
 
-#include "../Time/Time.h"
+#include <Calendar.h>
 
 typedef struct _event {
   unsigned int   timeout_us;
@@ -20,12 +19,18 @@ typedef struct _event_queue {
 typedef struct {
     timer_handler       *timer;
 
-    rtc_datetime        *time;
-    event_queue         *queue;
+    rtc_datetime_t      *time;
+    event_queue         *queue; 
+
+    void (*onEventHappened)(Component *instance);
+    void (*onEventEqueued)(Component *instance);
+    void (*onEventScheduled)(Component *instance);
 } Scheduler_blockProps;
 
 typedef struct {
-    void         (*enqueue)(Component *scheduler, unsigned int timeout_us, void (*callback)(void *args), void *args);
+    bool         (*enqueue)(Component *scheduler, unsigned int timeout_us, void (*callback)(void *args), void *args);
+    event        (*dequeue)(Component *scheduler);
+    bool         scheduled;
     event        next_event;
 } Scheduler_blockState;
 
@@ -36,4 +41,5 @@ React_Header(Scheduler);
 #define Scheduler_enqueue(instance, ...) \
     ((Scheduler_blockState *)((instance)->state))->enqueue(instance, ##__VA_ARGS__)
 
-#endif
+#define Scheduler_dequeue(instance) \
+    ((Scheduler_blockState *)((instance)->state))->dequeue(instance)

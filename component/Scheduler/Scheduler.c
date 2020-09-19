@@ -10,16 +10,22 @@ void event_callback(void *instance);
 int event_compare(unsigned int now, event *a, event *b);
 event dequeue(Component *instance); 
 void event_heapify(event_queue *scheduler, unsigned int now, unsigned char idx); 
-void event_prioritify(event_queue *queue, unsigned int now, event *new_event);
-void enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *args), void *args);
+void event_prioritify(event_queue *queue, unsigned int now, event new_event);
+bool enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *args), void *args);
 
-void
+bool
 enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *args), void *args) {
-    log_pin(D, 6);
     React_Load(Scheduler, instance);
     event_queue *queue = SchedulerProps->queue;
     timer_handler *timer = SchedulerProps->timer;
     unsigned int now = timer->get();
+
+    if(queue->size == queue->capacity 
+            || timeout_us == 0) {
+        return false;
+    }
+
+    if(SchedulerProps->onEventEqueued) SchedulerProps->onEventEqueued(instance); 
 
     event new_event = {
         timeout_us,
@@ -29,17 +35,19 @@ enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *arg
     };
 
     // Use priority queue
-    event_prioritify(queue, now, &new_event);
+    event_prioritify(queue, now, new_event);
+
+    return true;
 }
 
 void
-event_prioritify(event_queue *queue, unsigned int now, event *new_event) {
+event_prioritify(event_queue *queue, unsigned int now, event new_event) {
     // Use priority queue
     unsigned char index = queue->size;
     event *events = queue->events;
 
-    queue->events[index] = *new_event;
-    queue->size++;
+    queue->events[index] = new_event;
+    queue->size += 1;
     
     event swap = {0};
     while(index > 0 && event_compare(now, &events[index], &events[PARENT(index)]) > 0) {
@@ -53,13 +61,15 @@ event_prioritify(event_queue *queue, unsigned int now, event *new_event) {
 void 
 event_callback(void *instance) {
     React_Load(Scheduler, (Component *)instance);
+    SchedulerProps->timer->off();
 
     event triggered_event = SchedulerState->next_event; 
     
     triggered_event.callback(triggered_event.args);
     SchedulerState->next_event = (event){0, 0, 0, 0};
     
-    SchedulerProps->timer->off();
+
+    if(SchedulerProps->onEventHappened) SchedulerProps->onEventHappened(instance);
 }
 
 // If result is positive event A is close than B
@@ -78,7 +88,7 @@ event_compare(unsigned int now, event *a, event *b) {
     int a_remain = a_passed - (a->timeout_us << 1);
     int b_remain = b_passed - (b->timeout_us << 1);
 
-    return a_remain - b_remain; //b_remain - a_remain; 
+    return a_remain - b_remain; 
 }
 
 void
@@ -116,11 +126,11 @@ event_heapify(event_queue *scheduler, unsigned int now, unsigned char idx) {
 
 event
 dequeue(Component *instance) {
-    log_pin(D, 7);
     React_Load(Scheduler, instance);
     event_queue *scheduler = SchedulerProps->queue;
     timer_handler *timer = SchedulerProps->timer;
     event *events = scheduler->events;
+    unsigned int last_index = scheduler->size - 1;
 
     if(scheduler->size == 0) {
         return (event){0, 0, 0, 0};
@@ -128,49 +138,62 @@ dequeue(Component *instance) {
 
     event closest_event = events[0];
 
-    events[0] = events[scheduler->size - 1];
+    events[0] = events[last_index];
     scheduler->size -= 1;
 
-    event_heapify(scheduler, timer->get(), 0);
+    if(scheduler->size == 0) {
+        events[0] = (event){0};
+
+        return closest_event;
+    } else {
+        events[last_index] = (event){0};
+    }
+
+    if(scheduler->size > 1) {
+        event_heapify(scheduler, timer->get(), 0);
+    }
 
     return closest_event;
 }
 
-willMount(Scheduler_block) {
+willMount(Scheduler) {
     //void *ptr;
     //props->timer->init(ptr);
     state->enqueue = enqueue;
+    state->dequeue = dequeue;
     state->next_event = (event){0, 0, 0, 0};
 }
 
-shouldUpdate(Scheduler_block) {
+shouldUpdate(Scheduler) {
     // If queue empty, there are nothing to do
     if(props->queue->size == 0) {
         return false;
     }
     
     event *closest_event = &props->queue->events[0];
+
     // If current closest timeout as next event timeout, everything is setup
-    if(closest_event->timeout_us == state->next_event.timeout_us) {
+    if(closest_event->timeout_us != 0 
+            && closest_event->timeout_us == state->next_event.timeout_us) {
         return false;
     }
-
 
     return true;
 }
 
-willUpdate(Scheduler_block) {
+willUpdate(Scheduler) {
+    /* Add event ? */
     if(state->next_event.timeout_us != 0) {
-        log_pin(D, 4);
-        event_prioritify(props->queue, props->timer->get(), &state->next_event);
+        props->timer->off();
+        event_prioritify(props->queue, props->timer->get(), state->next_event);
     }
 
     state->next_event = dequeue(self);
 }
 
-release(Scheduler_block) { 
+release(Scheduler) { 
     if(state->next_event.timeout_us == 0) {
-
+        /* No events */
         return;
     }
 
@@ -185,13 +208,14 @@ release(Scheduler_block) {
     if(passed > timeout) {
         event_callback(self);
     } else {
+        if(props->onEventScheduled) props->onEventScheduled(self);
         props->timer->set(now + timeout - passed, event_callback, self);
     }
 }
 
-didMount(Scheduler_block) { }
-didUnmount(Scheduler_block) { }
-didUpdate(Scheduler_block) { }
+didMount(Scheduler) { }
+didUnmount(Scheduler) { }
+didUpdate(Scheduler) { }
 
 
-React_Constructor(Scheduler_block);
+React_Constructor(Scheduler);
