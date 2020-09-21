@@ -22,6 +22,7 @@ willUpdate(Time) {
 
 release(Time) {
     unsigned int us_passed = props->timer->usFromTicks(state->passed);
+    props->time->step_us = us_passed;
     props->time->microsecond += us_passed; // state->passed;//134;//ms_passed;
     props->time->time_us += us_passed;
     

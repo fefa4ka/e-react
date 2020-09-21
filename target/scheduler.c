@@ -198,6 +198,7 @@ int main(void) {
             .angle = state.angle  
         } to (motor);
 
+        /*
         react (Servo) {
             .io = &(HW.io),
             .pin = &servo_pin_hw,
@@ -215,6 +216,7 @@ int main(void) {
             .enabled = state.motor_enabled,
             .angle = 180 - state.angle  
         } to (nervo);
+        */
     }
 
     return 0;

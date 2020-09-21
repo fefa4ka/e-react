@@ -16,6 +16,7 @@ typedef struct rtc_datetime_s
   unsigned char  day_of_week;
   unsigned int   time_ms;
   unsigned long  time_us;
+  unsigned int   step_us;
 } rtc_datetime_t;
 
 

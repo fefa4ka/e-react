@@ -19,6 +19,18 @@ enum eCommunicationMode {
     eCommunicationModeReceiver
 }; 
 
+enum communication_mode_e {
+    off_e,
+    transceiver_e,
+    receiver_e 
+}; 
+
+typedef enum {
+   off_e,
+   output_e,
+   input_e
+} pin_mode_t;
+
 typedef struct {
     void              (*mount)(void *prescaler);
     void              (*selectChannel)(void *channel);

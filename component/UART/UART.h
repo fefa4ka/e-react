@@ -9,8 +9,8 @@ typedef struct {
     uart_handler        *uart;
     unsigned int        baudrate;
 
-    enum eCommunicationMode     mode; 
-    struct ring_buffer_s        *buffer;
+    struct ring_buffer_s        *tx_buffer;
+    struct ring_buffer_s        *rx_buffer;
     
 
     void (*onReceive)(Component *instance);
