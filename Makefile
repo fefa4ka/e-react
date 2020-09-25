@@ -20,7 +20,7 @@ else
 endif
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
 
-VPATH = react:target:tests:component
+VPATH = react:target:component
 
 SOURCES := $(shell find $(SOURCES_DIR) -name "*.c" -or -name "*.s")
 OBJECTS ?= $(SOURCES:%.c=%.o)
@@ -29,7 +29,7 @@ DEPENDENCIES := $(OBJECTS:.o=.d)
 INCLUDE_DIRS := $(shell find $(SOURCES_DIR) -type f -name '*.c' -or -name '*.s' | sed -E 's|\/[^\/]+$$||' |sort -u)
 INCLUDE_FLAGS := $(addprefix -I, $(INCLUDE_DIRS))
 
-TARGET_SOURCES = $(wildcard $(TARGET_DIR)/*.c)
+TARGET_SOURCES = $(wildcard $(TARGET_DIR)/**/*.c)
 TARGET_OBJECTS = $(patsubst %.c, %.o, \
 			   $(TARGET_SOURCES))
 TARGET ?= $(patsubst %.c, %, \

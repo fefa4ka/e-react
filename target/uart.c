@@ -4,18 +4,12 @@
 #include <UART.h>
 #include <Menu.h>
 
-#include "hal/avr/api.h"
-#define HW AVR_HAL
-static const int version = 1; 
-AVRPin button_pin_hw = {
-    .port = {
-        .port = &PORTB,
-        .ddr = &DDRB,
-        .pin = &PINB
-    },
-    .number = 2
-};
+/* Define harware API and pins */
+#include <hal.h>
 
+static const int version = 1; 
+
+/* Device state */
 typedef struct
 {
     rtc_datetime_t    time;
@@ -28,8 +22,6 @@ typedef struct
 
 #define BUFFER_SIZE 128 
 unsigned char output_buffer[BUFFER_SIZE];
-
-#define BUFFER_SIZE 128 
 unsigned char input_buffer[BUFFER_SIZE];
 
 device_state_t state  = {
@@ -108,11 +100,14 @@ void read_command(Component *trigger)
 
 int main(void)
 {
+    // Define HW
+    hw_pin(button_pin_hw, B, 2);
+
     // Define React components
-    react_define(Time, datetime);
-    react_define(UART, serial);
-    react_define(Button, button);
-    react_define(Menu, tty);
+    component(Time, datetime);
+    component(UART, serial);
+    component(Button, button);
+    component(Menu, tty);
 
     menu_command_t commands[] = {
         { 
@@ -133,13 +128,13 @@ int main(void)
     while (true) { 
         // Timer component, for event management and time counting
         react (Time) {
-            .timer = &(HW.timer),
+            .timer = &(hw.timer),
             .time = &state.time,
             .onMinute = minute_tick
         } to (datetime);
 
         react (UART) {
-            .uart = &(HW.uart),
+            .uart = &(hw.uart),
             .baudrate = UBRR_VALUE,
             .tx_buffer = &state.output_buffer,
             .rx_buffer = &state.input_buffer,
@@ -147,7 +142,7 @@ int main(void)
         } to (serial);
 
         react (Button) {
-            .io = &(HW.io),
+            .io = &(hw.io),
             .pin = &button_pin_hw,
             .type = push, /* or toggle */
             .time = &state.time,

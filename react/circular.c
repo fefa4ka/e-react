@@ -1,11 +1,11 @@
 #include "circular.h"
 
-unsigned int rb_length(struct ring_buffer_s *cb);
-enum eError rb_write(struct ring_buffer_s *cb, unsigned char data);
-enum eError rb_read(struct ring_buffer_s *cb, unsigned char *data);
-enum eError rb_write_string(struct ring_buffer_s *cb, unsigned char *data) ;
+unsigned int rb_length(struct ring_buffer *cb);
+enum eError rb_write(struct ring_buffer *cb, unsigned char data);
+enum eError rb_read(struct ring_buffer *cb, unsigned char *data);
+enum eError rb_write_string(struct ring_buffer *cb, unsigned char *data) ;
 
-unsigned int rb_length(struct ring_buffer_s *cb) {
+unsigned int rb_length(struct ring_buffer *cb) {
 /* Slower version */
    //int length = cb->write - cb->read;
    //if (length >= 0) { return length; }
@@ -14,7 +14,7 @@ unsigned int rb_length(struct ring_buffer_s *cb) {
    return ((cb->write - cb->read) & (cb->size - 1));
 }
 
-enum eError rb_write(struct ring_buffer_s *cb, unsigned char data){ 
+enum eError rb_write(struct ring_buffer *cb, unsigned char data){ 
     if (rb_length(cb) == (cb->size - 1)) {
         return eErrorBufferFull;
     } 
@@ -27,7 +27,7 @@ enum eError rb_write(struct ring_buffer_s *cb, unsigned char data){
 }
 
 
-enum eError rb_read(struct ring_buffer_s *cb, unsigned char *data) {
+enum eError rb_read(struct ring_buffer *cb, unsigned char *data) {
     if (rb_length(cb) == 0) { return eErrorBufferEmpty; }
     *data = cb->data[cb->read];
     cb->read = (cb->read + 1) & ( cb->size - 1);
@@ -35,7 +35,7 @@ enum eError rb_read(struct ring_buffer_s *cb, unsigned char *data) {
     return eErrorNone;
 }
 
-enum eError rb_write_string(struct ring_buffer_s *cb, unsigned char *data) 
+enum eError rb_write_string(struct ring_buffer *cb, unsigned char *data) 
 {
     while(*data) {
         if(rb_write(cb, *(data++)) == eErrorBufferFull) {

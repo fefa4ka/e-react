@@ -95,9 +95,9 @@ int main(void) {
     React_Define(Servo_block, Servo_9g);
 
     // Allocate memeory for events
-    event events[State.scheduler.capacity];
-    State.scheduler.events = events;
-    State.scheduler.scheduler = &Scheduler;
+    event events[state.scheduler.capacity];
+    state.scheduler.events = events;
+    state.scheduler.scheduler = &scheduler;
 
     // Log direction
     State.log_stdout = &Serial;

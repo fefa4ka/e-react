@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e -x
-TARGET="target/$1"
+TARGET="target/$1/main"
 ARCH="$2"
 echo "Building $1"
 

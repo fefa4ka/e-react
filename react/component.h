@@ -1,8 +1,7 @@
-
-#ifndef void_h
-#define void_h
+#pragma once
 
 #include <stdbool.h>
+#include <hal.h>
 
 typedef struct {
     enum {
@@ -98,6 +97,7 @@ void React_Release(Component *instance);
 #define React_Define(Type, name) React_Define_WithProps(Type, name, {0})
 #define Define React_Define
 #define react_define React_Define
+#define component React_Define
 
 #define React_Load(Type, instance) \
     Type##_blockProps *Type##Props = (instance)->props; \
@@ -151,5 +151,3 @@ void React_Release(Component *instance);
         props->ref = localProps; \
     } while(0) \
     ;
-
-#endif

@@ -2,17 +2,17 @@
 
 #include <component.h>
 
-typedef struct menu_command_t {
-    struct menu_command_t 
-                   *menu;
-    unsigned char  *command;
-    void           (*callback)(void *args);
-    void           *args;
-} menu_command_t;
+struct menu_command {
+    unsigned char         *command;
+    void                  (*callback)(void *args);
+    void                  *args;
+
+    struct menu_command   *menu;
+};
 
 typedef struct
 {
-    menu_command_t *menu;
+    struct menu_command   *menu;
     unsigned char  *command;
     void           (*onCommand)(void *instance);
     void           (*onSelect)(void *instance);
@@ -21,9 +21,9 @@ typedef struct
 } Menu_blockProps;
 
 typedef struct {
-    menu_command_t *previous_menu;
-    menu_command_t *current_menu;
-    unsigned char  command[32];
+    struct menu_command   *previous_menu;
+    struct menu_command   *current_menu;
+    unsigned char         command[32];
 } Menu_blockState;
 
 

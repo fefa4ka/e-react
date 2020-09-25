@@ -16,7 +16,7 @@ shouldUpdate(Menu) {
 }
 
 willUpdate(Menu) {
-    menu_command_t *command = state->current_menu && state->current_menu->menu
+    struct menu_command *command = state->current_menu && state->current_menu->menu
         ? state->current_menu->menu
         : props->menu;
 
@@ -35,7 +35,7 @@ willUpdate(Menu) {
 }
 
 release(Menu) {
-    menu_command_t *command = state->current_menu;
+    struct menu_command *command = state->current_menu;
     if(command) {
         command->callback(command->args);
     }

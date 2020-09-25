@@ -1,4 +1,4 @@
-#include "api.h"
+#include "avr.h"
 
 #define log_pin(port, pin) \
     DDR##port |= (1 << pin); \
@@ -19,7 +19,7 @@ static void adc_startConvertion(void *channel);
 static bool adc_isConvertionReady(void *channel);
 static int adc_readConvertion(void *channel);
 
-static void uart_init(void *baudrate);
+static void uart_init(unsigned int baudrate);
 static bool uart_isDataReceived();
 static bool uart_isTransmitReady();
 static void uart_transmit(unsigned char data);
@@ -158,8 +158,8 @@ adc_readConvertion(void *channel) {
 
 // UART
 static void 
-uart_init(void *baudrate) {
-    unsigned int baud = *(unsigned int *)baudrate;
+uart_init(unsigned int baudrate) {
+    unsigned int baud = hw_uart_baudrate(baudrate);
 
     /* Set baud rate */
     UBRR0H = (unsigned char)(baud>>8);

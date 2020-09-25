@@ -4,9 +4,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-#include "../../config/device.h"
-//#include "usart.h"
-#include <hal.h>
+#include "api.h"
 
 typedef struct {
     struct {
@@ -17,8 +15,17 @@ typedef struct {
     unsigned char number;
 } pin_t;
 
-#define hw_pin(name, port, pin) pin_t name = { { &PORT##port, &DDR##port, &PIN##port }, pin }
-
 HAL hw;
+
+#define debug(port, pin) \
+    ({ \
+         hw_pin(debug, port, pin); \
+         hw->io->flip(debug); \
+         hw->io->flip(debug); \
+    }) \
+
+#define hw_pin(name, port, pin) pin_t name = { { &PORT##port, &DDR##port, &PIN##port }, pin }
+#define hw_uart_baudrate(baudrate) (((F_CPU) + 4UL * (baudrate)) / (8UL * (baudrate)) - 1UL)
+
 
 #endif

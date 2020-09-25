@@ -1,5 +1,4 @@
-#ifndef block_UART_h
-#define block_UART_h
+#pragma once 
 
 #include <component.h>
 #include <api.h>
@@ -27,4 +26,3 @@ typedef struct {
 
 React_Header(UART);
 
-#endif

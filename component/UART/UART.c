@@ -1,7 +1,7 @@
 #include "UART.h"
 
 willMount(UART) {
-    props->uart->init(&props->baudrate);
+    props->uart->init(props->baudrate);
 }
 
 shouldUpdate(UART) {
@@ -20,7 +20,7 @@ shouldUpdate(UART) {
         } else {
             state->sending = sending;
 
-            if(sending == NULL) {
+            if(sending == 0) {
                 rb_read(props->tx_buffer, &sending);
                 state->mode = eCommunicationModeReceiver;
             } else {
@@ -30,8 +30,6 @@ shouldUpdate(UART) {
             return true;
         }
     }
-
-
 
     return false;
 }
