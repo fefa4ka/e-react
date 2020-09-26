@@ -14,7 +14,7 @@ struct device state  = {
     .command = {0},
     .output_buffer = { output_buffer, BUFFER_SIZE },
     .input_buffer = { input_buffer, BUFFER_SIZE },
-    .button_pin = hw_pin(button_pin, B, 1)
+    .button_pin = hw_pin(B, 1)
 };
 
 

@@ -1,6 +1,5 @@
 #include <IO.h>
 
-
 struct device
 {
     bool             debug;
@@ -8,7 +7,7 @@ struct device
 };
 
 
-struct devie state = {
+struct device state = {
     .debug = true,
     .pin = hw_pin(B, 1)
 };
