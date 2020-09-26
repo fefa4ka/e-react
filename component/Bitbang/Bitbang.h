@@ -37,3 +37,4 @@ typedef struct {
 
 
 React_Header(Bitbang);
+#define Bitbang(instance) component(Bitbang, instance)

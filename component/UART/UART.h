@@ -25,4 +25,4 @@ typedef struct {
 
 
 React_Header(UART);
-
+#define UART(instance) component(UART, instance)

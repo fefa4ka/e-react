@@ -3,6 +3,7 @@
 #include <component.h>
 #include <hal.h>
 
+
 struct rtc_datetime
 {
   unsigned int   year;
@@ -39,5 +40,5 @@ typedef struct {
 
     
 React_Header(Time);
-
+#define Time(instance) component(Time, instance)
 

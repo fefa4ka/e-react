@@ -27,5 +27,5 @@ typedef struct {
     bool level;
 } IO_blockState;
 
-Component IO_block(IO_blockProps *props, IO_blockState *state);
-
+React_Header(IO);
+#define IO(instance) component(IO, instance)

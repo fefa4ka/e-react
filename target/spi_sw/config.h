@@ -1,26 +1,29 @@
 #pragma once
 
+#include <Scheduler.h>
 #include <Button.h>
-#include <UART.h>
-#include <Menu.h>
-#include <Calendar.h>
-#include <circular.h>
-#include "routines.h"
+#include <Scheduler.h>
+#include <Bitbang.h>
 
 #define   VERSION      1
+
 #define   BAUDRATE     9600
 
 #define   COMMAND_BUFFER_SIZE  32
 #define   BUFFER_SIZE          128 
 
+
 struct device
 {
     struct rtc_datetime    time;
+    struct events_queue    scheduler; 
 
     struct ring_buffer     output_buffer;
     struct ring_buffer     input_buffer;
+    
+    pin_t                  signal_pin;
 
-    unsigned char          command[COMMAND_BUFFER_SIZE];
-
-    pin_t                  button_pin;
+    pin_t                  clk_pin;
+    pin_t                  miso_pin;
+    pin_t                  mosi_pin;
 };

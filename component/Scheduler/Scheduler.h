@@ -9,18 +9,18 @@ typedef struct _event {
   void           *args;
 } event;
 
-typedef struct _event_queue {
+struct events_queue {
     unsigned char    size;
     unsigned char    capacity;
     event            *events;
     Component        *scheduler;
-} event_queue;
+};
 
 typedef struct {
     timer_handler       *timer;
 
     rtc_datetime_t      *time;
-    event_queue         *queue; 
+    struct events_queue *queue; 
 
     void (*onEventHappened)(Component *instance);
     void (*onEventEqueued)(Component *instance);
@@ -37,6 +37,11 @@ typedef struct {
     
 React_Header(Scheduler);
 
+#define Scheduler(instance, queue) \
+    component(Scheduler, instance); \
+    event events[queue.capacity]; \
+    queue.events = events; \
+    queue.scheduler = &scheduler
 
 #define Scheduler_enqueue(instance, ...) \
     ((Scheduler_blockState *)((instance)->state))->enqueue(instance, ##__VA_ARGS__)

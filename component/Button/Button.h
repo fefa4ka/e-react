@@ -27,4 +27,5 @@ typedef struct {
     unsigned long tick;
 } Button_blockState;
 
-Component Button_block(Button_blockProps *props, Button_blockState *state);
+React_Header(Button);
+#define Button(instance) component(Button, instance)

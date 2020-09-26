@@ -9,14 +9,14 @@
 void event_callback(void *instance);
 int event_compare(unsigned int now, event *a, event *b);
 event dequeue(Component *instance); 
-void event_heapify(event_queue *scheduler, unsigned int now, unsigned char idx); 
-void event_prioritify(event_queue *queue, unsigned int now, event new_event);
+void event_heapify(struct events_queue *scheduler, unsigned int now, unsigned char idx); 
+void event_prioritify(struct events_queue *queue, unsigned int now, event new_event);
 bool enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *args), void *args);
 
 bool
 enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *args), void *args) {
     React_Load(Scheduler, instance);
-    event_queue *queue = SchedulerProps->queue;
+    struct events_queue *queue = SchedulerProps->queue;
     timer_handler *timer = SchedulerProps->timer;
     unsigned int now = timer->get();
 
@@ -41,7 +41,7 @@ enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *arg
 }
 
 void
-event_prioritify(event_queue *queue, unsigned int now, event new_event) {
+event_prioritify(struct events_queue *queue, unsigned int now, event new_event) {
     // Use priority queue
     unsigned char index = queue->size;
     event *events = queue->events;
@@ -92,7 +92,7 @@ event_compare(unsigned int now, event *a, event *b) {
 }
 
 void
-event_heapify(event_queue *scheduler, unsigned int now, unsigned char idx) {
+event_heapify(struct events_queue *scheduler, unsigned int now, unsigned char idx) {
     event swap = {0};
     event *events = scheduler->events;
 
@@ -127,7 +127,7 @@ event_heapify(event_queue *scheduler, unsigned int now, unsigned char idx) {
 event
 dequeue(Component *instance) {
     React_Load(Scheduler, instance);
-    event_queue *scheduler = SchedulerProps->queue;
+    struct events_queue *scheduler = SchedulerProps->queue;
     timer_handler *timer = SchedulerProps->timer;
     event *events = scheduler->events;
     unsigned int last_index = scheduler->size - 1;

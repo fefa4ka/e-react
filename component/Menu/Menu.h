@@ -28,3 +28,4 @@ typedef struct {
 
 
 React_Header(Menu);
+#define Menu(instance) component(Menu, instance)

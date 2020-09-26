@@ -117,6 +117,8 @@ void React_Release(Component *instance);
 
 #define react React
 
+#define loop for(;;)
+
 // Difficult to realize in function. 
 #define to(name)                                                                       \
     ;                                                                                         \

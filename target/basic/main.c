@@ -15,7 +15,7 @@ struct device state = {
 
 int main(void) {
     // Define React components
-    component(IO, pin);
+    IO(pin);
 
     // Event-loop
     while (true) { 

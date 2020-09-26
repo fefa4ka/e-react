@@ -25,9 +25,9 @@ void led_toggle(Component *trigger) {
 
 int main(void) {
     // Define React components
-    component(Time, datetime);
-    component(IO, led);
-    component(Button, switcher);
+    Time(datetime);
+    IO(led);
+    Button(switcher);
 
     // Event-loop
     while (true) { 

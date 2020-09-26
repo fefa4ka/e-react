@@ -1,20 +1,15 @@
 /* Used components */
-#include <Button.h>
-#include <UART.h>
-#include <Menu.h>
-
 #include "config.h"
-#include "routines.h"
 
 unsigned char output_buffer[BUFFER_SIZE];
 unsigned char input_buffer[BUFFER_SIZE];
 
 struct device state  = {
-    .time = {0},
-    .command = {0},
-    .output_buffer = { output_buffer, BUFFER_SIZE },
-    .input_buffer = { input_buffer, BUFFER_SIZE },
-    .button_pin = hw_pin(B, 1)
+    .time           = {0},
+    .command        = {0},
+    .output_buffer  = { output_buffer, BUFFER_SIZE },
+    .input_buffer   = { input_buffer, BUFFER_SIZE },
+    .button_pin     = hw_pin(B, 1)
 };
 
 
@@ -26,17 +21,17 @@ struct menu_command commands[] = {
 
 int main(void) {
     // Define React components
-    component(Time, datetime);
-    component(UART, serial);
-    component(Button, button);
-    component(Menu, tty);
+    Time(datetime);
+    UART(serial);
+    Button(button);
+    Menu(tty);
 
 
     // Welcom log
     print_version(NULL);
 
     // Event-loop
-    for (;;) { 
+    loop { 
         // Timer component, for event management and time counting
         react (Time) {
             .timer = &(hw.timer),
