@@ -1,5 +1,4 @@
-#ifndef hal_avr_h
-#define hal_avr_h
+#pragma once 
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -28,4 +27,3 @@ HAL hw;
 #define hw_uart_baudrate(baudrate) (((F_CPU) + 4UL * (baudrate)) / (8UL * (baudrate)) - 1UL)
 
 
-#endif
