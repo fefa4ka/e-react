@@ -13,15 +13,16 @@ struct device state  = {
     .time = {0},
     .command = {0},
     .output_buffer = { output_buffer, BUFFER_SIZE },
-    .input_buffer = { input_buffer, BUFFER_SIZE }
+    .input_buffer = { input_buffer, BUFFER_SIZE },
+    .button_pin = hw_pin(button_pin, B, 1)
 };
 
-hw_pin(button_pin, B, 1);
 
 struct menu_command commands[] = {
     { "time", print_time },
     { "version", print_version }
 };
+
 
 int main(void) {
     // Define React components
@@ -30,8 +31,9 @@ int main(void) {
     component(Button, button);
     component(Menu, tty);
 
-    
+
     // Welcom log
+    print_version(NULL);
 
     // Event-loop
     for (;;) { 
@@ -58,7 +60,7 @@ int main(void) {
 
         react (Button) {
             .io = &(hw.io),
-            .pin = &button_pin,
+            .pin = &state.button_pin,
 
             .type = push, 
             .time = &state.time,

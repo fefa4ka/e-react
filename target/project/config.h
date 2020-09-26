@@ -13,8 +13,11 @@
 struct device
 {
     struct rtc_datetime    time;
+
     struct ring_buffer     output_buffer;
     struct ring_buffer     input_buffer;
 
     unsigned char          command[COMMAND_BUFFER_SIZE];
+
+    pin_t                  button_pin;
 } ;

@@ -24,7 +24,7 @@ HAL hw;
          hw->io->flip(debug); \
     }) \
 
-#define hw_pin(name, port, pin) pin_t name = { { &PORT##port, &DDR##port, &PIN##port }, pin }
+#define hw_pin(name, port, pin) { { &PORT##port, &DDR##port, &PIN##port }, pin }
 #define hw_uart_baudrate(baudrate) (((F_CPU) + 4UL * (baudrate)) / (8UL * (baudrate)) - 1UL)
 
 
