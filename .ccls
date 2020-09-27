@@ -4,7 +4,7 @@ avr
 -mccu=atmega328p
 -DARCH_AVR=1
 -I/usr/local/Cellar/avr-gcc/9.3.0/avr/include
--I./component/ADC
+-I./component/AtDC
 -I./component/Button
 -I./component/IO
 -I./component/PWM
