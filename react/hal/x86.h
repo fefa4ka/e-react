@@ -1,10 +1,23 @@
-#pragma once 
+#pragma once
 
 #include "api.h"
-typedef struct {
-    char port;
+typedef struct
+{
+    char  *port;
     short number;
-} VirtualPin;
+} pin_t;
 
-HAL Virtual_HAL;
+HAL hw;
 
+#define debug(port, pin)                                                      \
+    ({                                                                        \
+        pin_t debug_pin = hw_pin (port, pin);                                 \
+        hw.io.out (&debug_pin);                                               \
+        hw.io.flip (&debug_pin);                                              \
+        hw.io.flip (&debug_pin);                                              \
+    })
+
+#define hw_pin(port, pin)                                                     \
+    {                                                                         \
+        #port, pin                                                            \
+    }

@@ -1,4 +1,4 @@
-#include "virtual.h"
+#include "x86.h"
 #include <stdio.h>
 #include <time.h>
 
@@ -30,7 +30,7 @@ static void timer_set(unsigned int ticks, void(*callback)(void *args), void *arg
 static void timer_off();
 static unsigned int timer_usFromTicks(unsigned int ticks);
 
-HAL Virtual_HAL = {
+HAL hw = {
     .io = {
         .in = in,
         .out = out,
@@ -67,39 +67,39 @@ HAL Virtual_HAL = {
 
 static void
 in(void *pin) {
-    VirtualPin *Pin = (VirtualPin *)pin;
+    pin_t *Pin = (pin_t *)pin;
 
-    printf("Pin PORT_%c_%d — in\n", Pin->port, Pin->number);
+    printf("Pin PORT_%s_%d — in\r\n", Pin->port, Pin->number);
 }
 
 static void 
 out(void *pin) {
-    VirtualPin *Pin = (VirtualPin *)pin;
-    printf("Pin PORT_%c_%d — out\n", Pin->port, Pin->number);
+    pin_t *Pin = (pin_t *)pin;
+    printf("Pin PORT_%s_%d — out\r\n", Pin->port, Pin->number);
 }
 
 
 static void 
 on(void *pin) {
-    VirtualPin *Pin = (VirtualPin *)pin;
+    pin_t *Pin = (pin_t *)pin;
 
-    printf("Pin PORT_%c_%d — on\n", Pin->port, Pin->number);
+    printf("Pin PORT_%s_%d — on\r\n", Pin->port, Pin->number);
 }
 
 
 static void 
 off(void *pin) {
-    VirtualPin *Pin = (VirtualPin *)pin;
+    pin_t *Pin = (pin_t *)pin;
 
-    printf("Pin PORT_%c_%d — off\n", Pin->port, Pin->number);
+    printf("Pin PORT_%s_%d — off\r\n", Pin->port, Pin->number);
 }
 
 
 static void 
 flip(void *pin) {
-    VirtualPin *Pin = (VirtualPin *)pin;
+    pin_t *Pin = (pin_t *)pin;
 
-    printf("Pin PORT_%c_%d — flip", Pin->port, Pin->number);
+    printf("Pin PORT_%s_%d — flip\r\n", Pin->port, Pin->number);
 }
 
 
@@ -110,9 +110,9 @@ pullup(void *pin) {
 
 static bool
 get(void *pin) {
-    VirtualPin *Pin = (VirtualPin *)pin;
+    pin_t *Pin = (pin_t *)pin;
 
-    printf("Pin PORT_%c_%d — get", Pin->port, Pin->number);
+    printf("Pin PORT_%s_%d — get\r\n", Pin->port, Pin->number);
 
     return true;
 }
@@ -122,25 +122,25 @@ get(void *pin) {
 
 static void
 adc_mount(void *prescaler) {
-    printf("ADC init\n");
+    printf("ADC init\r\n");
 }
 
 static void
 adc_selectChannel(void *channel) {
     unsigned short *ch = (unsigned short *)channel;
 
-    printf("ADC selectChannel %d\n", *ch);
+    printf("ADC selectChannel %d\r\n", *ch);
 }
 
 static void
 adc_startConvertion(void *channel) {
-    printf("ADC startConvertion\n");
+    printf("ADC startConvertion\r\n");
 }
 
 static bool 
 adc_isConvertionReady(void *channel) {
     unsigned short *ch = (unsigned short *)channel;
-    printf("ADC isConvertionReady %d\n", *ch);
+    printf("ADC isConvertionReady %d\r\n", *ch);
 
     return true;
 }
@@ -148,7 +148,7 @@ adc_isConvertionReady(void *channel) {
 static int 
 adc_readConvertion(void *channel) {
     unsigned short *ch = (unsigned short *)channel;
-    printf("ADC readConvertion %d\n", *ch); 
+    printf("ADC readConvertion %d\r\n", *ch); 
 
     return 41;
 }
@@ -160,12 +160,12 @@ uart_init(void *baudrate) {
     unsigned int baud = *(unsigned int *)baudrate;
 
     
-    printf("UART init baudrate %d\n", baud);
+    printf("UART init baudrate %d\r\n", baud);
 }
 
 static inline bool 
 uart_isDataReceived() {
-    printf("UART isDataReceived\n");
+    printf("UART isDataReceived\r\n");
 
     return false;
 }
@@ -177,12 +177,12 @@ uart_isTransmitReady() {
 
 static inline void 
 uart_transmit(unsigned char data) {
-    printf("%c\n", data);
+    printf("%c\r\n", data);
 }
 
 static inline unsigned char 
 uart_receive() {
-    printf("UART receive");
+    printf("UART receive\r\n");
     return 0;
 }
 
@@ -190,26 +190,26 @@ uart_receive() {
 static void
 timer_init(void *config) {
     srand(time(NULL));
-    printf("Timer init\n"); 
+    printf("Timer init\r\n"); 
 }
 
 
 static inline unsigned int
 timer_get() {
     unsigned int second = (unsigned int)clock();
-    printf("Timer get: %d\n", second);
+    printf("Timer get: %d\r\n", second);
     return second; 
 }
 
 static void
 timer_set(unsigned int ticks, void(*callback)(void *args), void *args) {
-    printf("Timer set: %d\n", ticks); 
+    printf("Timer set: %d\r\n", ticks); 
     callback(args);
 }
 
 static void 
 timer_off() {
-    printf("Timer off\n");
+    printf("Timer off\r\n");
 }
 
 static unsigned int timer_usFromTicks(unsigned int ticks) {

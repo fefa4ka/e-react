@@ -38,29 +38,30 @@ void React_Release(Component *instance);
     Type##_blockState *state = (Type##_blockState *)self->state  
 
 #define React_LifeCycle(Type, stage)                                                  \
-    static void Type##stage(Component *self, Type##_blockProps *props, Type##_blockState *state); \
+    static void Type##_##stage(Component *self, Type##_blockProps *props, Type##_blockState *state); \
     static void stage(void *instance)                                                 \
     {                                                                                 \
         React_Self(Type, instance);                                                   \
-        Type##stage(self, props, state);                                              \
+        Type##_##stage(self, props, state);                                              \
     }                                                                                 \
-    static inline void Type##stage(Component *self, Type##_blockProps *props, Type##_blockState *state)
+    static inline void Type##_##stage(Component *self, Type##_blockProps *props, Type##_blockState *state)
 
 #define React_SelfNext(Type, instance)                   \
     Type##_blockProps *nextProps = (Type##_blockProps *)nextProps_p; \
     Type##_blockState *nextState = (Type##_blockState *)nextState_p  
 
 #define React_UpdateCycle(Type, stage, returnType)                                                                                                  \
-    static returnType Type##stage(Component *self, Type##_blockProps *props, Type##_blockState *state, Type##_blockProps *nextProps_p, Type##_blockState *nextState); \
+    static returnType Type##_##stage(Component *self, Type##_blockProps *props, Type##_blockState *state, Type##_blockProps *nextProps_p, Type##_blockState *nextState); \
     static returnType stage(void *instance, void *nextProps_p, void *nextState_p)                                                             \
     {                                                                                                                                   \
         React_Self(Type, instance);                                                                                                     \
         React_SelfNext(Type, instance);                                                                                                 \
-        return Type##stage(self, props, state, nextProps, nextState);                                                                          \
+        return Type##_##stage(self, props, state, nextProps, nextState);                                                                          \
     }                                                                                                                                   \
-    static inline returnType Type##stage(Component *self, Type##_blockProps *props, Type##_blockState *state, Type##_blockProps *nextProps, Type##_blockState *nextState)
+    static inline returnType Type##_##stage(Component *self, Type##_blockProps *props, Type##_blockState *state, Type##_blockProps *nextProps, Type##_blockState *nextState)
 
 #define willMount(Type) React_LifeCycle(Type, willMount)
+#define willMount(Type, BaseType) React_LifeCycle(Type, willMount)
 #define release(Type) React_LifeCycle(Type, release)
 #define shouldUpdate(Type) React_UpdateCycle(Type, shouldUpdate, bool)
 #define willUpdate(Type) React_UpdateCycle(Type, willUpdate, void)
