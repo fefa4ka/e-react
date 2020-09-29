@@ -3,28 +3,31 @@
 #define bit_value(data, bit) ((data >> bit) & 1)      /** Return Data.Y value   **/
 #define bit_set(data, bit)    data |= (1 << bit)    /** Set Data.Y   to 1    **/
 #define bit_clear(data, bit)  data &= ~(1 << bit)   /** Clear Data.Y to 0    **/
+#define foreach_pins(pin, pins)                                               \
+    pin_t **pin;                                                              \
+    for (pin = pins; *pin; pin++)
 
 willMount(Bitbang) {
     // setup pins
-    void *pin = props->pins;
-    pin_mode_t *mode = props->modes; 
+    enum pin_mode *mode = props->modes; 
 
-    while(pin) {
-        if(*mode == input_e) {
-            props->io->in(pin);
+    if(props->clock) props->io->out(props->clock);
+    
+    foreach_pins(pin, props->pins) {
+        if(*mode == INPUT) {
+            props->io->in(*pin);
         } else {
-            props->io->out(pin);
+            props->io->out(*pin);
         }
 
-        pin++;
         mode++;
     }
 }
 
 shouldUpdate(Bitbang) {
-    // Component free for operation
+    /* Component free for operation */
     if(*state->data == 0) {
-        if(rb_length(props->buffers)) {
+        if(rb_length(*props->buffers)) {
             /* Data available */
             return true;
         }
@@ -44,35 +47,33 @@ shouldUpdate(Bitbang) {
 
 willUpdate(Bitbang) {
     unsigned char        *data   = state->data;
-    void                 *pin    = props->pins;
-    pin_mode_t           *mode   = props->modes;
-    struct ring_buffer_s *buffer = props->buffers;
+    enum pin_mode        *mode   = props->modes;
+    struct ring_buffer   **buffer = props->buffers;
     bool                 sending = state->sending;
 
     state->tick = props->time->time_us;
 
-    while(pin) {
-        if(*mode == output_e) {
+    foreach_pins(pin, props->pins) {
+        if(*mode == INPUT) {
             if(state->position == -1) {
                 /* Write full byte from input */
-                rb_write(buffer, *data);
+                if(*data)
+                    rb_write(*buffer, *data);
             } else {
                 /* Read bit */
-                if(props->io->get(pin)) {
+                if(props->io->get(*pin)) 
                     bit_set(*data, state->position);
-                } else {
+                else 
                     bit_clear(*data, state->position);
-                }
             }
         } else { 
             /* Read new byte for output */
             if(state->sending == false) {
-                rb_read(buffer, data);
+                rb_read(*buffer, data);
                 sending = true;
             }
         }
 
-        pin++;
         data++;
         mode++;
         buffer++;
@@ -83,20 +84,22 @@ willUpdate(Bitbang) {
 }
 
 release(Bitbang) {
-    void            *pin  = props->pins;
     unsigned char   *data = state->data;
-    pin_mode_t      *mode = props->modes;
+    enum pin_mode   *mode = props->modes;
 
-    while(pin) {
-        if(*mode == input_e) {
+    foreach_pins(pin, props->pins) {
+        if(*mode == OUTPUT) {
             if(bit_value(*data, state->position)) {
-                props->io->on(pin);
+                props->io->on(*pin);
             } else {
-                props->io->off(pin);
+                props->io->off(*pin);
             }
+
+            if(state->position == 7) {
+                *data = 0;
+            } 
         } 
         data++;
-        pin++;
         mode++;
     }
 }
@@ -114,6 +117,7 @@ didUpdate(Bitbang) {
             /* clear session */
             state->sending = false;
             state->position = -1;
+            if (props->onTransmit) props->onTransmit(self);
         } else {
             state->position++;
         }

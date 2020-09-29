@@ -1,37 +1,35 @@
 #include "config.h"
 
-#define BUFFER_SIZE 128 
 unsigned char output_buffer[BUFFER_SIZE];
-
-#define BUFFER_SIZE 128 
 unsigned char input_buffer[BUFFER_SIZE];
 
 struct device state = {
     .time = {0},
-    .led_power = true,
-    .output_buffer = { 
-        .size = BUFFER_SIZE,
-        .data = output_buffer
-    },
-    .input_buffer = { 
-        .size = BUFFER_SIZE,
-        .data = input_buffer
-    },
+    .signal_pin = hw_pin(B, 2),
+    .clk_pin = hw_pin(B, 1),
+    .mosi_pin = hw_pin(B, 3),
+    .miso_pin = hw_pin(B, 4),
+    .input_buffer = { input_buffer, BUFFER_SIZE },
+    .output_buffer = { output_buffer, BUFFER_SIZE },
+    .index = 0
 };
 
+pin_t *spi_pins[] = { &state.mosi_pin, &state.miso_pin, NULL };
+struct ring_buffer *spi_buffers[] = { &state.output_buffer, &state.input_buffer };
+enum pin_mode spi_modes[] = { OUTPUT, INPUT };
+
 /* Application handlers */
-void led_toggle(Component *trigger) {
-    state.led_power = !state.led_power;
+void send_number(Component *trigger) {
+    state.index++;
+
+    rb_write(&state.output_buffer, state.index); 
 }
 
 int main(void) {
     // Define React components
-    react_define(Time, datetime);
-    react_define(Button, button);
-    react_define(Bitbang, spi);
-
-    void spi_hw[] = { &mosi_pin_hw, &miso_pin_hw, NULL };
-    //enum pin_mode_e spi_modes[] = { output, input, NULL };
+    component(Time, datetime);
+    component(Button, button);
+    component(Bitbang, spi);
 
     // Event-loop
     while (true) { 
@@ -47,17 +45,20 @@ int main(void) {
             .type = toggle,
             .time = &state.time,
             .bounce_delay_ms = 100,
-            .onToggle = button_toggle
+            .onToggle = send_version 
         } to (button);
-
+    
+        
         react (Bitbang) {
             .io = &(hw.io),
             .time = &state.time,
             .baudrate = 9600,
-            .pins = { &state.mosi_pin, &state.miso_pin },
+            .pins = spi_pins,
             .clock = &state.clk_pin,
-            .modes = { input, output },
-            .buffers = &state.serial_buffer
+            .modes = spi_modes,
+            .buffers = spi_buffers,
+
+            .onTransmit = send_number 
         } to (spi);
     }
 

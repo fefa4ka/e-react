@@ -18,12 +18,14 @@ struct device
     struct rtc_datetime    time;
     struct events_queue    scheduler; 
 
-    struct ring_buffer     output_buffer;
     struct ring_buffer     input_buffer;
+    struct ring_buffer     output_buffer;
     
+    unsigned char          index; 
     pin_t                  signal_pin;
 
     pin_t                  clk_pin;
+    
     pin_t                  miso_pin;
     pin_t                  mosi_pin;
 };
