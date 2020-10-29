@@ -61,7 +61,6 @@ void React_Release(Component *instance);
     static inline returnType Type##_##stage(Component *self, Type##_blockProps *props, Type##_blockState *state, Type##_blockProps *nextProps, Type##_blockState *nextState)
 
 #define willMount(Type) React_LifeCycle(Type, willMount)
-#define willMount(Type, BaseType) React_LifeCycle(Type, willMount)
 #define release(Type) React_LifeCycle(Type, release)
 #define shouldUpdate(Type) React_UpdateCycle(Type, shouldUpdate, bool)
 #define willUpdate(Type) React_UpdateCycle(Type, willUpdate, void)
