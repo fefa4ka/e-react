@@ -77,7 +77,7 @@ read: $(TARGET)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS) $(DEPENDENCIES)
-	find $(TARGET_DIR) -type f -name '*.map' -or -name '*.lst' -or -name '*.elf' -or -name '*.hex' | xargs rm
+	find $(TARGET_DIR) -type f -name '*.map' -or -name '*.lst' -or -name '*.elf' -or -name '*.hex' | xargs rm -rf
 
 
 MKDIR_P ?= mkdir -p
