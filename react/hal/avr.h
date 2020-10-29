@@ -16,7 +16,7 @@ typedef struct
     unsigned char number;
 } pin_t;
 
-HAL hw;
+extern HAL hw;
 
 #define debug(port, pin)                                                      \
     ({                                                                        \

@@ -7,7 +7,7 @@ typedef struct
     short number;
 } pin_t;
 
-HAL hw;
+extern HAL hw;
 
 #define debug(port, pin)                                                      \
     ({                                                                        \
