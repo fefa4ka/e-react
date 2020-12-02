@@ -27,7 +27,7 @@ OBJECTS ?= $(SOURCES:%.c=%.o)
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
 INCLUDE_DIRS := $(shell find $(SOURCES_DIR) -type f -name '*.c' -or -name '*.s' | sed -E 's|\/[^\/]+$$||' |sort -u)
-INCLUDE_FLAGS := $(addprefix -I, $(INCLUDE_DIRS))
+INCLUDE_FLAGS := $(addprefix -I, $(INCLUDE_DIRS)) -I/usr/local/include/simavr/avr -I/usr/avr/include
 
 TARGET_SOURCES = $(wildcard $(TARGET_DIR)/**/*.c)
 TARGET_OBJECTS = $(patsubst %.c, %.o, \
@@ -47,24 +47,36 @@ else
 	MACHINE_FLAGS = -DF_CPU=$(CLOCK)
 endif
 DEFINE_FLAGS = -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME)
-CFLAGS ?= -g $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu99 
+CFLAGS ?= -Wall -g -Og $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu99 
 COMPILE = $(CC) $(CFLAGS)
 
-$(TARGET): $(OBJECTS) 
+%.hex: %.elf %.map
+	rm -f $@
+	avr-objcopy -j .text -j .data -O ihex $*.elf $@
+	avr-size --format=avr --mcu=$(DEVICE) $*.elf
+
+%.map: %.elf $(OBJECTS)
+	$(COMPILE) -Wl,-Map,$@ -o $* $(OBJECTS)
+	avr-objdump -h -S $* > $*.lst
+
+%.elf: $(OBJECTS) 
 	@echo $(DEPENDENCIES)
 	$(COMPILE) -o $@ $(OBJECTS)
 
-%.map: % $(OBJECTS)
-	$(CC) -g -mmcu=$(DEVICE) -Wl,-Map,$@ -o $* $(OBJECTS)
-	avr-objdump -h -S $* > $*.lst
+%.sim.elf: %.c
+	$(CC) $(CFLAGS) -o $@ $*.c -lsimavr -lelf -I/usr/local/include/simavr
 
-%.hex: % %.map
-	rm -f $@
-	avr-objcopy -j .text -j .data -O ihex $* $@
-	avr-size --format=avr --mcu=$(DEVICE) $*
+%.e.c: %.c
+	@echo "Pressing $*.c"
+	$(COMPILE) -c $*.c -o $@.expanded $(INCLUDE_FLAGS) -E
+	grep ^[^\#].*$  $@.expanded > $@.unformatted
+	clang-format $@.unformatted > $@
+	rm $@.*
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $*.c -o $@ $(INCLUDE_FLAGS)
+	make $*.e.c
+	@echo "Make object for $@"
+	$(COMPILE) -c $*.e.c -o $@ $(INCLUDE_FLAGS)
 
 flash: $(TARGET)
 	$(AVRDUDE) -U flash:w:${TARGET}:i
@@ -77,7 +89,7 @@ read: $(TARGET)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS) $(DEPENDENCIES)
-	find $(TARGET_DIR) -type f -name '*.map' -or -name '*.lst' -or -name '*.elf' -or -name '*.hex' | xargs rm -rf
+	find . -type f -name '*.map' -or -name '*.lst' -or -name '*.elf' -or -name '*.e.c' -or -name '*.hex' | xargs rm -rf
 
 
 MKDIR_P ?= mkdir -p

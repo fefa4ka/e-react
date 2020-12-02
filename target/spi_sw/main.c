@@ -25,44 +25,42 @@ void send_number(Component *trigger) {
     rb_write(&state.output_buffer, state.index); 
 }
 
-int main(void) {
+int
+main (void)
+{
     // Define React components
-    component(Time, datetime);
-    component(Button, button);
-    component(Bitbang, spi);
+    Time (datetime);
+    Button (button);
+    Bitbang (spi);
 
     // Event-loop
-    while (true) { 
+    while (true) {
         // Timer component, for event management and time counting
         react (Time) {
             .timer = &(hw.timer),
-            .time = &state.time,
+            .time  = &state.time,
         } to (datetime);
 
-        react (Button) {
-            .io = &(hw.io),
-            .pin = &state.signal_pin,
-            .type = toggle,
-            .time = &state.time,
-            .bounce_delay_ms = 100,
-            .onToggle = send_version 
+        react (Button) { .io              = &(hw.io),
+                         .pin             = &state.signal_pin,
+                         .type            = toggle,
+                         .time            = &state.time,
+                         .bounce_delay_ms = 100,
+                         .onToggle        = send_version 
         } to (button);
-    
-        
-        react (Bitbang) {
-            .io = &(hw.io),
-            .time = &state.time,
-            .baudrate = 9600,
-            .pins = spi_pins,
-            .clock = &state.clk_pin,
-            .modes = spi_modes,
-            .buffers = spi_buffers,
 
-            .onTransmit = send_number 
+
+        react (Bitbang) { .io       = &(hw.io),
+                          .time     = &state.time,
+                          .baudrate = 9600,
+                          .pins     = spi_pins,
+                          .clock    = &state.clk_pin,
+                          .modes    = spi_modes,
+                          .buffers  = spi_buffers,
+
+                          .onTransmit = send_number 
         } to (spi);
     }
 
     return 0;
 }
-
-

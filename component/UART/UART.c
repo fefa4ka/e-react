@@ -1,7 +1,7 @@
 #include "UART.h"
 
 willMount(UART) {
-    props->uart->init(props->baudrate);
+    props->uart->init(&props->baudrate);
 }
 
 shouldUpdate(UART) {

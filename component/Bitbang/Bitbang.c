@@ -1,33 +1,37 @@
 #include "Bitbang.h"
 
-#define bit_value(data, bit) ((data >> bit) & 1)      /** Return Data.Y value   **/
-#define bit_set(data, bit)    data |= (1 << bit)    /** Set Data.Y   to 1    **/
-#define bit_clear(data, bit)  data &= ~(1 << bit)   /** Clear Data.Y to 0    **/
+#define bit_value(data, bit) ((data >> bit) & 1) /** Return Data.Y value **/
+#define bit_set(data, bit)   data |= (1 << bit)  /** Set Data.Y   to 1    **/
+#define bit_clear(data, bit) data &= ~(1 << bit) /** Clear Data.Y to 0    **/
 #define foreach_pins(pin, pins)                                               \
     pin_t **pin;                                                              \
     for (pin = pins; *pin; pin++)
 
-willMount(Bitbang) {
+willMount (Bitbang)
+{
     // setup pins
-    enum pin_mode *mode = props->modes; 
+    enum pin_mode *mode = props->modes;
 
-    if(props->clock) props->io->out(props->clock);
-    
-    foreach_pins(pin, props->pins) {
-        if(*mode == INPUT) {
-            props->io->in(*pin);
+    if (props->clock)
+        props->io->out (props->clock);
+
+    foreach_pins (pin, props->pins)
+    {
+        if (*mode == INPUT) {
+            props->io->in (*pin);
         } else {
-            props->io->out(*pin);
+            props->io->out (*pin);
         }
 
         mode++;
     }
 }
 
-shouldUpdate(Bitbang) {
+shouldUpdate (Bitbang)
+{
     /* Component free for operation */
-    if(*state->data == 0) {
-        if(rb_length(*props->buffers)) {
+    if (*state->data == 0) {
+        if (rb_length (*props->buffers)) {
             /* Data available */
             return true;
         }
@@ -38,38 +42,41 @@ shouldUpdate(Bitbang) {
 
     // Change state on baudrate
     unsigned long bit_duration = 1000000 / props->baudrate;
-    if(props->time->time_us + props->time->step_us - state->tick >= bit_duration) {
+    if (props->time->time_us + props->time->step_us - state->tick
+        >= bit_duration) {
         return true;
     }
-    
+
     return false;
 }
 
-willUpdate(Bitbang) {
-    unsigned char        *data   = state->data;
-    enum pin_mode        *mode   = props->modes;
-    struct ring_buffer   **buffer = props->buffers;
+willUpdate (Bitbang)
+{
+    unsigned char *      data    = state->data;
+    enum pin_mode *      mode    = props->modes;
+    struct ring_buffer **buffer  = props->buffers;
     bool                 sending = state->sending;
 
     state->tick = props->time->time_us;
 
-    foreach_pins(pin, props->pins) {
-        if(*mode == INPUT) {
-            if(state->position == -1) {
+    foreach_pins (pin, props->pins)
+    {
+        if (*mode == INPUT) {
+            if (state->position == -1) {
                 /* Write full byte from input */
-                if(*data)
-                    rb_write(*buffer, *data);
+                if (*data)
+                    rb_write (*buffer, *data);
             } else {
                 /* Read bit */
-                if(props->io->get(*pin)) 
-                    bit_set(*data, state->position);
-                else 
-                    bit_clear(*data, state->position);
+                if (props->io->get (*pin))
+                    bit_set (*data, state->position);
+                else
+                    bit_clear (*data, state->position);
             }
-        } else { 
+        } else {
             /* Read new byte for output */
-            if(state->sending == false) {
-                rb_read(*buffer, data);
+            if (state->sending == false) {
+                rb_read (*buffer, data);
                 sending = true;
             }
         }
@@ -78,27 +85,30 @@ willUpdate(Bitbang) {
         mode++;
         buffer++;
     }
- 
+
     state->sending = sending;
-    if(props->clock) props->io->off(props->clock);
+    if (props->clock)
+        props->io->off (props->clock);
 }
 
-release(Bitbang) {
-    unsigned char   *data = state->data;
-    enum pin_mode   *mode = props->modes;
+release (Bitbang)
+{
+    unsigned char *data = state->data;
+    enum pin_mode *mode = props->modes;
 
-    foreach_pins(pin, props->pins) {
-        if(*mode == OUTPUT) {
-            if(bit_value(*data, state->position)) {
-                props->io->on(*pin);
+    foreach_pins (pin, props->pins)
+    {
+        if (*mode == OUTPUT) {
+            if (bit_value (*data, state->position)) {
+                props->io->on (*pin);
             } else {
-                props->io->off(*pin);
+                props->io->off (*pin);
             }
 
-            if(state->position == 7) {
+            if (state->position == 7) {
                 *data = 0;
-            } 
-        } 
+            }
+        }
         data++;
         mode++;
     }
@@ -108,16 +118,19 @@ didMount(Bitbang) { }
 didUnmount(Bitbang) { }
 
 
-didUpdate(Bitbang) {
-    if(props->clock) props->io->on(props->clock);
-    
+didUpdate (Bitbang)
+{
+    if (props->clock)
+        props->io->on (props->clock);
+
     /* Increment bit position */
-    if(state->sending) {
-        if(state->position == 7) {
+    if (state->sending) {
+        if (state->position == 7) {
             /* clear session */
-            state->sending = false;
+            state->sending  = false;
             state->position = -1;
-            if (props->onTransmit) props->onTransmit(self);
+            if (props->onTransmit)
+                props->onTransmit (self);
         } else {
             state->position++;
         }

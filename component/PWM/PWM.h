@@ -1,15 +1,15 @@
-#ifndef PWM_block_h
-#define PWM_block_h
+#pragma once
 
 #include <IO.h>
-#include <Time.h>
+#include <Calendar.h>
 
-typedef struct {
-    io_handler     *io;
-    void           *pin;
-    unsigned int   frequency;
-    unsigned char  duty_cycle;
-    rtc_datetime_t *time;
+typedef struct
+{
+    io_handler *         io;
+    void *               pin;
+    unsigned int         frequency;
+    unsigned char        duty_cycle;
+    struct rtc_datetime *time;
 } PWM_blockProps;
 
 typedef struct {
@@ -18,5 +18,4 @@ typedef struct {
 } PWM_blockState;
 
 React_Header(PWM);
-
-#endif
+#define PWM(instance) component (PWM, instance)

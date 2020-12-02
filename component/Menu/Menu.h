@@ -14,10 +14,10 @@ typedef struct
 {
     struct menu_command   *menu;
     unsigned char  *command;
-    void           (*onCommand)(void *instance);
-    void           (*onSelect)(void *instance);
-    void           (*onLookup)(void *instance);
-    void           (*onWillRun)(void *instance);
+    void           (*onCommand)(Component *instance);
+    void           (*onSelect)(Component *instance);
+    void           (*onLookup)(Component *instance);
+    void           (*onWillRun)(Component *instance);
 } Menu_blockProps;
 
 typedef struct {

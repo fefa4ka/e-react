@@ -8,8 +8,8 @@ typedef struct {
     uart_handler        *uart;
     unsigned int        baudrate;
 
-    struct ring_buffer_s        *tx_buffer;
-    struct ring_buffer_s        *rx_buffer;
+    struct ring_buffer        *tx_buffer;
+    struct ring_buffer        *rx_buffer;
     
 
     void (*onReceive)(Component *instance);

@@ -11,12 +11,12 @@ typedef struct
     enum {
         output,
         input
-    } mode : 4;
+    } mode;
 
     enum {
         low,
         high
-    } level : 4;
+    } level;
 
     void (*onChange)(Component *instance);
     void (*onLow)(Component *instance); 

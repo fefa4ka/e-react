@@ -1,5 +1,8 @@
 #include "avr.h"
 
+#include "avr_mcu_section.h"
+AVR_MCU(F_CPU, "atmega168p");
+
 #define log_pin(port, pin) \
     DDR##port |= (1 << pin); \
     PORT##port ^= (1 << pin); \
@@ -19,7 +22,7 @@ static void adc_startConvertion(void *channel);
 static bool adc_isConvertionReady(void *channel);
 static int adc_readConvertion(void *channel);
 
-static void uart_init(unsigned int baudrate);
+static void uart_init(void *baudrate);
 static bool uart_isDataReceived();
 static bool uart_isTransmitReady();
 static void uart_transmit(unsigned char data);
@@ -158,8 +161,8 @@ adc_readConvertion(void *channel) {
 
 // UART
 static void 
-uart_init(unsigned int baudrate) {
-    unsigned int baud = hw_uart_baudrate(baudrate);
+uart_init(void *baudrate) {
+    unsigned int baud = hw_uart_baudrate(*(unsigned int*)baudrate);
 
     /* Set baud rate */
     UBRR0H = (unsigned char)(baud>>8);

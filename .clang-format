@@ -20,4 +20,4 @@ BreakStringLiterals: true
 IncludeBlocks: Preserve
 IndentPPDirectives: BeforeHash
 MaxEmptyLinesToKeep: 2
-SpaceAfterLogicalNot: true
+SpaceAfterLogicalNot: false 

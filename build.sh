@@ -2,6 +2,7 @@
 
 set -e -x
 TARGET="target/$1/main"
+SIMULATOR="target/$1/sim"
 ARCH="$2"
 echo "Building $1"
 
@@ -23,7 +24,8 @@ DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/
 
 if [ "$ARCH" == "AVR" ]; then
     make "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
-    make flash TARGET="${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
+    make "${SIMULATOR}.sim.elf"
+    #make flash TARGET="${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
 else
     make "${TARGET}" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
 fi

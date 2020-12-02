@@ -22,14 +22,14 @@ void print_command(Component *trigger)
     log_string("\r\n");
 }
 
-void print_version(void *args) 
+void print_version(Component *trigger) 
 {
     log_num("\r\ne-react ver. 0.", VERSION);
     log_num(".", BUILD_NUM);
     log_string("\r\n"); 
 }
 
-void print_time(void *args) 
+void print_time(Component *trigger) 
 {
     log_string("Timestamp: ");
     log_string(utoa(state.time.time_us));
