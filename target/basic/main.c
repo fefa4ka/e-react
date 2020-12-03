@@ -2,34 +2,34 @@
 
 struct device
 {
-    bool             debug;
-    pin_t            pin; 
+    bool  debug;
+    pin_t pin;
 };
 
 
 struct device state = {
     .debug = true,
-    .pin = hw_pin(B, 1)
+    .pin = hw_pin(D, 4)
 };
 
 
-int main(void) {
+int
+main (void)
+{
     // Define React components
-    IO(pin);
+    IO (pin);
 
     // Event-loop
-    while (true) { 
+    while (true) {
         // Debug Step
         state.debug = !state.debug;
 
-        react (IO) {
-            .io = &(hw.io),
-            .pin = &state.pin,
-            .mode = output,
-            .level = state.debug, 
-        } to (pin);
+        react (IO, pin,
+               _ ({
+                   .io    = &(hw.io),
+                   .pin   = &state.pin,
+                   .mode  = output,
+                   .level = state.debug,
+               }));
     }
-
-    return 0;
 }
-

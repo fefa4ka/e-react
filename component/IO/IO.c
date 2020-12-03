@@ -74,4 +74,4 @@ didMount (IO)
 didUnmount (IO) {}
 didUpdate (IO) {}
 
-React_Constructor (IO);
+React_Constructor (IO)
