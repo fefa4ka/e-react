@@ -29,18 +29,20 @@ for filename in ${DEPS}; do
             object=${sourcename/.c/.rel}
         fi
 
-        DEPENDENT_OBJECTS="${DEPENDENT_OBJECTS} ${object}"
-    fi
+    DEPENDENT_OBJECTS="${DEPENDENT_OBJECTS} ${object}"
+fi
 done
-DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/[^/]*/\.\./|/|' -e 't a' | awk '{ for (i=NF; i>1; i--) printf("%s ",$i); print $1; }'`
+DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/[^/]*/\.\./|/|' -e 't a'`
 
 if [ "$ARCH" == "AVR" ]; then
     make "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
-    make "${SIMULATOR}.sim.elf"
+    #make "${SIMULATOR}.sim.elf"
     make flash TARGET="${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
 fi
 
 if [ "$ARCH" == "STM8L" ]; then
+
+    DEPENDENT_OBJECTS="${DEPENDENT_OBJECTS} react/hal/stm8l.rel"
     make "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
 fi
 

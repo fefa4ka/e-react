@@ -31,7 +31,7 @@ shouldUpdate (Button)
     state->level = level;
 
     // Another checks after pressed
-    if (props->type == push && state->pressed && level == 0) {
+    if (props->type == BTN_PUSH && state->pressed && level == 0) {
         // Push button unpressed after release
         return true;
     }
@@ -53,13 +53,13 @@ willUpdate (Button)
 release (Button)
 {
     unsigned int passed  = props->time->time_ms - state->tick;
-    bool         pressed = props->type == toggle 
+    bool         pressed = props->type == BTN_TOGGLE 
                                             ? state->pressed 
                                             : false;
 
     if (state->tick && passed > props->bounce_delay_ms) {
         if (state->level) {
-            pressed = props->type == toggle 
+            pressed = props->type == BTN_TOGGLE
                                         ? !state->pressed 
                                         : true;
         }

@@ -44,13 +44,19 @@ void React_Release (Component *instance);
     Type##_blockProps *props = (Type##_blockProps *)self->props;              \
     Type##_blockState *state = (Type##_blockState *)self->state
 
+#if __GNUC__
+#define React_LifeCycle_Header(Type, stage)                                   \
+    extern inline void Type##_##stage (Component *self, Type##_blockProps *props,    \
+                                Type##_blockState *state)
+#else
 #define React_LifeCycle_Header(Type, stage)                                   \
     inline void Type##_##stage (Component *self, Type##_blockProps *props,    \
                                 Type##_blockState *state)
+#endif
 
 #define React_LifeCycle_Headers(Type, stage)                                   \
-    void Type##_generic_##stage (void *instance);                                       \
-    React_LifeCycle_Header(Type, stage)                                   \
+    React_LifeCycle_Header(Type, stage);                                   \
+    void Type##_generic_##stage (void *instance)                                        \
 
 #define React_LifeCycle(Type, stage)                                          \
     void Type##_generic_##stage (void *instance)                                        \
@@ -65,14 +71,21 @@ void React_Release (Component *instance);
     Type##_blockState *nextState = (Type##_blockState *)nextState_p
 
 
+#if __GNUC__
+#define React_UpdateCycle_Header(Type, stage, returnType)                     \
+    extern inline returnType Type##_##stage (                                        \
+        Component *self, Type##_blockProps *props, Type##_blockState *state,  \
+        Type##_blockProps *nextProps, Type##_blockState *nextState)
+#else
 #define React_UpdateCycle_Header(Type, stage, returnType)                     \
     inline returnType Type##_##stage (                                        \
         Component *self, Type##_blockProps *props, Type##_blockState *state,  \
         Type##_blockProps *nextProps, Type##_blockState *nextState)
+#endif
 
 #define React_UpdateCycle_Headers(Type, stage, returnType)                     \
-    returnType Type##_generic_##stage (void *instance, void *nextProps, void *nextState);  \
-    React_UpdateCycle_Header(Type, stage, returnType)                     \
+    React_UpdateCycle_Header(Type, stage, returnType);                     \
+    returnType Type##_generic_##stage (void *instance, void *nextProps, void *nextState)   \
     
 #define React_UpdateCycle(Type, stage, returnType)                            \
     returnType Type##_generic_##stage (void *instance, void *nextProps_p, void *nextState_p)   \

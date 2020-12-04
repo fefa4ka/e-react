@@ -10,13 +10,13 @@ typedef struct
     void *pin;
 
     enum {
-        output,
-        input
+        IO_OUTPUT,
+        IO_INPUT 
     } mode;
 
     enum {
-        low,
-        high
+        IO_LOW,
+        IO_HIGH 
     } level;
 
     void (*onChange)(Component *instance);

@@ -1,14 +1,15 @@
-#include <Calendar.h>
 #include <Button.h>
+#include <Calendar.h>
 
 struct device
 {
-    struct rtc_datetime    time;
+    struct rtc_datetime time;
 
-    bool                   led_enabled;
+    bool led_enabled;
 
-    pin_t                  switcher_pin; 
-    pin_t                  led_pin; 
+    pin_t switcher_pin;
+    pin_t led_pin;
+
 };
 
 
@@ -35,24 +36,31 @@ main (void)
     // Event-loop
     while (true) {
         // Timer component, for event management and time counting
-        react (Time){
-            .timer = &(hw.timer),
-            .time  = &state.time,
-        } to (datetime);
+        react (Time, datetime,
+               _ ({
+                   .timer = &(hw.timer),
+                   .time  = &state.time
+               }));
 
-        react (Button) { .io              = &(hw.io),
-                         .pin             = &state.switcher_pin,
-                         .type            = toggle,
-                         .time            = &state.time,
-                         .bounce_delay_ms = 100,
-                         .onToggle        = led_toggle 
-        } to (switcher);
+        react (Button, switcher,
+               _ ({
+                   .io              = &(hw.io),
+                   .pin             = &state.switcher_pin,
+                   .type            = BTN_TOGGLE,
+                   .time            = &state.time,
+                   .bounce_delay_ms = 100,
+                   .onToggle        = led_toggle
+               }));
 
-        React (IO) { .io    = &(hw.io),
-                     .pin   = &state.led_pin,
-                     .mode  = output,
-                     .level = state.led_enabled ? high : low 
-        } to (led);
+        react (IO, led,
+               _ ({
+                   .io    = &(hw.io),
+                   .pin   = &state.led_pin,
+                   .mode  = IO_OUTPUT,
+                   .level = state.led_enabled
+                                ? IO_HIGH
+                                : IO_LOW 
+               }));
     }
 
     return 0;

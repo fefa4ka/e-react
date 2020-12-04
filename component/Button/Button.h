@@ -10,8 +10,8 @@ typedef struct
 
     enum
     {
-        push,
-        toggle
+        BTN_PUSH,
+        BTN_TOGGLE 
     } type;
 
 

@@ -28,7 +28,7 @@ extern HAL hw;
 
 #define hw_pin(port, pin)                                                     \
     {                                                                         \
-        { &PORT##port, &DDR##port, &PIN##port }, pin                          \
+        { &DDR##port, &PORT##port, &PIN##port }, pin                          \
     }
 #define hw_uart_baudrate(baudrate)                                            \
     (((F_CPU) + 4UL * (baudrate)) / (8UL * (baudrate)) - 1UL)

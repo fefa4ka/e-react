@@ -28,7 +28,7 @@ main (void)
                _ ({
                    .io    = &(hw.io),
                    .pin   = &state.pin,
-                   .mode  = output,
+                   .mode  = IO_OUTPUT,
                    .level = state.debug,
                }));
     }
