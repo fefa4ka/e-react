@@ -13,11 +13,13 @@ shouldUpdate(UART) {
     }
 
     if(props->uart->isTransmitReady()) {
+
         state->mode = eCommunicationModeTransceiver;
 
         if(rb_read(props->tx_buffer, &sending) == eErrorBufferEmpty) {
             return false;
         } else {
+
             state->sending = sending;
 
             if(sending == 0) {
@@ -66,4 +68,4 @@ didUpdate(UART) {
 }
 
 
-React_Constructor(UART);
+React_Constructor(UART)

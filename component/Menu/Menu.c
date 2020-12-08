@@ -48,4 +48,4 @@ didUnmount(Menu) { }
 didUpdate(Menu) {
 }
 
-React_Constructor(Menu);
+React_Constructor(Menu)

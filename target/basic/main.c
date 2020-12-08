@@ -1,35 +1,24 @@
 #include <IO.h>
 
-struct device
-{
-    bool  debug;
-    pin_t pin;
-};
-
-
-struct device state = {
-    .debug = true,
-    .pin = hw_pin(D, 4)
-};
-
-
 int
 main (void)
 {
+    bool debug = false;
     // Define React components
     IO (pin);
 
     // Event-loop
     while (true) {
         // Debug Step
-        state.debug = !state.debug;
+        debug = !debug;
 
         react (IO, pin,
                _ ({
-                   .io    = &(hw.io),
-                   .pin   = &state.pin,
+                   .io    = &hw.io,
+                   .pin   = hw_pin (D, 4),
                    .mode  = IO_OUTPUT,
-                   .level = state.debug,
+                   .level = debug,
                }));
+
     }
 }

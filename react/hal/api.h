@@ -1,6 +1,4 @@
-#ifndef hal_api_h
-#define hal_api_h
-
+#pragma once
 #include <stdbool.h>
 
 typedef struct {
@@ -40,7 +38,7 @@ typedef struct {
     bool (*isTransmitReady)();
     void (*transmit)(unsigned char data);
     unsigned char (*receive)();
-} uart_handler;
+} serial_handler;
 
 typedef struct {
     void         (*init)(void *config);
@@ -54,9 +52,7 @@ typedef struct
 {
     io_handler    io;
     adc_handler   adc;
-    uart_handler  uart;
-    uart_handler  spi;
+    serial_handler  uart;
+    serial_handler  spi;
     timer_handler timer;
 } HAL;
-
-#endif

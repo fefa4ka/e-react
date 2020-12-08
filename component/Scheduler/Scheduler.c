@@ -8,13 +8,11 @@
 
 void event_callback(void *instance);
 int event_compare(unsigned int now, event *a, event *b);
-event dequeue(Component *instance); 
 void event_heapify(struct events_queue *scheduler, unsigned int now, unsigned char idx); 
-void event_prioritify(struct events_queue *queue, unsigned int now, event new_event);
-bool enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *args), void *args);
+void event_prioritify(struct events_queue *queue, unsigned int now, event *new_event);
 
 bool
-enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *args), void *args) {
+Scheduler_enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *args), void *args) {
     React_Load(Scheduler, instance);
     struct events_queue *queue = SchedulerProps->queue;
     timer_handler *timer = SchedulerProps->timer;
@@ -35,18 +33,18 @@ enqueue(Component *instance, unsigned int timeout_us, void (*callback)(void *arg
     };
 
     // Use priority queue
-    event_prioritify(queue, now, new_event);
+    event_prioritify(queue, now, &new_event);
 
     return true;
 }
 
 void
-event_prioritify(struct events_queue *queue, unsigned int now, event new_event) {
+event_prioritify(struct events_queue *queue, unsigned int now, event *new_event) {
     // Use priority queue
     unsigned char index = queue->size;
     event *events = queue->events;
 
-    queue->events[index] = new_event;
+    queue->events[index] = *new_event;
     queue->size += 1;
     
     event swap = {0};
@@ -63,11 +61,12 @@ event_callback(void *instance) {
     React_Load(Scheduler, (Component *)instance);
     SchedulerProps->timer->off();
 
-    event triggered_event = SchedulerState->next_event; 
+    event triggered_event = {0};
+    triggered_event = SchedulerState->next_event; 
     
     triggered_event.callback(triggered_event.args);
-    SchedulerState->next_event = (event){0, 0, 0, 0};
-    
+    event null_event = {0};
+    SchedulerState->next_event = null_event;
 
     if(SchedulerProps->onEventHappened) SchedulerProps->onEventHappened(instance);
 }
@@ -124,44 +123,48 @@ event_heapify(struct events_queue *scheduler, unsigned int now, unsigned char id
     }
 }
 
-event
-dequeue(Component *instance) {
+bool
+Scheduler_dequeue(Component *instance, event * dequed_event) {
     React_Load(Scheduler, instance);
     struct events_queue *scheduler = SchedulerProps->queue;
     timer_handler *timer = SchedulerProps->timer;
     event *events = scheduler->events;
     unsigned int last_index = scheduler->size - 1;
 
+    event null_event = {0};
     if(scheduler->size == 0) {
-        return (event){0, 0, 0, 0};
+        *dequed_event = null_event;
+        return false;
     }
 
-    event closest_event = events[0];
+    event closest_event = {0};
+    closest_event = events[0];
 
     events[0] = events[last_index];
     scheduler->size -= 1;
 
     if(scheduler->size == 0) {
-        events[0] = (event){0};
+        events[0] = null_event;
 
-        return closest_event;
+        *dequed_event = closest_event;
+        return true;
     } else {
-        events[last_index] = (event){0};
+        events[last_index] = null_event;
     }
 
     if(scheduler->size > 1) {
         event_heapify(scheduler, timer->get(), 0);
     }
 
-    return closest_event;
+    *dequed_event = closest_event;
+    return true;
 }
 
 willMount(Scheduler) {
     //void *ptr;
     //props->timer->init(ptr);
-    state->enqueue = enqueue;
-    state->dequeue = dequeue;
-    state->next_event = (event){0, 0, 0, 0};
+    event null_event = {0};
+    state->next_event = null_event;
 }
 
 shouldUpdate(Scheduler) {
@@ -185,10 +188,10 @@ willUpdate(Scheduler) {
     /* Add event ? */
     if(state->next_event.timeout_us != 0) {
         props->timer->off();
-        event_prioritify(props->queue, props->timer->get(), state->next_event);
+        event_prioritify(props->queue, props->timer->get(), &state->next_event);
     }
 
-    state->next_event = dequeue(self);
+    Scheduler_dequeue(self, &state->next_event);
 }
 
 release(Scheduler) { 
@@ -218,4 +221,4 @@ didUnmount(Scheduler) { }
 didUpdate(Scheduler) { }
 
 
-React_Constructor(Scheduler);
+React_Constructor(Scheduler)

@@ -1,8 +1,6 @@
 #include "Bitbang.h"
+#include <common.h>
 
-#define bit_value(data, bit) ((data >> bit) & 1) /** Return Data.Y value **/
-#define bit_set(data, bit)   data |= (1 << bit)  /** Set Data.Y   to 1    **/
-#define bit_clear(data, bit) data &= ~(1 << bit) /** Clear Data.Y to 0    **/
 #define foreach_pins(pin, pins)                                               \
     pin_t **pin;                                                              \
     for (pin = pins; *pin; pin++)
@@ -138,4 +136,4 @@ didUpdate (Bitbang)
 }
 
 
-React_Constructor(Bitbang);
+React_Constructor(Bitbang)

@@ -12,6 +12,7 @@
 #define   COMMAND_BUFFER_SIZE  32
 #define   BUFFER_SIZE          128 
 
+#define signal_pin hw_pin (B, 2)
 
 struct device
 {
@@ -22,7 +23,6 @@ struct device
     struct ring_buffer     output_buffer;
     
     unsigned char          index; 
-    pin_t                  signal_pin;
 
     pin_t                  clk_pin;
     

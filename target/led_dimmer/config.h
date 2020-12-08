@@ -5,10 +5,11 @@
 #include <UART.h>
 
 #define BAUDRATE 9600
-enum sensor_channel {
-    potentiomenter = 0,
-    solar_panel = 1
-};
+
+//enum sensor_channel {
+#define SENSOR_POTENTIOMETER 15
+#define SENSOR_SOLAR_POWER   13
+//};
 
 #define BUFFER_SIZE 128
 

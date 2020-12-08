@@ -5,7 +5,7 @@
 #include <circular.h>
 
 typedef struct {
-    uart_handler        *uart;
+    serial_handler        *uart;
     unsigned int        baudrate;
 
     struct ring_buffer        *tx_buffer;

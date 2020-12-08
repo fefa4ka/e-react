@@ -1,6 +1,8 @@
 #pragma once
 
 #include "api.h"
+// https://github.com/gicking/STM8_headers/
+#include "STM8L152R6.h"
 
 #define _MEM_(mem_addr)   (*(volatile unsigned char *)(mem_addr))
 #define _SFR_(mem_addr)   (*(volatile unsigned char *)(0x5000 + (mem_addr)))
@@ -864,6 +866,7 @@ typedef struct
     {
         volatile unsigned char *ddr;
         volatile unsigned char *port;
+        volatile unsigned char *state;
         volatile unsigned char *pin;
     } port;
     unsigned char number;
@@ -873,5 +876,14 @@ extern HAL hw;
 
 #define hw_pin(port, pin)                                                     \
     {                                                                         \
-        { &P##port##_DDR, &P##port##_ODR, &P##port##_CR1 }, pin                          \
+        { &P##port##_DDR, &P##port##_ODR, &P##port##_IDR, &P##port##_CR1 }, pin                          \
     }
+
+#define log_pin(port, pin) \
+    P##port##_DDR |= (1 << pin); \
+    P##port##_CR1 |= (1 << pin); \
+    P##port##_ODR ^= (1 << pin); \
+    P##port##_ODR ^= (1 << pin);
+
+#define hw_uart_baudrate(baudrate)                                            \
+    ((F_CPU + baudrate / 2) / baudrate)

@@ -4,7 +4,7 @@
 
 struct menu_command {
     unsigned char         *command;
-    void                  (*callback)(void *args);
+    void                  (*callback)(Component *instance);
     void                  *args;
 
     struct menu_command   *menu;

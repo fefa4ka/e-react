@@ -9,6 +9,6 @@
 #endif
 
 #ifdef ARCH_x86
-#include <hal/x86.h>
+#include "hal/x86.h"
 #endif
 

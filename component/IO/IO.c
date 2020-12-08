@@ -4,9 +4,9 @@ static inline void
 IO_setPinMode (IO_blockProps *props)
 {
     if (props->mode == IO_INPUT) {
-        props->io->in (props->pin);
+        props->io->in (&props->pin);
     } else {
-        props->io->out (props->pin);
+        props->io->out (&props->pin);
     }
 }
 
@@ -14,9 +14,9 @@ static inline void
 IO_setPinState (IO_blockProps *props)
 {
     if (props->level == IO_HIGH) {
-        props->io->on (props->pin);
+        props->io->on (&props->pin);
     } else {
-        props->io->off (props->pin);
+        props->io->off (&props->pin);
     }
 }
 
@@ -48,7 +48,7 @@ release (IO)
     if (props->mode == IO_OUTPUT) {
         IO_setPinState (props);
     } else {
-        bool level = props->io->get (props->pin);
+        bool level = props->io->get (&props->pin);
         if (state->level != level) {
             state->level = level;
             if (level != 0 && props->onHigh) {

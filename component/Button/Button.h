@@ -6,12 +6,14 @@
 typedef struct
 {
     io_handler *io;
-    void       *pin;
+    pin_t      pin;
 
     enum
     {
-        BTN_PUSH,
-        BTN_TOGGLE 
+        BTN_PUSH_PULLUP,
+        BTN_PUSH_PULLDOWN,
+        BTN_TOGGLE_PULLUP,
+        BTN_TOGGLE_PULLDOWN
     } type;
 
 
@@ -25,6 +27,7 @@ typedef struct
 
 typedef struct
 {
+    bool          inverse;
     bool          level;
     bool          pressed;
     unsigned long tick;
@@ -32,3 +35,4 @@ typedef struct
 
 React_Header (Button);
 #define Button(instance) component (Button, instance)
+#define Button_State(instance, attribute) ((Button_blockState *)instance.state)->attribute

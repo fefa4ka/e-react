@@ -17,10 +17,8 @@ typedef struct
 
     void (*componentWillMount) (void *instance);
 
-    bool (*componentShouldUpdate) (void *instance, void *nextProps,
-                                   void *nextState);
-    void (*componentWillUpdate) (void *instance, void *nextProps,
-                                 void *nextState);
+    bool (*componentShouldUpdate) (void *instance, void *nextProps);
+    void (*componentWillUpdate) (void *instance, void *nextProps);
 
     void (*componentRelease) (void *instance);
 
@@ -68,31 +66,30 @@ void React_Release (Component *instance);
 
 #define React_SelfNext(Type, instance)                                        \
     Type##_blockProps *nextProps = (Type##_blockProps *)nextProps_p;          \
-    Type##_blockState *nextState = (Type##_blockState *)nextState_p
 
 
 #if __GNUC__
 #define React_UpdateCycle_Header(Type, stage, returnType)                     \
     extern inline returnType Type##_##stage (                                        \
         Component *self, Type##_blockProps *props, Type##_blockState *state,  \
-        Type##_blockProps *nextProps, Type##_blockState *nextState)
+        Type##_blockProps *nextProps)
 #else
 #define React_UpdateCycle_Header(Type, stage, returnType)                     \
     inline returnType Type##_##stage (                                        \
         Component *self, Type##_blockProps *props, Type##_blockState *state,  \
-        Type##_blockProps *nextProps, Type##_blockState *nextState)
+        Type##_blockProps *nextProps)
 #endif
 
 #define React_UpdateCycle_Headers(Type, stage, returnType)                     \
     React_UpdateCycle_Header(Type, stage, returnType);                     \
-    returnType Type##_generic_##stage (void *instance, void *nextProps, void *nextState)   \
+    returnType Type##_generic_##stage (void *instance, void *nextProps)   \
     
 #define React_UpdateCycle(Type, stage, returnType)                            \
-    returnType Type##_generic_##stage (void *instance, void *nextProps_p, void *nextState_p)   \
+    returnType Type##_generic_##stage (void *instance, void *nextProps_p)   \
     {                                                                         \
         React_Self (Type, instance);                                          \
         React_SelfNext (Type, instance);                                      \
-        return Type##_##stage (self, props, state, nextProps, nextState);     \
+        return Type##_##stage (self, props, state, nextProps);     \
     }                                                                         \
     React_UpdateCycle_Header(Type, stage, returnType)
 
@@ -171,10 +168,9 @@ void React_Release (Component *instance);
         Type##_blockProps nextProps = propsValue;                                  \
         if (name.stage == released                                            \
             && Type##_shouldUpdate (&name, &name##Props, &name##State,          \
-                                    &nextProps, &name##State)) {              \
+                                    &nextProps)) {              \
             name.stage = prepared;                                            \
-            Type##_willUpdate (&name, &name##Props, &name##State, &nextProps,   \
-                               &name##State);                                 \
+            Type##_willUpdate (&name, &name##Props, &name##State, &nextProps);                                 \
             name##Props = nextProps;                                          \
         } else if (name.stage == prepared) {                                  \
             name.stage = released; \
@@ -192,23 +188,6 @@ void React_Release (Component *instance);
 #define react React
 #define loop  for (;;)
 
-// Difficult to realize in function.
-#define to(name)                                                              \
-    ;                                                                         \
-    if (name.stage == released                                                \
-        && name.componentShouldUpdate (&name, &nextProps, &name##State)) {    \
-        name.stage = prepared;                                                \
-        name.componentWillUpdate (&name, &nextProps, &name##State);           \
-        name##Props = nextProps;                                              \
-    } else if (name.stage == prepared) {                                      \
-        React_Release (&name);                                                \
-    } else if (name.stage == defined) {                                       \
-        name##Props = nextProps;                                              \
-        React_Mount (&name);                                                  \
-    }                                                                         \
-    }                                                                         \
-    while (0)                                                                 \
-        ;
 
 #define React_Local(Type, ref)                                                \
     do {                                                                      \

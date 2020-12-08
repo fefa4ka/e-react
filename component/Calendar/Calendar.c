@@ -25,7 +25,7 @@ release(Time) {
     props->time->step_us = us_passed;
     props->time->microsecond += us_passed; // state->passed;//134;//ms_passed;
     props->time->time_us += us_passed;
-    
+
     if(props->time->microsecond > 1000) {
         unsigned int ms_passed = props->time->microsecond / 1000;
         props->time->time_ms += ms_passed;
@@ -74,4 +74,4 @@ didUpdate(Time) {
 }
 
 
-React_Constructor(Time);
+React_Constructor(Time)

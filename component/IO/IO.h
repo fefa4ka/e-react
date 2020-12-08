@@ -2,12 +2,11 @@
 
 #include <stdbool.h>
 #include <component.h>
-#include <api.h>
 
 typedef struct
 {
     io_handler *io;
-    void *pin;
+    pin_t      pin;
 
     enum {
         IO_OUTPUT,

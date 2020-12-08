@@ -1,65 +1,93 @@
 #include <Button.h>
 #include <Calendar.h>
+#include <UART.h>
+#include <circular.h>
+
+struct rtc_datetime time = {0};
+
+#define   BAUDRATE     9600
+#define   BUFFER_SIZE          128 
+unsigned char output_buffer[BUFFER_SIZE];
+unsigned char input_buffer[BUFFER_SIZE];
 
 struct device
 {
-    struct rtc_datetime time;
-
-    bool led_enabled;
-
-    pin_t switcher_pin;
-    pin_t led_pin;
+    struct ring_buffer     output_buffer;
+    struct ring_buffer     input_buffer;
 
 };
+struct device state  = {
+    .output_buffer  = { output_buffer, BUFFER_SIZE },
+    .input_buffer   = { input_buffer, BUFFER_SIZE }
+};
 
-
-struct device state = { .time         = { 0 },
-                        .led_enabled  = true,
-                        .led_pin      = hw_pin (B, 1),
-                        .switcher_pin = hw_pin (B, 2) };
-
-
-void
-led_toggle (Component *trigger)
+void log_string(char *message) 
 {
-    state.led_enabled = !state.led_enabled;
+    while(*message) {
+        rb_write(&state.output_buffer, *(message++));
+    }; 
 }
 
-int
-main (void)
-{
+
+
     // Define React components
     Time (datetime);
     IO (led);
+    IO (led_yet);
     Button (switcher);
+    Button (pusher);
+
+    UART(serial);
+int
+main (void)
+{
+
+    log_string("Welcome\r\n");
 
     // Event-loop
     while (true) {
+
         // Timer component, for event management and time counting
         react (Time, datetime,
-               _ ({
-                   .timer = &(hw.timer),
-                   .time  = &state.time
-               }));
+               _ ({ .timer = &(hw.timer), .time = &time }));
+
+        react (IO, led_yet,
+               _ ({ .io    = &hw.io,
+                    .pin   = hw_pin (D, 4),
+                    .mode  = IO_OUTPUT,
+                    .level = Button_State (pusher, pressed) }));
+
+        react (IO, led,
+               _ ({ .io    = &hw.io,
+                    .pin   = hw_pin (D, 5),
+                    .mode  = IO_OUTPUT,
+                    .level = Button_State (switcher, pressed) }));
 
         react (Button, switcher,
                _ ({
-                   .io              = &(hw.io),
-                   .pin             = &state.switcher_pin,
-                   .type            = BTN_TOGGLE,
-                   .time            = &state.time,
-                   .bounce_delay_ms = 100,
-                   .onToggle        = led_toggle
+                   .io              = &hw.io,
+                   .pin             = hw_pin (D, 6),
+                   .type            = BTN_TOGGLE_PULLUP,
+                   .time            = &time,
+                   .bounce_delay_ms = 1000,
                }));
 
-        react (IO, led,
+        react (UART, serial, _({
+            .uart = &hw.uart,
+
+            .baudrate = BAUDRATE,
+            .tx_buffer = &state.output_buffer,
+            .rx_buffer = &state.input_buffer,
+
+        }));
+
+        react (Button, pusher,
                _ ({
-                   .io    = &(hw.io),
-                   .pin   = &state.led_pin,
-                   .mode  = IO_OUTPUT,
-                   .level = state.led_enabled
-                                ? IO_HIGH
-                                : IO_LOW 
+                   .io              = &hw.io,
+                   .pin             = hw_pin (D, 7),
+                   .type            = BTN_PUSH_PULLUP,
+                   .time            = &time,
+                   .bounce_delay_ms = 100,
                }));
     }
 

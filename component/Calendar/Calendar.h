@@ -1,8 +1,6 @@
 #pragma once
 
 #include <component.h>
-#include <hal.h>
-
 
 struct rtc_datetime
 {

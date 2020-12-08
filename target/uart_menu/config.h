@@ -1,7 +1,8 @@
 #pragma once
 
+#include <IO.h>
 #include <Button.h>
-#include <UART.h>
+#include <Serial.h>
 #include <Menu.h>
 #include <Calendar.h>
 #include <circular.h>
@@ -13,6 +14,9 @@
 #define   COMMAND_BUFFER_SIZE  32
 #define   BUFFER_SIZE          128 
 
+#define button_pin hw_pin (D, 7)
+#define led_pin    hw_pin (D, 5)
+
 struct device
 {
     struct rtc_datetime    time;
@@ -21,6 +25,4 @@ struct device
     struct ring_buffer     input_buffer;
 
     unsigned char          command[COMMAND_BUFFER_SIZE];
-
-    pin_t                  button_pin;
 };

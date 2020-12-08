@@ -42,62 +42,62 @@ int main(void) {
     // Event-loop
     while (true) { 
         // Timer component, for event management and time counting
-        react (Time) {
-            .timer = &(hw.timer),
+        react (Time, datetime, _({
+            .timer = &hw.timer,
             .time = &state.time
-        } to (datetime);
+        }));
 
-        react (Scheduler) {
-            .timer = &(hw.timer),
+        react (Scheduler, scheduler, _({
+            .timer = &hw.timer,
             .time = &state.time,
             .queue = &state.scheduler,
-        } to (scheduler);
+        }));
 
-        react (AtDC) {
-            .adc = &(hw.adc),
+        react (AtDC, sensor, _({
+            .adc = &hw.adc,
             .channel = &(state.sensor),
 
             .onChange = sensor_readed 
-        } to (sensor);
+        }));
 
-        react (Button) {
-            .io = &(hw.io),
-            .pin = &state.switcher_pin,
-            .type = toggle,
+        react (Button, switcher, _({
+            .io = &hw.io,
+            .pin = state.switcher_pin,
+            .type = BTN_PUSH_PULLUP,
             .time = &state.time,
             .bounce_delay_ms = 100,
 
             .onToggle = switch_motor
-        } to (switcher);
+        }));
 
-        react (Servo) {
-            .io = &(hw.io),
-            .pin = &state.left_actuator_pin,
+        react (Servo, left_actuator, _({
+            .io = &hw.io,
+            .pin = state.left_actuator_pin,
             .scheduler = &scheduler,
             .speed = 10,
             .enabled = state.motors_enabled,
             .angle = state.angle
-        } to (left_actuator);
+        }));
 
         
-        react (Servo) {
-            .io = &(hw.io),
-            .pin = &state.right_actuator_pin,
+        react (Servo, right_actuator, _({
+            .io = &hw.io,
+            .pin = state.right_actuator_pin,
             .scheduler = &scheduler,
             .speed = 30,
             .enabled = state.motors_enabled,
             .angle = 180 - state.angle  
-        } to (right_actuator);
+        }));
 
         /*
-        react (Servo) {
+        react (Servo, nervo, _({
             .io = &(hw.io),
             .pin = &state.engine_pin,
             .scheduler = &scheduler,
             .speed = 15,
             .enabled = state.motors_enabled,
             .angle = state.thrust 
-        } to (nervo);
+        }));
         */
     }
 
