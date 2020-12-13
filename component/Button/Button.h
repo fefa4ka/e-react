@@ -11,9 +11,9 @@ typedef struct
     enum
     {
         BTN_PUSH_PULLUP,
-        BTN_PUSH_PULLDOWN,
+        BTN_PUSH,
         BTN_TOGGLE_PULLUP,
-        BTN_TOGGLE_PULLDOWN
+        BTN_TOGGLE
     } type;
 
 

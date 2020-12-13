@@ -3,10 +3,6 @@
 #include "avr_mcu_section.h"
 AVR_MCU(F_CPU, "atmega168p");
 
-#define log_pin(port, pin) \
-    DDR##port |= (1 << pin); \
-    PORT##port ^= (1 << pin); \
-    PORT##port ^= (1 << pin);
 
 static void in(void *pin);
 static void out(void *pin);
@@ -74,6 +70,7 @@ in(void *pin)
     pin_t *Pin = (pin_t *)pin;
     
     *(Pin->port.ddr) &= ~(1 << (Pin->number));
+    *(Pin->port.port) |= (1 << (Pin->number));
 }
 
 static inline void 

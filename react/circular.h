@@ -2,6 +2,11 @@
 #define circular_h 
 #include "common.h"
 
+struct callback {
+    void (*method)(void *trigger, void *argument);
+    void *argument;
+};
+
 struct ring_buffer {
     unsigned char  *data;
     unsigned int   size;

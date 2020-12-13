@@ -66,25 +66,16 @@ main (void)
         react (Button, switcher,
                _ ({
                    .io              = &hw.io,
-                   .pin             = hw_pin (D, 6),
+                   .pin             = hw_pin (B, 2),
                    .type            = BTN_TOGGLE_PULLUP,
                    .time            = &time,
                    .bounce_delay_ms = 1000,
                }));
 
-        react (UART, serial, _({
-            .uart = &hw.uart,
-
-            .baudrate = BAUDRATE,
-            .tx_buffer = &state.output_buffer,
-            .rx_buffer = &state.input_buffer,
-
-        }));
-
         react (Button, pusher,
                _ ({
                    .io              = &hw.io,
-                   .pin             = hw_pin (D, 7),
+                   .pin             = hw_pin (B, 3),
                    .type            = BTN_PUSH_PULLUP,
                    .time            = &time,
                    .bounce_delay_ms = 100,

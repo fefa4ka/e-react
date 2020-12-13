@@ -12,14 +12,15 @@ willMount (Bitbang)
 
     if (props->clock)
         props->io->out (props->clock);
+        props->io->off (props->clock);
 
     foreach_pins (pin, props->pins)
     {
-        if (*mode == INPUT) {
+        if (*mode == INPUT)
             props->io->in (*pin);
-        } else {
+        else
             props->io->out (*pin);
-        }
+        
 
         mode++;
     }
@@ -31,6 +32,7 @@ shouldUpdate (Bitbang)
     if (*state->data == 0) {
         if (rb_length (*props->buffers)) {
             /* Data available */
+
             return true;
         }
 
@@ -42,6 +44,7 @@ shouldUpdate (Bitbang)
     unsigned long bit_duration = 1000000 / props->baudrate;
     if (props->time->time_us + props->time->step_us - state->tick
         >= bit_duration) {
+
         return true;
     }
 
@@ -74,8 +77,12 @@ willUpdate (Bitbang)
         } else {
             /* Read new byte for output */
             if (state->sending == false) {
-                rb_read (*buffer, data);
-                sending = true;
+                if(rb_read (*buffer, data) == eErrorNone) {
+                    sending = true;
+
+                    if(props->onStart)
+                        props->onStart(self);
+                }
             }
         }
 
@@ -84,6 +91,9 @@ willUpdate (Bitbang)
         buffer++;
     }
 
+    if (state->position == -1) 
+        state->position++;
+    
     state->sending = sending;
     if (props->clock)
         props->io->off (props->clock);
@@ -103,7 +113,7 @@ release (Bitbang)
                 props->io->off (*pin);
             }
 
-            if (state->position == 7) {
+            if (state->position == 8) {
                 *data = 0;
             }
         }
@@ -118,19 +128,23 @@ didUnmount(Bitbang) { }
 
 didUpdate (Bitbang)
 {
-    if (props->clock)
-        props->io->on (props->clock);
-
     /* Increment bit position */
     if (state->sending) {
-        if (state->position == 7) {
+        if (state->position == 8) {
             /* clear session */
             state->sending  = false;
             state->position = -1;
-            if (props->onTransmit)
-                props->onTransmit (self);
+
+            if (props->clock)
+                props->io->off (props->clock);
+
+            if (props->onTransmitted)
+                props->onTransmitted (self);
         } else {
             state->position++;
+
+            if (props->clock)
+                props->io->on (props->clock);
         }
     }
 }

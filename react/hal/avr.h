@@ -32,3 +32,8 @@ extern HAL hw;
     }
 #define hw_uart_baudrate(baudrate)                                            \
     (((F_CPU) + 4UL * (baudrate)) / (8UL * (baudrate)) - 1UL)
+
+#define log_pin(port, pin) \
+    DDR##port |= (1 << pin); \
+    PORT##port ^= (1 << pin); \
+    PORT##port ^= (1 << pin);

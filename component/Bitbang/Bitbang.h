@@ -22,10 +22,7 @@ typedef struct
     pin_t               *clock;
 
     void (*onStart) (Component *instance);
-    void (*onReceive) (Component *instance);
-    void (*onReceiveLine) (Component *instance);
-    void (*onTransmit) (Component *instance);
-    void (*onTransmitLine) (Component *instance);
+    void (*onTransmitted) (Component *instance);
 } Bitbang_blockProps;
 
 typedef struct

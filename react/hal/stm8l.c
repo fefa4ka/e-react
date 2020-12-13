@@ -64,7 +64,6 @@ in(void *pin)
     pin_t *Pin = (pin_t *)pin;
     
     *(Pin->port.ddr) &= ~(1 << (Pin->number));
-    *(Pin->port.pin) |= (1 << (Pin->number));
 }
 
 static inline void 
