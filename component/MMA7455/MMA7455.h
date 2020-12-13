@@ -2,16 +2,56 @@
 
 #include <component.h>
 
-typedef struct {
-    struct ring_buffer *bus_buffer;
+/* Accelerometer mode */
+enum MMA7455_MODE
+{
+  MMA7455_MODE_STANDBY = 0,
+  MMA7455_MODE_MEASURE = 1,
+  MMA7455_MODE_LEVEL   = 2,
+  MMA7455_MODE_PULSE   = 3,
+  MMA7455_MODE_NONE
+};
 
-    void (*onChange)(Component *instance);
+// When using an union for the registers and
+// the axis values, the byte order of the accelerometer
+// should match the byte order of the compiler and AVR chip.
+// Both have the lower byte at the lower address,
+// so they match.
+// This union is only used by the low level functions.
+union MMA7455_xyz 
+{
+  struct
+  {
+    unsigned short x_lsb;
+    unsigned short x_msb;
+    unsigned short y_lsb;
+    unsigned short y_msb;
+    unsigned short z_lsb;
+    unsigned short z_msb;
+  } reg;
+  struct
+  {
+    unsigned int x;
+    unsigned int y;
+    unsigned int z;
+  } value;
+};
+
+typedef struct {
+   Component *spi;
+   Component *i2c;
+   
+   pin_t *chip_select_pin;
+   unsigned short sensitivity;
+   unsigned short mode;
+
+   void (*onChange)(Component *instance);
 } MMA7455_blockProps;
 
 typedef struct {
-   unsigned int x;
-   unsigned int y;
-   unsigned int z;
+   union MMA7455_xyz force;
+   bool ready;
+   unsigned char mode;
 } MMA7455_blockState;
 
 
@@ -79,6 +119,19 @@ typedef struct {
 #define MMA7455_STON MMA7455_D4
 #define MMA7455_SPI3W MMA7455_D5
 #define MMA7455_DRPD MMA7455_D6
+#define MMA7455_MCTL_OFF                (0x16)
+#define MMA7455_MCTL_MOD_MASK           (0x03 << 0)
+#define MMA7455_MCTL_MOD_STBY           (0x00 << 0)
+#define MMA7455_MCTL_MOD_MSMT           (0x01 << 0)
+#define MMA7455_MCTL_MOD_LVL            (0x02 << 0)
+#define MMA7455_MCTL_MOD_PLS            (0x03 << 0)
+#define MMA7455_MCTL_GLVL_MASK          (0x03 << 2)
+#define MMA7455_MCTL_GLVL_2G            (0x01 << 2)
+#define MMA7455_MCTL_GLVL_4G            (0x02 << 2)
+#define MMA7455_MCTL_GLVL_8G            (0x00 << 2)
+#define MMA7455_MCTL_STON               (0x01 << 4)
+#define MMA7455_MCTL_SPI3W              (0x01 << 5)
+#define MMA7455_MCTL_DRPD               (0x01 << 6)
 
 // Control 1 Register
 #define MMA7455_INTPIN MMA7455_D0
@@ -116,30 +169,7 @@ typedef struct {
 #define MMA7455_I2C_ADDRESS 0x1D
 
 
-// When using an union for the registers and
-// the axis values, the byte order of the accelerometer
-// should match the byte order of the compiler and AVR chip.
-// Both have the lower byte at the lower address,
-// so they match.
-// This union is only used by the low level functions.
-union xyz_union
-{
-  struct
-  {
-    unsigned short x_lsb;
-    unsigned short x_msb;
-    unsigned short y_lsb;
-    unsigned short y_msb;
-    unsigned short z_lsb;
-    unsigned short z_msb;
-  } reg;
-  struct
-  {
-    unsigned int x;
-    unsigned int y;
-    unsigned int z;
-  } value;
-};
+
 
 React_Header(MMA7455);
 #define MMA7455(instance) component(MMA7455, instance)
