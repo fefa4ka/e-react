@@ -3,7 +3,7 @@
 
 
 willMount(Servo) {
-    props->io->out(&props->pin);
+    props->io->out(props->pin);
 
     state->on_duty = true;
     state->duty_cycle = 1000 + props->angle * 50 / 9;
@@ -35,10 +35,10 @@ willUpdate(Servo) {
 release(Servo) {
     if(props->enabled) {
         if(state->on_duty) {
-            props->io->off(&props->pin);
+            props->io->off(props->pin);
             state->on_duty = false;
         } else {
-            props->io->on(&props->pin);
+            props->io->on(props->pin);
 
             state->on_duty = true;
         }
@@ -48,12 +48,12 @@ release(Servo) {
                 state->on_duty 
                     ? state->duty_cycle
                     : state->remain_time, 
-                self->componentRelease, self
+                self->Release, self
         );
 
         state->scheduled = scheduled;
     } else {
-        props->io->off(&props->pin);
+        props->io->off(props->pin);
         state->scheduled = false;
     }
 }

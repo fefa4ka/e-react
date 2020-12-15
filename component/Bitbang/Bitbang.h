@@ -14,15 +14,15 @@ typedef struct
     io_handler *         io;
     struct rtc_datetime *time;
 
-    unsigned int        baudrate;
-    unsigned short      pins_number;
-    pin_t               **pins;
-    enum pin_mode       *modes;
-    struct ring_buffer  **buffers;
-    pin_t               *clock;
+    unsigned int         baudrate;
+    unsigned short       pins_number;
+    void **              pins;
+    enum pin_mode *      modes;
+    struct ring_buffer **buffers;
+    void *               clock;
 
-    void (*onStart) (Component *instance);
-    void (*onTransmitted) (Component *instance);
+    struct callback *onStart;
+    struct callback *onTransmitted;
 } Bitbang_blockProps;
 
 typedef struct

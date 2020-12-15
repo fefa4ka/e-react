@@ -1,31 +1,34 @@
-#pragma once 
+#pragma once
 
-#include <stdbool.h>
 #include <component.h>
+#include <stdbool.h>
 
 typedef struct
 {
     io_handler *io;
-    pin_t      pin;
+    void *      pin;
 
-    enum {
+    enum
+    {
         IO_OUTPUT,
-        IO_INPUT 
+        IO_INPUT
     } mode;
 
-    enum {
+    enum
+    {
         IO_LOW,
-        IO_HIGH 
+        IO_HIGH
     } level;
 
-    void (*onChange)(Component *instance);
-    void (*onLow)(Component *instance); 
-    void (*onHigh)(Component *instance);
+    void (*onChange) (Component *instance);
+    void (*onLow) (Component *instance);
+    void (*onHigh) (Component *instance);
 } IO_blockProps;
 
-typedef struct {
+typedef struct
+{
     bool level;
 } IO_blockState;
 
-React_Header(IO);
-#define IO(instance) component(IO, instance)
+React_Header (IO);
+#define IO(instance) component (IO, instance)

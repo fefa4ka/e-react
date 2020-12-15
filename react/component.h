@@ -33,15 +33,21 @@ void React_Mount (Component *instance);
 void React_Release (Component *instance);
 
 // Component Creation
+#define Instance_State(Type, instance) ((Type##_blockState *)(instance)->state)
+#define Instance_Props(Type, instance) ((Type##_blockProps *)(instance)->props)
+#define React_State(Type, instance, attribute) Instance_State(Type, instance)->attribute
+#define React_Props(Type, instance, attribute) Instance_Props(Type, instance)->attribute
+
 #define React_Header(name)                                                    \
     void name##_block (Component *instance, name##_blockProps *props,         \
                        name##_blockState *state);                             \
     React_Cycle_Header (name)
 
+
 #define React_Self(Type, instance)                                            \
     Component *        self  = instance;                                      \
-    Type##_blockProps *props = (Type##_blockProps *)self->props;              \
-    Type##_blockState *state = (Type##_blockState *)self->state
+    Type##_blockProps *props = Instance_Props(Type, self); \
+    Type##_blockState *state = Instance_State(Type, self) 
 
 #if __GNUC__
     #define React_LifeCycle_Header(Type, stage)                               \

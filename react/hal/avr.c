@@ -64,7 +64,7 @@ HAL hw = {
     }
 };
 
-static inline void
+static void
 in(void *pin)
 {
     pin_t *Pin = (pin_t *)pin;
@@ -73,7 +73,7 @@ in(void *pin)
     *(Pin->port.port) |= (1 << (Pin->number));
 }
 
-static inline void 
+static void 
 out(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
@@ -81,33 +81,33 @@ out(void *pin) {
 }
 
 
-static inline void 
+static void 
 on(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     *(Pin->port.port) |= (1 << (Pin->number));
 }
 
-static inline void 
+static void 
 off(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     *(Pin->port.port) &= ~(1 << (Pin->number));
 }
 
-static inline void 
+static void 
 flip(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     *(Pin->port.port) ^= (1 << (Pin->number));
 }
 
-static inline void 
+static void 
 pullup(void *pin) {
     on(pin);
 }
 
-static inline bool
+static bool
 get(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 

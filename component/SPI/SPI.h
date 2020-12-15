@@ -18,25 +18,26 @@ typedef struct
     io_handler *         io;
     struct rtc_datetime *time;
 
-    unsigned int      baudrate;
-    struct SPI_buffer buffer;
+    unsigned int       baudrate;
+    struct SPI_buffer *buffer;
 
-    pin_t *miso_pin;
-    pin_t *mosi_pin;
-    pin_t *clk_pin;
-
-    void (*callback) (Component *instance);
+    void *miso_pin;
+    void *mosi_pin;
+    void *clk_pin;
 } SPI_blockProps;
 
 typedef struct
 {
     Component           bitbanger;
-    Bitbang_blockState  bitbang;
-    pin_t *             pins[3];
+    Bitbang_blockState  bitbang_state;
+    Bitbang_blockProps  bitbang_props;
+    void *              pins[3];
     struct ring_buffer *buffers[2];
 
     unsigned char      input_buffer_data;
     struct ring_buffer input_buffer;
+    struct callback    SPI_init;
+    struct callback    SPI_receive;
 } SPI_blockState;
 
 React_Header (SPI);

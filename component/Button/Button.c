@@ -3,18 +3,18 @@
 willMount (Button)
 {
     /* Setup pin as input */
-    props->io->in (&props->pin);
+    props->io->in (props->pin);
     state->inverse
         = props->type == BTN_PUSH_PULLUP || props->type == BTN_TOGGLE_PULLUP;
 
     if(state->inverse) {
-        props->io->pullup(&props->pin);
+        props->io->pullup(props->pin);
     }
 }
 
 shouldUpdate (Button)
 {
-    bool         level          = props->io->get (&props->pin);
+    bool         level          = props->io->get (props->pin);
     bool         is_level_equal = state->level == level;
     bool         state_level = state->inverse ? !state->level : state->level;
     unsigned int passed      = props->time->time_ms - state->tick;
@@ -54,7 +54,7 @@ shouldUpdate (Button)
 willUpdate (Button)
 {
     // Actual state
-    state->level = props->io->get (&props->pin);
+    state->level = props->io->get (props->pin);
     bool         state_level = state->inverse ? !state->level : state->level;
 
     // Set initial tick to start count delay

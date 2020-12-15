@@ -10,9 +10,10 @@ willMount (Bitbang)
     // setup pins
     enum pin_mode *mode = props->modes;
 
-    if (props->clock)
+    if (props->clock) {
         props->io->out (props->clock);
         props->io->off (props->clock);
+    }
 
     foreach_pins (pin, props->pins)
     {
@@ -20,7 +21,7 @@ willMount (Bitbang)
             props->io->in (*pin);
         else
             props->io->out (*pin);
-        
+
 
         mode++;
     }
@@ -77,11 +78,8 @@ willUpdate (Bitbang)
         } else {
             /* Read new byte for output */
             if (state->sending == false) {
-                if(rb_read (*buffer, data) == eErrorNone) {
+                if (rb_read (*buffer, data) == eErrorNone) {
                     sending = true;
-
-                    if(props->onStart)
-                        props->onStart(self);
                 }
             }
         }
@@ -91,10 +89,14 @@ willUpdate (Bitbang)
         buffer++;
     }
 
-    if (state->position == -1) 
+    if (state->position == -1)
         state->position++;
-    
+
+    if (sending && state->sending == false && props->onStart->method)
+        props->onStart->method (self, props->onStart->argument);
+
     state->sending = sending;
+
     if (props->clock)
         props->io->off (props->clock);
 }
@@ -122,8 +124,8 @@ release (Bitbang)
     }
 }
 
-didMount(Bitbang) { }
-didUnmount(Bitbang) { }
+didMount (Bitbang) {}
+didUnmount (Bitbang) {}
 
 
 didUpdate (Bitbang)
@@ -138,8 +140,8 @@ didUpdate (Bitbang)
             if (props->clock)
                 props->io->off (props->clock);
 
-            if (props->onTransmitted)
-                props->onTransmitted (self);
+            if (props->onTransmitted->method)
+                props->onTransmitted->method (self, props->onStart->argument);
         } else {
             state->position++;
 
@@ -150,4 +152,4 @@ didUpdate (Bitbang)
 }
 
 
-React_Constructor(Bitbang)
+React_Constructor (Bitbang)

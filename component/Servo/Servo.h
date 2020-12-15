@@ -6,7 +6,7 @@
 
 typedef struct {
     io_handler     *io;
-    pin_t          pin;
+    void           *pin;
     unsigned char  speed;
     unsigned int   angle;
     bool           enabled;

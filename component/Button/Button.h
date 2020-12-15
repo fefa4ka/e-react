@@ -6,7 +6,7 @@
 typedef struct
 {
     io_handler *io;
-    pin_t      pin;
+    void       *pin;
 
     enum
     {
@@ -35,4 +35,4 @@ typedef struct
 
 React_Header (Button);
 #define Button(instance) component (Button, instance)
-#define Button_State(instance, attribute) ((Button_blockState *)instance.state)->attribute
+#define Button_isPressed(instance) React_State(Button, instance, pressed)
