@@ -17,7 +17,7 @@ struct device state = { .time      = { 0 },
                         .clk_pin   = hw_pin (D, 2),
                         .data_pin  = hw_pin (D, 3),
                         .reset_pin = hw_pin (D, 4),
-                        .btn_pin   = hw_pin (D, 4) };
+                        .btn_pin   = hw_pin (B, 2) };
 
 
 int
