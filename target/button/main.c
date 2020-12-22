@@ -23,10 +23,10 @@ struct device
 struct device state = { .time           = { 0 },
                         .output_buffer  = { output_buffer, BUFFER_SIZE },
                         .input_buffer   = { input_buffer, BUFFER_SIZE },
-                        .led_pin        = hw_pin (D, 4),
-                        .led_red_pin    = hw_pin (D, 5),
-                        .btn_push_pin   = hw_pin (B, 2),
-                        .btn_switch_pin = hw_pin (B, 3) };
+                        .led_pin        = hw_pin (B, 1),
+                        .led_red_pin    = hw_pin (B, 2),
+                        .btn_push_pin   = hw_pin (D, 0),
+                        .btn_switch_pin = hw_pin (D, 1) };
 
 void
 log_string (char *message)

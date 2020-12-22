@@ -21,10 +21,6 @@ typedef struct {
 
     rtc_datetime_t      *time;
     struct events_queue *queue; 
-
-    void (*onEventHappened)(Component *instance);
-    void (*onEventEqueued)(Component *instance);
-    void (*onEventScheduled)(Component *instance);
 } Scheduler_blockProps;
 
 typedef struct {

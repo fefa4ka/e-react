@@ -1,5 +1,7 @@
 #include <IO.h>
 
+pin_t debug_pin = hw_pin(D, 4);
+
 int
 main (void)
 {
@@ -15,7 +17,7 @@ main (void)
         react (IO, pin,
                _ ({
                    .io    = &hw.io,
-                   .pin   = hw_pin (D, 4),
+                   .pin   = &debug_pin,
                    .mode  = IO_OUTPUT,
                    .level = debug,
                }));

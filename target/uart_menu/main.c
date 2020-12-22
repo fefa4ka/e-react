@@ -8,7 +8,8 @@ struct device state  = {
     .time           = {0},
     .command        = {0},
     .output_buffer  = { output_buffer, BUFFER_SIZE },
-    .input_buffer   = { input_buffer, BUFFER_SIZE }
+    .input_buffer   = { input_buffer, BUFFER_SIZE },
+    .btn_pin = hw_pin(D, 0)
 };
 
 
@@ -29,6 +30,7 @@ IO (led);
 int main(void) {
     // Welcom log
     print_version(NULL);
+    print_shell(NULL);
 
     // Event-loop
     while(true) { 
@@ -49,13 +51,14 @@ int main(void) {
             .tx_buffer = &state.output_buffer,
             .rx_buffer = &state.input_buffer,
 
-            .onReceiveLine = read_command 
+            .onReceiveLine = read_command,
+            .onReceive = read_symbol
         }));
 
 
         react (Button, button, _({
             .io = &hw.io,
-            .pin = button_pin,
+            .pin = &state.btn_pin,
 
             .type = BTN_PUSH_PULLUP, 
             .time = &state.time,
@@ -68,7 +71,7 @@ int main(void) {
             .menu = commands,
             .command = (unsigned char*)&state.command,
 
-            .onCommand = print_command,
+            .onCommand = print_shell,
         }));
         
 
@@ -76,7 +79,7 @@ int main(void) {
                _ ({ .io    = &hw.io,
                     .pin   = led_pin,
                     .mode  = IO_OUTPUT,
-                    .level = Button_State (button, pressed) }));
+                    .level = Button_isPressed(&button) }));
     }
 
     return 0;

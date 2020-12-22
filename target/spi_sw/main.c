@@ -1,13 +1,17 @@
 #include "config.h"
 
-unsigned char output_buffer[BUFFER_SIZE];
-unsigned char input_buffer[BUFFER_SIZE];
+#define signal_pin hw_pin (B, 2)
+
+unsigned char        output_buffer[BUFFER_SIZE];
+unsigned char        input_buffer[BUFFER_SIZE];
+struct ring_callback *callback_buffer[BUFFER_SIZE] = {0};
+pin_t                *chip_select_buffer[BUFFER_SIZE] = {0};
 
 struct device state = {
     .time          = { 0 },
-    .clk_pin       = hw_pin (D, 4),
-    .mosi_pin      = hw_pin (D, 5),
-    .miso_pin      = hw_pin (B, 7),
+    .clk_pin       = hw_pin (D, 1),
+    .mosi_pin      = hw_pin (D, 2),
+    .miso_pin      = hw_pin (D, 3),
     .input_buffer  = { input_buffer, BUFFER_SIZE },
     .output_buffer = { output_buffer, BUFFER_SIZE },
     .index         = 0,
@@ -26,64 +30,51 @@ send_number (Component *trigger)
     rb_write (&state.output_buffer, state.index);
 }
 
-void
-log_string (char *message)
+void 
+write_address(unsigned char address, unsigned char value, pin_t *chip_select_pin) 
 {
-    while (*message) {
-        rb_write (&state.output_buffer, *(message++));
-    };
+    rb_write(&state.output_buffer, address);
+    rb_write(&state.output_buffer, value);
+    chip_select_buffer[state.output_buffer.read] = chip_select_pin;
 }
 
 void
-log_num (char *message, int number)
-{
-    log_string (message);
-    log_string (itoa (number));
+send_command_callback(unsigned char address, unsigned char value, pin_t *chip_select_pin, struct ring_callback *callback) {
+    write_address(address, value, chip_select_pin);
+    callback_buffer[state.output_buffer.read] = callback;
 }
 
 void
-send_version (Component *trigger)
-{
-    log_num ("\r\ne-react ver. 0.", VERSION);
-    log_num (".", BUILD_NUM);
-    log_string ("\r\n");
+read_address(unsigned char address, pin_t *chip_select_pin, struct ring_callback *callback) {
+    send_command_callback(address, 0, callback);
 }
 
-static const long hextable[]
-    = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0,  1,  2,  3,  4,  5,
-        6,  7,  8,  9,  -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1 };
-
-/**
- * @brief convert a hexidecimal string to a signed long
- * will not produce or process negative numbers except
- * to signal error.
- *
- * @param hex without decoration, case insensitive.
- *
- * @return -1 on error, or result (max (sizeof(long)*8)-1 bits)
- */
-long
-hexdec (unsigned const char *hex)
-{
-    long ret = 0;
-    while (*hex && ret >= 0) {
-        ret = (ret << 4) | hextable[*hex++];
+void
+spi_init(Component *instance) {
+    pin_t *chip_select_pin = chip_select_buffer[state.output_buffer.read];
+    if(chip_select_pin) {
+        hw.io.out(chip_select_pin);
+        hw.io.on(chip_select_pin);
     }
-    return ret;
 }
+
+void 
+spi_receive(Component *instance) {
+    pin_t *chip_select_pin = chip_select_buffer[state.output_buffer.read];
+    struct ring_callback *callback = callback_buffer[state.output_buffer.read];
+    unsigned char data;
+    rb_read(&state.input_buffer, &data);
+
+    if(callback) {
+        callback->method(data, callback->argument);
+        callback_buffer[state.output_buffer.read] = NULL;
+    }
+    if(chip_select_pin) {
+        hw.io.off(chip_select_pin);
+        chip_select_buffer[state.output_buffer.read] = NULL;
+    }
+}
+
 int
 main (void)
 {
@@ -92,6 +83,7 @@ main (void)
     Button (button);
     Bitbang (spi);
 
+    send_number(NULL);
     // Event-loop
     while (true) {
         // Timer component, for event management and time counting
@@ -102,13 +94,15 @@ main (void)
                }));
 
         react (Button, button,
-               _ ({ .io              = &hw.io,
-                    .pin             = signal_pin,
-                    .type            = BTN_PUSH_PULLUP,
-                    .time            = &state.time,
-                    .bounce_delay_ms = 100,
-                    .onRelease       = send_version }));
+               _ ({
+                   .io              = &hw.io,
+                   .pin             = hw_pin (B, 2),
+                   .type            = BTN_PUSH_PULLUP,
+                   .time            = &state.time,
+                   .bounce_delay_ms = 100,
 
+                   .onRelease       = send_number
+        }));
 
         react (Bitbang, spi,
                _ ({ .io       = &hw.io,
@@ -119,7 +113,9 @@ main (void)
                     .modes    = spi_modes,
                     .buffers  = spi_buffers,
 
-                    .onTransmit = send_number }));
+                    .onStart = spi_init,
+                    .onTransmitted = spi_receive
+        }));
     }
 
     return 0;

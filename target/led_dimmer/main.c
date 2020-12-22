@@ -8,8 +8,8 @@ struct device state = { .time          = { 0 },
                         .brightness    = 0,
                         .angle         = 0,
                         .output_buffer = { output_buffer, BUFFER_SIZE },
-                        .input_buffer  = { input_buffer, BUFFER_SIZE }
-                          };
+                        .input_buffer  = { input_buffer, BUFFER_SIZE },
+                        .led_pin       = hw_pin (B, 1) };
 
 /* Application handlers */
 void
@@ -62,28 +62,30 @@ main (void)
     // Event-loop
     while (true) {
         // Timer component, for event management and time counting
-        react (Time, datetime, _({ .timer    = &hw.timer,
-                       .time     = &state.time,
-                       .onSecond = log_sensors 
-        }));
+        react (Time, datetime,
+               _ ({ .timer    = &hw.timer,
+                    .time     = &state.time,
+                    .onSecond = log_sensors }));
 
-        react (UART, serial, _({ .uart     = &hw.uart,
-                       .baudrate = BAUDRATE,
-                       .tx_buffer = &state.output_buffer,
-                       .rx_buffer = &state.input_buffer,
-        }));
+        react (UART, serial,
+               _ ({
+                   .uart      = &hw.uart,
+                   .baudrate  = BAUDRATE,
+                   .tx_buffer = &state.output_buffer,
+                   .rx_buffer = &state.input_buffer,
+               }));
 
-        react (AtDC, sensor, _({ .adc      = &hw.adc,
-                       .channel  = &state.sensor,
-                       .onChange = sensor_readed 
-        }));
+        react (AtDC, sensor,
+               _ ({ .adc      = &hw.adc,
+                    .channel  = &state.sensor,
+                    .onChange = sensor_readed }));
 
-        react (PWM, led, _({ .io         = &hw.io,
-                      .pin        = hw_pin (D, 5),
-                      .frequency  = 20,
-                      .duty_cycle = state.brightness,
-                      .time       = &state.time 
-        }));
+        react (PWM, led,
+               _ ({ .io         = &hw.io,
+                    .pin        = &state.led_pin,
+                    .frequency  = 120,
+                    .duty_cycle = state.brightness,
+                    .time       = &state.time }));
     }
 
     return 0;

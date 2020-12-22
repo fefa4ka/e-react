@@ -9,10 +9,8 @@
 
 #define   BAUDRATE     9600
 
-#define   COMMAND_BUFFER_SIZE  32
-#define   BUFFER_SIZE          128 
+#define   BUFFER_SIZE          8
 
-#define signal_pin hw_pin (B, 2)
 
 struct device
 {

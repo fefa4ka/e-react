@@ -24,5 +24,7 @@ struct device
     struct ring_buffer     output_buffer;
     struct ring_buffer     input_buffer;
 
+    pin_t                  btn_pin;
+
     unsigned char          command[COMMAND_BUFFER_SIZE];
 };

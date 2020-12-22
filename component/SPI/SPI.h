@@ -7,7 +7,6 @@
 struct SPI_buffer
 {
     struct ring_buffer output;
-    struct callback *  callback;
     pin_t **           chip_select;
 };
 

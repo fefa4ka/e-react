@@ -8,7 +8,6 @@ willMount(Menu) {
 shouldUpdate(Menu) {
     /* Command not found */
     if(strcmp(props->command, state->command) != 0) {
-        if(props->onCommand) props->onCommand(self);
         return true;
     }
 
@@ -24,6 +23,7 @@ willUpdate(Menu) {
     while(command) {
         if(strcmp(command->command, props->command) == 0) {
             if(props->onSelect) props->onSelect(self);
+
             state->previous_menu = state->current_menu;
             state->current_menu = command;
             return;
@@ -37,7 +37,9 @@ willUpdate(Menu) {
 release(Menu) {
     struct menu_command *command = state->current_menu;
     if(command) {
+        if(props->onWillRun) props->onWillRun(self);
         command->callback(command->args);
+        if(props->onCommand) props->onCommand(self);
     }
 }
 

@@ -3,7 +3,6 @@
 #include <Scheduler.h>
 #include <AtDC.h>
 #include <Button.h>
-#include <Scheduler.h>
 #include <Servo.h>
 
 #define   VERSION      1
