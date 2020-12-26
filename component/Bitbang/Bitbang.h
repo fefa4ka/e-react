@@ -15,6 +15,7 @@ typedef struct
     struct rtc_datetime *time;
 
     unsigned int         baudrate;
+    bool                 little_endian;
     unsigned short       pins_number;
     void **              pins;
     enum pin_mode *      modes;

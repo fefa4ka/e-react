@@ -31,7 +31,7 @@ typedef struct
     bool                reseting;
     void *              pins[3];
     unsigned char       pins_state;
-    unsigned char       buffer_data;
+    unsigned char       buffer_data[2];
     struct ring_buffer  buffer;
     struct ring_buffer *buffers[2];
     struct callback     SIPO_reset;

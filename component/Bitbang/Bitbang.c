@@ -41,6 +41,10 @@ shouldUpdate (Bitbang)
         return false;
     }
 
+    if(props->baudrate == 0) {
+        return true;
+    }
+
     // Change state on baudrate
     unsigned long bit_duration = 1000000 / props->baudrate;
     if (props->time->time_us + props->time->step_us - state->tick
@@ -48,6 +52,7 @@ shouldUpdate (Bitbang)
 
         return true;
     }
+
 
     return false;
 }
@@ -79,6 +84,9 @@ willUpdate (Bitbang)
             /* Read new byte for output */
             if (state->sending == false) {
                 if (rb_read (*buffer, data) == eErrorNone) {
+                    if(props->little_endian) {
+                        *data = reverse(*data);
+                    }
                     sending = true;
                 }
             }
@@ -92,7 +100,7 @@ willUpdate (Bitbang)
     if (state->position == -1)
         state->position++;
 
-    if (sending && state->sending == false && props->onStart->method)
+    if (sending && state->sending == false && props->onStart && props->onStart->method)
         props->onStart->method (self, props->onStart->argument);
 
     state->sending = sending;
@@ -140,8 +148,8 @@ didUpdate (Bitbang)
             if (props->clock)
                 props->io->off (props->clock);
 
-            if (props->onTransmitted->method)
-                props->onTransmitted->method (self, props->onStart->argument);
+            if (props->onTransmitted && props->onTransmitted->method)
+                props->onTransmitted->method (self, props->onTransmitted->argument);
         } else {
             state->position++;
 

@@ -4,13 +4,13 @@
 AVR_MCU(F_CPU, "atmega168p");
 
 
-static void in(void *pin);
-static void out(void *pin);
-static void on(void *pin);
-static void off(void *pin);
-static void flip(void *pin);
-static void pullup(void *pin);
-static bool get(void *pin);
+static void io_in(void *pin);
+static void io_out(void *pin);
+static void io_on(void *pin);
+static void io_off(void *pin);
+static void io_flip(void *pin);
+static void io_pullup(void *pin);
+static bool io_get(void *pin);
 
 static void adc_mount(void *prescaler);
 static void adc_selectChannel(void *channel);
@@ -33,13 +33,13 @@ static unsigned int timer_usFromTicks(unsigned int ticks);
 
 HAL hw = {
     .io = {
-        .in = in,
-        .out = out,
-        .on = on,
-        .off = off,
-        .flip = flip,
-        .get = get,
-        .pullup = pullup
+        .in = io_in,
+        .out = io_out,
+        .on = io_on,
+        .off = io_off,
+        .flip = io_flip,
+        .get = io_get,
+        .pullup = io_pullup
     },
     .adc = {
         .mount = adc_mount,
@@ -65,50 +65,50 @@ HAL hw = {
 };
 
 static void
-in(void *pin)
+io_in(void *pin)
 {
     pin_t *Pin = (pin_t *)pin;
     
-    *(Pin->port.ddr) &= ~(1 << (Pin->number));
-    *(Pin->port.port) |= (1 << (Pin->number));
+    bit_clear(*Pin->port.ddr, Pin->number);
+    bit_set(*Pin->port.port, Pin->number);
 }
 
 static void 
-out(void *pin) {
+io_out(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
-    *(Pin->port.ddr) |= (1 << (Pin->number));
+    bit_set(*Pin->port.ddr, Pin->number);
 }
 
 
 static void 
-on(void *pin) {
+io_on(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
-    *(Pin->port.port) |= (1 << (Pin->number));
+    bit_set(*Pin->port.port, Pin->number);
 }
 
 static void 
-off(void *pin) {
+io_off(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
-    *(Pin->port.port) &= ~(1 << (Pin->number));
+    bit_clear(*Pin->port.port, Pin->number);
 }
 
 static void 
-flip(void *pin) {
+io_flip(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
-    *(Pin->port.port) ^= (1 << (Pin->number));
+    bit_flip(*Pin->port.port, Pin->number);
 }
 
 static void 
-pullup(void *pin) {
-    on(pin);
+io_pullup(void *pin) {
+    io_on(pin);
 }
 
 static bool
-get(void *pin) {
+io_get(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     return *(Pin->port.pin) & (1 << (Pin->number));
