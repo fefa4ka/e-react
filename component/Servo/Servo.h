@@ -1,6 +1,5 @@
 
-#ifndef Servo_block_h
-#define Servo_block_h
+#pragma once
 
 #include "../IO/IO.h"
 #include "../Scheduler/Scheduler.h"
@@ -21,6 +20,6 @@ typedef struct {
     bool                   scheduled;
 } Servo_blockState;
 
-React_Header(Servo);
 
-#endif
+React_Header(Servo);
+#define Servo(instance) component(Servo, instance)

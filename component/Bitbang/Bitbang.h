@@ -1,39 +1,40 @@
 
-#pragma once 
+#pragma once
 
-#include <stdbool.h>
-#include <component.h>
-#include <circular.h>
-#include <hal.h>
 #include <Calendar.h>
+#include <circular.h>
+#include <component.h>
+#include <hal.h>
+#include <stdbool.h>
 
 #define BITBANG_MAX_LINES 8
 
 typedef struct
 {
-    io_handler *io;
-    rtc_datetime_t   *time;
-    
-    unsigned int  baudrate;
-    void          *pins;
-    void          *clock;
-    pin_mode_t    *modes;
-    struct ring_buffer_s 
-                  *buffers;
+    io_handler *         io;
+    struct rtc_datetime *time;
 
-    void (*onStart)(Component *instance);
-    void (*onReceive)(Component *instance);
-    void (*onReceiveLine)(Component *instance);
-    void (*onTransmit)(Component *instance);
-    void (*onTransmitLine)(Component *instance);
+    unsigned int         baudrate;
+    unsigned short       pins_number;
+    void **              pins;
+    enum pin_mode *      modes;
+    struct ring_buffer **buffers;
+    void *               clock;
+
+    struct callback *onStart;
+    struct callback *onTransmitted;
 } Bitbang_blockProps;
 
-typedef struct {
-    bool            sending;
-    short           position;
-    unsigned char   data[BITBANG_MAX_LINES]; 
-    unsigned long   tick;
+typedef struct
+{
+    bool sending;
+
+    unsigned char data[BITBANG_MAX_LINES];
+    short         position;
+
+    unsigned long tick;
 } Bitbang_blockState;
 
 
-React_Header(Bitbang);
+React_Header (Bitbang);
+#define Bitbang(instance) component (Bitbang, instance)

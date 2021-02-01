@@ -38,4 +38,4 @@ didUpdate(PWM) {
 }
 
 
-React_Constructor(PWM);
+React_Constructor(PWM)

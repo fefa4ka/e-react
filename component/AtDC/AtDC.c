@@ -39,4 +39,4 @@ didMount(AtDC) {
 didUnmount(AtDC) { }
 didUpdate(AtDC) { }
 
-React_Constructor(AtDC);
+React_Constructor(AtDC)

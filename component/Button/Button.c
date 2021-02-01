@@ -1,88 +1,114 @@
 #include "Button.h"
 
-
-
-willMount(Button) {
+willMount (Button)
+{
     /* Setup pin as input */
-    props->io->in(props->pin);
+    props->io->in (props->pin);
+    state->inverse
+        = props->type == BTN_PUSH_PULLUP || props->type == BTN_TOGGLE_PULLUP;
+
+    if(state->inverse) {
+        props->io->pullup(props->pin);
+    }
 }
 
-shouldUpdate(Button) {
-    bool level = props->io->get(props->pin); 
+shouldUpdate (Button)
+{
+    bool         level          = props->io->get (props->pin);
+    bool         is_level_equal = state->level == level;
+    bool         state_level = state->inverse ? !state->level : state->level;
+    unsigned int passed      = props->time->time_ms - state->tick;
 
-    unsigned int passed = props->time->time_ms - state->tick;
-    
+
+    if (passed < 0) {
+        passed = 65535 - state->tick + props->time->time_ms;
+    }
 
     // Second check after bounce_delay_ms
-    if(state->tick && passed >= props->bounce_delay_ms) {
+    if (state->tick && passed >= props->bounce_delay_ms) {
         return true;
     }
 
     /* Already pressed */
-    if(state->level == 1 && level == 1 && state->pressed) {
+    if (state_level == 1 && is_level_equal && state->pressed) {
         return false;
     }
 
     /* First high level detected */
-    if(state->level == 0 && level != 0 && state->tick == 0) {
+    if (state_level == 0 && !is_level_equal) {
         return true;
     }
-    
 
-    state->level = level;
 
-    // Another checks after pressed
-    if(props->type == push && state->pressed && level == 0) {
+    /* Another checks after pressed */
+    if ((props->type == BTN_PUSH_PULLUP || props->type == BTN_PUSH)
+        && state->pressed && (level == 0 || state->inverse)) {
         // Push button unpressed after release
         return true;
     }
-
+    
+    state->level = level;
     return false;
 }
 
-willUpdate(Button) {
+willUpdate (Button)
+{
     // Actual state
-    state->level = props->io->get(props->pin); 
+    state->level = props->io->get (props->pin);
+    bool         state_level = state->inverse ? !state->level : state->level;
 
     // Set initial tick to start count delay
-    if(!state->tick && state->level) {
+    if (!state->tick && state_level) {
         state->tick = props->time->time_ms;
     }
 }
 
-release(Button) {
-    unsigned int passed = props->time->time_ms - state->tick;
-    bool pressed = props->type == toggle 
-                ? state->pressed 
-                : false;
+release (Button)
+{
 
-    if(state->tick && passed > props->bounce_delay_ms) {
-        if(state->level) {
-            pressed = props->type == toggle 
-                ? !state->pressed 
-                : true;
-        } 
+    unsigned int passed  = props->time->time_ms - state->tick;
+    bool         pressed = false;
+    bool         state_level = state->inverse ? !state->level : state->level;
+
+    if (props->type == BTN_TOGGLE_PULLUP
+        || props->type == BTN_TOGGLE) {
+        pressed = state->pressed;
+    }
+
+    if (state->tick && passed > props->bounce_delay_ms) {
+        if (state_level) {
+            if (props->type == BTN_TOGGLE_PULLUP
+                || props->type == BTN_TOGGLE) {
+                pressed = !state->pressed;
+            } else {
+                pressed = true;
+            }
+        }
 
         state->tick = 0;
     }
 
-    if(state->pressed != pressed) {
-        if(props->onToggle) props->onToggle(self);
+    if (state->pressed != pressed) {
+        if (props->onToggle)
+            props->onToggle (self);
 
-        if(pressed) {
-            if(props->onPress) props->onPress(self);
+        if (pressed) {
+            if (props->onPress)
+                props->onPress (self);
         } else {
-            if(props->onRelease) props->onRelease(self);
+            if (props->onRelease)
+                props->onRelease (self);
         }
+
+        state->pressed = pressed;
     }
 
-    state->pressed = pressed;
 }
 
-didMount(Button) { }
+didMount (Button) {}
 
-didUnmount(Button) { }
+didUnmount (Button) {}
 
-didUpdate(Button) { }
+didUpdate (Button) {}
 
-React_Constructor(Button);
+React_Constructor (Button)

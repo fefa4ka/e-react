@@ -19,5 +19,6 @@ typedef struct {
     bool loading;
 } AtDC_blockState;
 
-React_Header(AtDC);
 
+React_Header(AtDC);
+#define AtDC(instance) component(AtDC, instance)

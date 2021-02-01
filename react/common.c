@@ -1,40 +1,30 @@
 #include "common.h"
 
-char * utoa(unsigned long value);
-char * itoa(long value);
 
 //-----------------------------------------------------------------------------
 // Преобразование числа в строку ANSI C через быстрое деление
 //-----------------------------------------------------------------------------
 
 static char utoaBuffer[13];
-typedef struct 
+
+
+
+inline void divmodu10(divmod10_t *res, unsigned long n)
 {
-    unsigned long quot;
-    unsigned short rem;
-} divmod10_t;
+    res->quot = n >> 1;
+    res->quot += res->quot >> 1;
+    res->quot += res->quot >> 4;
+    res->quot += res->quot >> 8;
+    res->quot += res->quot >> 16;
+    unsigned long qq = res->quot;
 
-
-
-inline static divmod10_t divmodu10(unsigned long n)
-{
-    divmod10_t res;
-
-    res.quot = n >> 1;
-    res.quot += res.quot >> 1;
-    res.quot += res.quot >> 4;
-    res.quot += res.quot >> 8;
-    res.quot += res.quot >> 16;
-    unsigned long qq = res.quot;
-
-    res.quot >>= 3;
-    res.rem = (unsigned short)(n - ((res.quot << 1) + (qq & ~7ul)));
-    if(res.rem > 9)
+    res->quot >>= 3;
+    res->rem = (unsigned short)(n - ((res->quot << 1) + (qq & ~7ul)));
+    if(res->rem > 9)
     {
-        res.rem -= 10;
-        res.quot++;
+        res->rem -= 10;
+        res->quot++;
     }
-    return res;
 }
 
 
@@ -47,7 +37,8 @@ char * utoa(unsigned long value)
     *--buffer = 0;
     do
     {
-        divmod10_t res = divmodu10(value);
+        divmod10_t res = {0};
+        divmodu10(&res, value);
         *--buffer = res.rem + '0';
         value = res.quot;
     }

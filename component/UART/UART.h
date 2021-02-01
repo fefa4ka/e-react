@@ -1,16 +1,15 @@
-#ifndef block_UART_h
-#define block_UART_h
+#pragma once 
 
 #include <component.h>
 #include <api.h>
 #include <circular.h>
 
 typedef struct {
-    uart_handler        *uart;
+    serial_handler        *uart;
     unsigned int        baudrate;
 
-    struct ring_buffer_s        *tx_buffer;
-    struct ring_buffer_s        *rx_buffer;
+    struct ring_buffer        *tx_buffer;
+    struct ring_buffer        *rx_buffer;
     
 
     void (*onReceive)(Component *instance);
@@ -26,5 +25,4 @@ typedef struct {
 
 
 React_Header(UART);
-
-#endif
+#define UART(instance) component(UART, instance)

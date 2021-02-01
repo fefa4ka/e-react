@@ -2,6 +2,13 @@
 #include <common.h>
 
 
+static unsigned int g_seed = 12312;
+
+extern inline int fastrand() { 
+  g_seed = (214013*g_seed+2531011); 
+  return (g_seed>>16)&0x7FFF; 
+} 
+
 willMount(Servo) {
     props->io->out(props->pin);
 
@@ -45,10 +52,11 @@ release(Servo) {
 
         bool scheduled = Scheduler_enqueue(
                 props->scheduler, 
-                state->on_duty 
+                (state->on_duty 
                     ? state->duty_cycle
-                    : state->remain_time, 
-                self->componentRelease, self
+                    : state->remain_time) 
+                + (state->scheduled ? 0 : fastrand()), 
+                self->Release, self
         );
 
         state->scheduled = scheduled;

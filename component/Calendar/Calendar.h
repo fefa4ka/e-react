@@ -1,9 +1,8 @@
 #pragma once
 
 #include <component.h>
-#include <hal.h>
 
-typedef struct rtc_datetime_s
+struct rtc_datetime
 {
   unsigned int   year;
   unsigned char  month;
@@ -17,7 +16,8 @@ typedef struct rtc_datetime_s
   unsigned int   time_ms;
   unsigned long  time_us;
   unsigned int   step_us;
-} rtc_datetime_t;
+};
+typedef struct rtc_datetime rtc_datetime_t;
 
 
 typedef struct {
@@ -38,5 +38,5 @@ typedef struct {
 
     
 React_Header(Time);
-
+#define Time(instance) component(Time, instance)
 

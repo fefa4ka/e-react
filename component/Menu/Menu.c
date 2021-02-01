@@ -8,7 +8,6 @@ willMount(Menu) {
 shouldUpdate(Menu) {
     /* Command not found */
     if(strcmp(props->command, state->command) != 0) {
-        if(props->onCommand) props->onCommand(self);
         return true;
     }
 
@@ -16,7 +15,7 @@ shouldUpdate(Menu) {
 }
 
 willUpdate(Menu) {
-    menu_command_t *command = state->current_menu && state->current_menu->menu
+    struct menu_command *command = state->current_menu && state->current_menu->menu
         ? state->current_menu->menu
         : props->menu;
 
@@ -24,6 +23,7 @@ willUpdate(Menu) {
     while(command) {
         if(strcmp(command->command, props->command) == 0) {
             if(props->onSelect) props->onSelect(self);
+
             state->previous_menu = state->current_menu;
             state->current_menu = command;
             return;
@@ -35,9 +35,11 @@ willUpdate(Menu) {
 }
 
 release(Menu) {
-    menu_command_t *command = state->current_menu;
+    struct menu_command *command = state->current_menu;
     if(command) {
+        if(props->onWillRun) props->onWillRun(self);
         command->callback(command->args);
+        if(props->onCommand) props->onCommand(self);
     }
 }
 
@@ -48,4 +50,4 @@ didUnmount(Menu) { }
 didUpdate(Menu) {
 }
 
-React_Constructor(Menu);
+React_Constructor(Menu)
