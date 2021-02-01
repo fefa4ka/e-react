@@ -14,8 +14,13 @@ avr
 -I./component/Servo
 -I./component/Calendar
 -I./component/UART
+-I./component/Serial
 -I./component/Menu
 -I./component/Bitbang
 -I./react
+-I./react/hal
 -I./target
 
+-I./component/SPI
+-I./component/SIPO
+-I./component/OneWire
