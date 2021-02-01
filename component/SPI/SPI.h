@@ -7,13 +7,12 @@
 struct SPI_buffer
 {
     struct ring_buffer output;
-    pin_t **           chip_select;
+    struct callback  * callback;
+    void  **           chip_select;
 };
 
 typedef struct
 {
-    Bitbang_blockProps bitbang;
-
     io_handler *         io;
     struct rtc_datetime *time;
 
@@ -33,7 +32,7 @@ typedef struct
     void *              pins[3];
     struct ring_buffer *buffers[2];
 
-    unsigned char      input_buffer_data;
+    unsigned char      input_buffer_data[2];
     struct ring_buffer input_buffer;
     struct callback    SPI_init;
     struct callback    SPI_receive;
@@ -43,7 +42,7 @@ React_Header (SPI);
 #define SPI(instance) component (SPI, instance)
 
 void SPI_write (Component *instance, unsigned char address,
-                unsigned char value, pin_t *chip_select_pin);
+                unsigned char value, void *chip_select_pin);
 
 void SPI_read (Component *instance, unsigned char address,
-               struct callback *callback, pin_t *chip_select_pin);
+               struct callback *callback, void *chip_select_pin);
