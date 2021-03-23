@@ -22,6 +22,7 @@ struct device
     
     unsigned char          index; 
 
+    pin_t                  btn_pin;
     pin_t                  clk_pin;
     
     pin_t                  miso_pin;

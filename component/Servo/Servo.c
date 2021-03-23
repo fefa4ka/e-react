@@ -2,13 +2,6 @@
 #include <common.h>
 
 
-static unsigned int g_seed = 12312;
-
-extern inline int fastrand() { 
-  g_seed = (214013*g_seed+2531011); 
-  return (g_seed>>16)&0x7FFF; 
-} 
-
 willMount(Servo) {
     props->io->out(props->pin);
 
@@ -19,13 +12,11 @@ willMount(Servo) {
 
 shouldUpdate(Servo) {
     if(props->angle != nextProps->angle
-            || props->enabled != nextProps->enabled) {
+            || props->enabled != nextProps->enabled)
         return true;
-    }
 
-    if(props->enabled && state->scheduled == false) {
+    if(props->enabled && state->scheduled == false)
         return true;
-    }
 
     return false;
 }
@@ -34,9 +25,8 @@ willUpdate(Servo) {
     state->duty_cycle = 1000 + props->angle * 50 / 9;
     state->remain_time = props->speed * 1000 - state->duty_cycle;
 
-    if(state->scheduled) {
+    if(state->scheduled)
         self->stage = released;
-    }
 }
 
 release(Servo) {
@@ -55,7 +45,9 @@ release(Servo) {
                 (state->on_duty 
                     ? state->duty_cycle
                     : state->remain_time) 
-                + (state->scheduled ? 0 : fastrand()), 
+                + (state->scheduled 
+                    ? 0 
+                    : random()), 
                 self->Release, self
         );
 

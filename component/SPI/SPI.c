@@ -4,7 +4,7 @@ static enum pin_mode SPI_modes[] = { OUTPUT, INPUT };
 
 void
 SPI_write (Component *instance, unsigned char address, unsigned char value,
-           pin_t *chip_select_pin)
+           void *chip_select_pin)
 {
     SPI_blockProps *   spi_props  = Instance_Props (SPI, instance);
     struct SPI_buffer *spi_buffer = spi_props->buffer;
@@ -17,7 +17,7 @@ SPI_write (Component *instance, unsigned char address, unsigned char value,
 
 void
 SPI_read (Component *instance, unsigned char address,
-          struct callback *callback, pin_t *chip_select_pin)
+          struct callback *callback, void *chip_select_pin)
 {
     SPI_blockProps *   spi_props  = Instance_Props (SPI, instance);
     struct SPI_buffer *spi_buffer = spi_props->buffer;
@@ -33,7 +33,7 @@ SPI_receive (void *bitbanger, void *spi)
 {
     SPI_blockProps *spi_props       = Instance_Props (SPI, (Component *)spi);
     unsigned int    index           = spi_props->buffer->output.read;
-    pin_t *         chip_select_pin = spi_props->buffer->chip_select[index];
+    void *          chip_select_pin = spi_props->buffer->chip_select[index];
 
     if (chip_select_pin) {
         spi_props->io->out (chip_select_pin);
@@ -49,7 +49,7 @@ SPI_init (void *bitbanger, void *spi)
     struct SPI_buffer *spi_buffer = spi_props->buffer;
     unsigned int       index      = spi_buffer->output.read;
 
-    pin_t *          chip_select_pin = spi_buffer->chip_select[index];
+    void *           chip_select_pin = spi_buffer->chip_select[index];
     struct callback *callback        = &spi_buffer->callback[index];
     unsigned char    data;
     rb_read (&spi_state->input_buffer, &data);
@@ -71,13 +71,12 @@ willMount (SPI)
         = { .bitbanger    = React_Define_Component (Bitbang, NULL, NULL),
             .pins         = { props->mosi_pin, props->miso_pin, NULL },
             .buffers      = { &props->buffer->output, NULL },
-            .input_buffer = { NULL, 1 },
+            .input_buffer = { NULL, 2 },
             .SPI_init     = { SPI_init, self },
             .SPI_receive  = { SPI_receive, self } };
     *state                 = State;
-    state->bitbanger.state = &state->bitbang_state;
-    state->bitbanger.props = &state->bitbang_props;
 
+    state->bitbanger.state = &state->bitbang_state;
 
     Bitbang_blockProps bitbang_props
         = { .io            = props->io,
@@ -89,10 +88,10 @@ willMount (SPI)
             .buffers       = state->buffers,
             .onStart       = &state->SPI_init,
             .onTransmitted = &state->SPI_receive };
+    state->bitbang_props = bitbang_props;
+    state->bitbanger.props = &state->bitbang_props;
 
-    props->bitbang = bitbang_props;
-
-    state->input_buffer.data = &state->input_buffer_data;
+    state->input_buffer.data = state->input_buffer_data;
     state->buffers[1]        = &state->input_buffer;
 
     state->bitbanger.WillMount (&state->bitbanger);

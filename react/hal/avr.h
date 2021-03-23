@@ -4,6 +4,7 @@
 #include <avr/io.h>
 
 #include "api.h"
+#include <common.h>
 
 typedef struct
 {

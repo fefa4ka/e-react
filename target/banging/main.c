@@ -2,11 +2,12 @@
 
 #define signal_pin hw_pin (B, 2)
 
-unsigned char        output_buffer[BUFFER_SIZE];
-unsigned char        input_buffer[BUFFER_SIZE];
+unsigned char output_buffer[BUFFER_SIZE];
+unsigned char input_buffer[BUFFER_SIZE];
 
 struct device state = {
     .time          = { 0 },
+    .btn_pin       = hw_pin (D, 0),
     .clk_pin       = hw_pin (D, 2),
     .mosi_pin      = hw_pin (D, 3),
     .miso_pin      = hw_pin (D, 4),
@@ -37,7 +38,6 @@ main (void)
     Button (button);
     Bitbang (spi);
 
-    send_number(NULL);
 
     // Event-loop
     while (true) {
@@ -51,23 +51,24 @@ main (void)
         react (Button, button,
                _ ({
                    .io              = &hw.io,
-                   .pin             = hw_pin (B, 1),
-                   .type            = BTN_PUSH,
+                   .pin             = &state.btn_pin,
+                   .type            = BTN_PUSH_PULLUP,
                    .time            = &state.time,
                    .bounce_delay_ms = 100,
 
-                   .onRelease       = send_number
-        }));
+                   .onRelease = send_number
+               }));
 
         react (Bitbang, spi,
-               _ ({ .io       = &hw.io,
-                    .time     = &state.time,
-                    .baudrate = 9600,
-                    .pins     = spi_pins,
-                    .clock    = &state.clk_pin,
-                    .modes    = spi_modes,
-                    .buffers  = spi_buffers
-        }));
+               _ ({
+                   .io       = &hw.io,
+                   .time     = &state.time,
+                   .baudrate = 9600,
+                   .pins     = spi_pins,
+                   .clock    = &state.clk_pin,
+                   .modes    = spi_modes,
+                   .buffers  = spi_buffers,
+               }));
     }
 
     return 0;

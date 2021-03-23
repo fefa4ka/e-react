@@ -7,6 +7,7 @@
 
 static char utoaBuffer[13];
 
+static unsigned int g_seed = 12312;
 
 
 inline void divmodu10(divmod10_t *res, unsigned long n)
@@ -27,7 +28,10 @@ inline void divmodu10(divmod10_t *res, unsigned long n)
     }
 }
 
-
+extern inline int random() { 
+  g_seed = (214013*g_seed+2531011); 
+  return (g_seed>>16)&0x7FFF; 
+} 
 
 //utoa fast div
 char * utoa(unsigned long value)
@@ -45,9 +49,6 @@ char * utoa(unsigned long value)
     while (value != 0);
     return buffer;
 }
-
-
-
 
 //utoa fast div
 char * itoa(long value)
@@ -69,3 +70,10 @@ char * itoa(long value)
     return unsignedStr;
 }
 
+
+unsigned char reverse(unsigned char b) {
+   b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+   b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+   b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+   return b;
+}
