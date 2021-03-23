@@ -26,6 +26,7 @@ struct device
 };
 
 
+#define VERSION 1
 #define UART_BAUDRATE 9600
 #define SPI_BAUDRATE  9600
 // Buffers allication
@@ -49,10 +50,10 @@ struct device state = {
     .spi_bus_buffer = { .output      = { spi_output_buffer, BUFFER_SIZE },
                         .callback    = spi_callback_buffer,
                         .chip_select = spi_chip_select_buffer },
-    .clk_pin        = hw_pin (D, 1),
-    .mosi_pin       = hw_pin (D, 2),
-    .miso_pin       = hw_pin (D, 3),
-    .mma7455_pin    = hw_pin (D, 4),
+    .clk_pin        = hw_pin (B, 2),
+    .mosi_pin       = hw_pin (B, 4),
+    .miso_pin       = hw_pin (B, 5),
+    .mma7455_pin    = hw_pin (B, 1),
 };
 
 void
@@ -78,6 +79,15 @@ log_accelerometer (Component *trigger)
     log_string ("\r\n");
 }
 
+
+void print_version(Component *trigger) 
+{
+    log_num("\r\ne-react ver. 0.", VERSION);
+    log_num(".", BUILD_NUM);
+    log_string("\r\n"); 
+}
+
+
 int
 main (void)
 {
@@ -86,11 +96,14 @@ main (void)
     SPI (spi_bus);
     MMA7455 (sensor);
 
+    print_version(NULL);
+
     while (true) {
         react (Time, datetime,
                _ ({
                    .timer = &hw.timer,
                    .time  = &state.time,
+                   .onSecond = print_version
                }));
 
         react (UART, serial,
