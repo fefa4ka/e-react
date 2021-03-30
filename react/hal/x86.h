@@ -1,10 +1,18 @@
 #pragma once
 
+#include <stdlib.h>
 #include "api.h"
+#include "../hash.h"
 typedef struct
 {
-    char  *port;
-    short number;
+    unsigned char number;
+    char  *name;
+    struct
+    {
+        unsigned char ddr;
+        unsigned char port;
+        unsigned char pin;
+    } port;
 } pin_t;
 
 extern HAL hw;
@@ -19,5 +27,5 @@ extern HAL hw;
 
 #define hw_pin(port, pin)                                                     \
     {                                                                         \
-        #port, pin                                                            \
+        pin, #port, {0}                                                           \
     }

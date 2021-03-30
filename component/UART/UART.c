@@ -8,15 +8,15 @@ shouldUpdate(UART) {
     unsigned char sending;
 
     if(props->uart->isDataReceived()) {
-        state->mode = eCommunicationModeReceiver;
+        state->mode = COMMUNICATION_MODE_RECEIVER;
         return true;
     }
 
     if(props->uart->isTransmitReady()) {
 
-        state->mode = eCommunicationModeTransceiver;
+        state->mode = COMMUNICATION_MODE_TRANSCIEVER;
 
-        if(rb_read(props->tx_buffer, &sending) == eErrorBufferEmpty) {
+        if(rb_read(props->tx_buffer, &sending) == ERROR_BUFFER_EMPTY) {
             return false;
         } else {
 
@@ -24,7 +24,7 @@ shouldUpdate(UART) {
 
             if(sending == 0) {
                 rb_read(props->tx_buffer, &sending);
-                state->mode = eCommunicationModeReceiver;
+                state->mode = COMMUNICATION_MODE_RECEIVER;
             } else {
                 return true;
             }
@@ -39,12 +39,12 @@ shouldUpdate(UART) {
 willUpdate(UART) { }
 
 release(UART) {
-    if(state->mode == eCommunicationModeTransceiver) {
+    if(state->mode == COMMUNICATION_MODE_TRANSCIEVER) {
         props->uart->transmit(state->sending);
 
         if(props->onTransmit) props->onTransmit(self);
 
-    } else if(state->mode == eCommunicationModeReceiver) {
+    } else if(state->mode == COMMUNICATION_MODE_RECEIVER) {
         state->sending = props->uart->receive();
         rb_write(props->rx_buffer, state->sending); 
 
@@ -57,7 +57,7 @@ didUnmount(UART) { }
 
 didUpdate(UART) {
     if(state->sending == '\r') {
-        if(state->mode == eCommunicationModeReceiver) {
+        if(state->mode == COMMUNICATION_MODE_RECEIVER) {
             if(props->onReceiveLine) props->onReceiveLine(self);
         } else {
             if(props->onTransmitLine) props->onTransmitLine(self);

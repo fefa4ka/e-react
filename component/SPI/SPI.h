@@ -4,6 +4,8 @@
 #include <component.h>
 #include <stdbool.h>
 
+#define SPI(instance) React_Define(SPI, instance)
+
 struct SPI_buffer
 {
     struct ring_buffer output;
@@ -22,13 +24,13 @@ typedef struct
     void *miso_pin;
     void *mosi_pin;
     void *clk_pin;
-} SPI_blockProps;
+} SPI_props_t;
 
 typedef struct
 {
     Component           bitbanger;
-    Bitbang_blockState  bitbang_state;
-    Bitbang_blockProps  bitbang_props;
+    Bitbang_state_t     bitbang_state;
+    Bitbang_props_t     bitbang_props;
     void *              pins[3];
     struct ring_buffer *buffers[2];
 
@@ -36,10 +38,9 @@ typedef struct
     struct ring_buffer input_buffer;
     struct callback    SPI_init;
     struct callback    SPI_receive;
-} SPI_blockState;
+} SPI_state_t;
 
 React_Header (SPI);
-#define SPI(instance) component (SPI, instance)
 
 void SPI_write (Component *instance, unsigned char address,
                 unsigned char value, void *chip_select_pin);

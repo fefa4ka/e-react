@@ -1,9 +1,16 @@
 #include "Servo.h"
-#include <common.h>
 
+static unsigned int g_seed = 31337;
+
+inline int
+fast_random ()
+{
+    g_seed = (214013 * g_seed + 2531011);
+    return (g_seed >> 16) & 0x7FFF;
+}
 
 willMount(Servo) {
-    props->io->out(props->pin);
+    state->io->out(state->pin);
 
     state->on_duty = true;
     state->duty_cycle = 1000 + props->angle * 50 / 9;
@@ -11,11 +18,11 @@ willMount(Servo) {
 }
 
 shouldUpdate(Servo) {
-    if(props->angle != nextProps->angle
-            || props->enabled != nextProps->enabled)
+    if(props->angle != next_props->angle
+            || props->speed != next_props->speed)
         return true;
 
-    if(props->enabled && state->scheduled == false)
+    if(props->speed && state->on_duty == SERVO_STANDY)
         return true;
 
     return false;
@@ -25,42 +32,41 @@ willUpdate(Servo) {
     state->duty_cycle = 1000 + props->angle * 50 / 9;
     state->remain_time = props->speed * 1000 - state->duty_cycle;
 
-    if(state->scheduled)
-        self->stage = released;
-}
+    if(state->on_duty != SERVO_STANDY)
+        self->stage = REACT_STAGE_RELEASED;
 
-release(Servo) {
-    if(props->enabled) {
-        if(state->on_duty) {
-            props->io->off(props->pin);
-            state->on_duty = false;
-        } else {
-            props->io->on(props->pin);
-
-            state->on_duty = true;
-        }
-
-        bool scheduled = Scheduler_enqueue(
-                props->scheduler, 
-                (state->on_duty 
-                    ? state->duty_cycle
-                    : state->remain_time) 
-                + (state->scheduled 
-                    ? 0 
-                    : random()), 
-                self->Release, self
-        );
-
-        state->scheduled = scheduled;
-    } else {
-        props->io->off(props->pin);
-        state->scheduled = false;
+    if(props->speed == 0 && next_props->speed) {
+        Servo_willMount(self, next_props);
     }
 }
 
-didMount(Servo) { }
+release(Servo) {
+    if(props->speed) {
+        if(state->on_duty == SERVO_ON_DUTY) {
+            state->io->off(state->pin);
+            state->on_duty = SERVO_ON_OFFSET;
+        } else {
+            state->io->on(state->pin);
 
-didUnmount(Servo) { }
-didUpdate(Servo) { }
+            state->on_duty = SERVO_ON_DUTY;
+        }
 
-React_Constructor(Servo);
+        bool scheduled = Scheduler_enqueue(
+                state->scheduler, 
+                (state->on_duty 
+                    ? state->duty_cycle
+                    : state->remain_time) 
+                + (state->on_duty
+                    ? 0 
+                    : fast_random()), 
+                self->Release, self
+        );
+    } else {
+        state->io->off(state->pin);
+        state->on_duty = SERVO_STANDY;
+    }
+}
+
+didMount(Servo) {}
+didUpdate(Servo) {}
+

@@ -1,32 +1,30 @@
 #pragma once
 
 #include <Bitbang.h>
-#include <component.h>
-#include <stdbool.h>
+
+#define SIPO(instance) React_Define(SIPO, instance)
 
 struct SIPO_pin
 {
-    Component *  bus;
+    Component *bus;
     unsigned int number;
 };
 
 typedef struct
 {
     io_handler *         io;
-    struct rtc_datetime *time;
+    struct Timer        *timer;
 
     unsigned int baudrate;
 
     pin_t *data_pin;
     pin_t *reset_pin;
     pin_t *clk_pin;
-} SIPO_blockProps;
+} SIPO_props_t;
 
 typedef struct
 {
-    Component          bitbanger;
-    Bitbang_blockState bitbanger_state;
-    Bitbang_blockProps bitbanger_props;
+    Bitbang_Component          bitbanger;
 
     bool                reseting;
     void *              pins[3];
@@ -35,9 +33,8 @@ typedef struct
     struct ring_buffer  buffer;
     struct ring_buffer *buffers[2];
     struct callback     SIPO_reset;
-} SIPO_blockState;
+} SIPO_state_t;
 
 extern io_handler SIPO_handler;
 
 React_Header (SIPO);
-#define SIPO(instance) component (SIPO, instance)

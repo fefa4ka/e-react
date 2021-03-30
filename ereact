@@ -1,6 +1,5 @@
 #!/bin/bash
-
-set -e -x
+#set -e -x
 
 if [ $1 == "component" ]; then
     name=$2
@@ -11,12 +10,31 @@ if [ $1 == "component" ]; then
     sed -i "s/Template/$name/g" component/$name/$name.c
     echo "-I./component/$name" >> .ccls
     echo "component/$name created."
+
     exit
 fi
 
-TARGET="target/$1/main"
-SIMULATOR="target/$1/sim"
-ARCH="$2"
+if [ $1 == "clean" ]; then
+    make -f Makefile.AVR clean
+    make -f Makefile.STM8L clean
+    make -f Makefile.x86 clean
+
+    exit
+fi
+
+if [ $1 == "test" ]; then
+    TARGET="test/$2"
+    TARGET_DIR="./test"
+    ARCH="x86"
+else
+    if [ -f app/$1.c ]; then
+        TARGET="app/$1"
+    else
+        TARGET="app/$1/main"
+    fi
+    TARGET_DIR="./app"
+    ARCH="$2"
+fi
 
 echo "Building $1"
 
@@ -24,11 +42,18 @@ make -f Makefile.${ARCH} clean
 
 cat BUILD.num | awk '{ print $1 + 1 }' | tee BUILD.num 
 
+# Get dependencies
 make -f Makefile.${ARCH} ${TARGET}.d ARCH=$ARCH
+DEP_DEFS=""
+
 DEPS=`cat ${TARGET}.d | cut -d':' -f2`
 DEPENDENT_OBJECTS=""
 for filename in ${DEPS}; do
     sourcename=${filename/.h/.c}
+
+    if [[ "$filename" == *"third_party/"* ]]; then
+        continue
+    fi
 
     if [ -f $sourcename ]; then
         if [ "$ARCH" == "AVR" ]; then
@@ -40,31 +65,51 @@ for filename in ${DEPS}; do
         fi
 
         if [ "$ARCH" == "STM8L" ]; then
-
-            if [[ "$filename" == *"main.c" ]]; then
+            if [[ "$filename" == *"$1.c" || "$filename" == *"main.c" ]]; then
                 continue
             fi
             object=${sourcename/.c/.rel}
+        fi
+
+        if [[ "$sourcename" == "component/"* ]]; then
+            component=$(echo $sourcename | cut -d'/' -f2)
+            while read definition; do
+                def=$(echo $definition | rev | cut -d' ' -f1 | rev)
+                DEP_DEFS="$DEP_DEFS -D${def}"
+            done < <(grep "^#define.*_${component}_" ${TARGET}.c)
         fi
 
     DEPENDENT_OBJECTS="${DEPENDENT_OBJECTS} ${object}"
 fi
 done
 DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/[^/]*/\.\./|/|' -e 't a'`
+DEFS="ARCH=$ARCH PRODUCT_NAME=$1"
 
 if [ "$ARCH" == "AVR" ]; then
-    make -f Makefile.${ARCH} "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
+    make -f Makefile.${ARCH} "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
+    if [[ -f "${TARGET}_test.c" ]]; then
+        echo "Test exists"
+        # mv ${TARGET}.elf ${TARGET}.fw
+        # ./ereact ${1}_test x86
+        # mv ${TARGET}.fw ${TARGET}.elf
+        # exit 0
+    fi
+
+    SIMULATOR="target/$1/sim"
     #make "${SIMULATOR}.sim.elf"
     make -f Makefile.${ARCH} flash TARGET="${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
 fi
 
 if [ "$ARCH" == "STM8L" ]; then
-
-    make -f Makefile.${ARCH} "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
+    make -f Makefile.${ARCH} "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
     sudo stm8flash -c stlinkv2 -p stm8l152k6 -w ${TARGET}.ihx
 fi
 
 if [ "$ARCH" == "x86" ]; then
-    make -f Makefile.${ARCH} "${TARGET}" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH PRODUCT_NAME=$1
+    make -f Makefile.${ARCH} "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 
 fi
 
+if [ "$1" == "test" ]; then
+    echo -e "\n\n$2 test started\n"
+    ./test/$2
+fi

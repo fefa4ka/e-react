@@ -3,6 +3,9 @@
 #include <component.h>
 #include <stdbool.h>
 
+#define IO(instance) React_Define(IO, instance)
+#define IO_new(instance, props) React_Define_WithProps(IO, instance, props)
+
 typedef struct
 {
     io_handler *io;
@@ -23,12 +26,11 @@ typedef struct
     void (*onChange) (Component *instance);
     void (*onLow) (Component *instance);
     void (*onHigh) (Component *instance);
-} IO_blockProps;
+} IO_props_t;
 
 typedef struct
 {
     bool level;
-} IO_blockState;
+} IO_state_t;
 
 React_Header (IO);
-#define IO(instance) component (IO, instance)

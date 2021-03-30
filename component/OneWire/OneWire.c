@@ -88,7 +88,7 @@ release (OneWire)
         props->io->in (props->pin);
         state->sending  = false;
         state->tick     = 0;
-        state->position = (state->position + 1) % 8;
+        state->position = (state->position + 1) % 8; // TODO: fast div && (1 << 3)?
     }
 }
 

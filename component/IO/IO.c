@@ -1,77 +1,88 @@
 #include "IO.h"
 
-static inline void
-IO_setPinMode (IO_blockProps *props)
-{
-    if (props->mode == IO_INPUT) {
-        props->io->in (props->pin);
-    } else {
-        props->io->out (props->pin);
-    }
+/**
+ * \brief Initial pin mode configuration
+ */
+willMount(IO) {
+    IO_willUpdate(self, next_props);
 }
 
-static inline void
-IO_setPinState (IO_blockProps *props)
-{
-    if (props->level == IO_HIGH) {
-        props->io->on (props->pin);
-    } else {
-        props->io->off (props->pin);
-    }
-}
-
-willMount (IO) { IO_setPinMode (props); }
-
-shouldUpdate (IO)
+/**
+ * \brief Updates everytime in input mode,
+ *        otherwise updates if props changes
+ */
+shouldUpdate(IO)
 {
     if (props->mode == IO_INPUT) {
         return true;
     }
 
-    if (props->level != nextProps->level || props->mode != nextProps->mode
-        || props->io->in != nextProps->io->in) {
+    if (props->level != next_props->level || props->mode != next_props->mode
+        || props->io->in != next_props->io->in || props->pin != next_props->pin) {
         return true;
     }
 
     return false;
 }
 
-willUpdate (IO)
+/**
+ * \brief Configure pin mode if needed
+ */
+willUpdate(IO)
 {
-    if (props->mode != nextProps->mode || props->io->in != nextProps->io->in) {
-        IO_setPinMode (props);
+    if (props->mode != next_props->mode
+        || props->io->in != next_props->io->in 
+            || props->pin != next_props->pin 
+                || self->stage == REACT_STAGE_DEFINED) {
+        /* Configure pin for operation in certain mode */
+        if (props->mode == IO_INPUT) {
+            props->io->in(next_props->pin);
+        } else {
+            props->io->out(next_props->pin);
+        }
     }
 }
 
-release (IO)
+/**
+ * \brief Actual pin state configuration
+ *        and callbacks triggering
+ */
+release(IO)
 {
     if (props->mode == IO_OUTPUT) {
-        IO_setPinState (props);
+        /* Configure pin level */
+        if (props->level == IO_HIGH) {
+            props->io->on(props->pin);
+        } else {
+            props->io->off(props->pin);
+        }
     } else {
-        bool level = props->io->get (props->pin);
+        bool level = props->io->get(props->pin);
         if (state->level != level) {
             state->level = level;
-            if (level != 0 && props->onHigh) {
-                props->onHigh (self);
-            }
-            if (level == 0 && props->onLow) {
-                props->onLow (self);
-            }
+
             if (props->onChange) {
-                props->onChange (self);
+                props->onChange(self);
+            }
+
+            if (level != 0 && props->onHigh) {
+                props->onHigh(self);
+            } else if (level == 0 && props->onLow) {
+                props->onLow(self);
             }
         }
     }
 }
 
-didMount (IO)
+/**
+ * \brief First level reading
+ */
+didMount(IO)
 {
     if (props->onChange) {
-        props->onChange (self);
+        props->onChange(self);
     }
 }
 
-didUnmount (IO) {}
-didUpdate (IO) {}
+didUpdate(IO) {}
 
-React_Constructor (IO)

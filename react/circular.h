@@ -1,6 +1,5 @@
-#ifndef circular_h 
-#define circular_h 
-#include "common.h"
+#pragma once
+#include "macros.h"
 
 struct callback {
     void (*method)(void *trigger, void *argument);
@@ -16,9 +15,6 @@ struct ring_buffer {
 };
 
 unsigned int rb_length(struct ring_buffer *cb);
-enum eError rb_write(struct ring_buffer *cb, unsigned char data);
-enum eError rb_write_string(struct ring_buffer *cb, unsigned char *data);
-enum eError rb_read(struct ring_buffer *cb, unsigned char *data);
-
-#endif
-
+enum error rb_write(struct ring_buffer *cb, unsigned char data);
+enum error rb_write_string(struct ring_buffer *cb, unsigned char *data);
+enum error rb_read(struct ring_buffer *cb, unsigned char *data);

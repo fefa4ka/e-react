@@ -4,7 +4,7 @@
 #include <avr/io.h>
 
 #include "api.h"
-#include <common.h>
+#include "../macros.h"
 
 typedef struct
 {
@@ -38,3 +38,5 @@ extern HAL hw;
     DDR##port |= (1 << pin); \
     PORT##port ^= (1 << pin); \
     PORT##port ^= (1 << pin);
+
+#define breakpoint(port, pin) while(true) log_pin(port, pin)

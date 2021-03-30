@@ -2,23 +2,24 @@ BUILD_NUMBER=$(shell cat BUILD.num)
 
 BUILD_DIR ?= ./build
 
-TARGET_DIR = ./target
+TARGET_DIR ?= ./app
 COMPONENTS_DIR = ./component
 SOURCES_DIR = .
 
 ARCH ?= x86
-CC = clang 
+CC = gcc
 
-VPATH = react:target:component
+VPATH = react:app:component
 
-SOURCES := $(shell find $(SOURCES_DIR) -name "*.c" -or -name "*.s")
+SOURCES := $(shell find $(SOURCES_DIR) \( -name "*.c" -or -name "*.s" \) -and -not -path "./third_party/*")
 OBJECTS ?= $(SOURCES:%.c=%.o)
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
-INCLUDE_DIRS := $(shell find $(SOURCES_DIR) -type f -name '*.c' -or -name '*.s' | sed -E 's|\/[^\/]+$$||' |sort -u)
+INCLUDE_DIRS := $(shell find $(SOURCES_DIR) -type f \( -name '*.c' -or -name '*.s' \) -and -not -path "./third_party/*" | sed -E 's|\/[^\/]+$$||' |sort -u)
 INCLUDE_FLAGS := $(addprefix -I, $(INCLUDE_DIRS))
+INCLUDE_FLAGS += -I./third_party/simavr/simavr/sim -I./third_party/simavr/simavr/ -I./third_party/simavr/include -I/usr/local/include/simavr
 
-TARGET_SOURCES = $(wildcard $(TARGET_DIR)/**/*.c)
+TARGET_SOURCES = $(wildcard $(TARGET_DIR)/*.c $(TARGET_DIR)/**/*.c)
 TARGET_OBJECTS = $(patsubst %.c, %.o, \
 			   $(TARGET_SOURCES))
 TARGET ?= $(patsubst %.c, %, \
@@ -30,8 +31,11 @@ COMPONENTS = $(patsubst %.c, %.o, \
 			 	$(COMPONENTS_SOURCES))
 
 MACHINE_FLAGS = -DF_CPU=$(CLOCK)
-DEFINE_FLAGS = -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME)
-CFLAGS ?= -Wall -g -Og $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu11 
+OPTIMIZATION_FLAGS ?=
+DEBUG_FLAGS ?=
+DEFINE_COMPUTED ?= 
+DEFINE_FLAGS = $(DEFINE_COMPUTED) -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME) -DTIMESTAMP=$(shell date +%s)
+CFLAGS ?= -fcompare-debug-second -Wall -g -Og $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu11 -lglfw -lGL -lm -lX11 -lXrandr -lrt  -lGLU -lpthread -lsimavr -lelf
 COMPILE = $(CC) $(CFLAGS)
 
 $(TARGET): $(OBJECTS) 
@@ -39,13 +43,14 @@ $(TARGET): $(OBJECTS)
 	$(COMPILE) -o $@ $(OBJECTS)
 
 %.e.c: %.c
-	@echo "Pressing $*.c"
+	@echo "Processing $*.c"
 	$(COMPILE) -c $*.c -o $@.expanded $(INCLUDE_FLAGS) -E
 	grep ^[^\#].*$  $@.expanded > $@.unformatted
 	clang-format $@.unformatted > $@
 	rm $@.*
 
 %.o: %.c
+	@echo "Make object for $@"
 	$(COMPILE) -c $*.c -o $@ $(INCLUDE_FLAGS)
 
 %.d: %.c

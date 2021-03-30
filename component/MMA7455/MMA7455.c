@@ -31,7 +31,7 @@ static void
 isAxisDataReady (void *message, void *trigger)
 {
     Component *         self = (Component *)trigger;
-    MMA7455_blockState *state  = (MMA7455_blockState *)self->state;
+    MMA7455_state_t *state  = (MMA7455_state_t *)self->state;
     if (bit_value (*(unsigned char *)message, MMA7455_DRDY)) {
         state->ready = true;
     } else {
@@ -43,20 +43,19 @@ static void
 axisDataReaded (void *message, void *trigger)
 {
     Component *self = (Component *)trigger;
-    self->stage     = prepared;
+    self->stage     = REACT_STAGE_PREPARED;
 }
 
 static void
 isModeSynced (void *message, void *trigger)
 {
-    Component *         self = (Component *)trigger;
-    MMA7455_blockState *state  = (MMA7455_blockState *)self->state;
-    MMA7455_blockProps *props  = (MMA7455_blockProps *)self->props;
+    Component *         self   = (Component *)trigger;
+    MMA7455_props_t *props  = (MMA7455_props_t *)self->props;
 
     unsigned char  mode     = *(unsigned char *)message;
     unsigned short selected = 0;
 
-    self->stage = released;
+    self->stage = REACT_STAGE_RELEASED;
 
     switch (mode & MMA7455_MCTL_GLVL_MASK) {
     case MMA7455_MCTL_GLVL_2G:
@@ -73,7 +72,7 @@ isModeSynced (void *message, void *trigger)
         break;
     }
     if (props->sensitivity != selected) {
-        self->stage = defined;
+        self->stage = REACT_STAGE_DEFINED;
     }
 
     switch (mode & MMA7455_MCTL_MOD_MASK) {
@@ -94,16 +93,15 @@ isModeSynced (void *message, void *trigger)
         break;
     }
     if (props->mode != selected) {
-        self->stage = defined;
+        self->stage = REACT_STAGE_DEFINED;
     }
 }
 
 static void
 setMode (void *message, void *trigger)
 {
-    Component *         self   = (Component *)trigger;
-    MMA7455_blockState *state    = (MMA7455_blockState *)self->state;
-    MMA7455_blockProps *props    = (MMA7455_blockProps *)self->props;
+    Component *         self     = (Component *)trigger;
+    MMA7455_props_t *props    = (MMA7455_props_t *)self->props;
     unsigned char       mode     = *(unsigned char *)message;
     unsigned short      selected = 0;
 
@@ -179,8 +177,8 @@ willMount (MMA7455)
 
 shouldUpdate (MMA7455)
 {
-    if (props->sensitivity != nextProps->sensitivity
-        || props->mode != nextProps->mode) {
+    if (props->sensitivity != next_props->sensitivity
+        || props->mode != next_props->mode) {
         return true;
     }
 
@@ -197,8 +195,8 @@ shouldUpdate (MMA7455)
 
 willUpdate (MMA7455)
 {
-    if (props->sensitivity != nextProps->sensitivity
-        || props->mode != nextProps->mode) {
+    if (props->sensitivity != next_props->sensitivity
+        || props->mode != next_props->mode) {
         read (MMA7455_MCTL, setMode);
     } else {
         // Read 6 bytes, containing the X,Y,Z information
@@ -214,7 +212,7 @@ willUpdate (MMA7455)
         read (MMA7455_STATUS, axisDataReaded);
     }
 
-    self->stage = blocked;
+    self->stage = REACT_STAGE_BLOCKED;
 }
 
 release (MMA7455)
