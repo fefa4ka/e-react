@@ -7,23 +7,23 @@ PRODUCT_NAME ?= unnamed
 
 BUILD_DIR ?= ./build
 
-TARGET_DIR = ./target
+TARGET_DIR = ./app
 COMPONENTS_DIR = ./component
 SOURCES_DIR = .
 
 
 MACHINE_FLAGS = -lstm8 -mstm8 --std-sdcc11 --stack-auto
 
-VPATH = react:target:component
+VPATH = react:app:component
 
-SOURCES := $(shell find $(SOURCES_DIR) -name "*.c" -or -name "*.s")
+SOURCES := $(shell find $(SOURCES_DIR) \( -name "*.c" -or -name "*.s" \) -and -not -path "./third_party/*")
 OBJECTS ?= $(SOURCES:%.c=%.o)
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
-INCLUDE_DIRS := $(shell find $(SOURCES_DIR) -type f -name '*.c' -or -name '*.s' | sed -E 's|\/[^\/]+$$||' |sort -u)
+INCLUDE_DIRS := $(shell find $(SOURCES_DIR) -type f \( -name '*.c' -or -name '*.s' \) -and -not -path "./third_party/*" | sed -E 's|\/[^\/]+$$||' |sort -u)
 INCLUDE_FLAGS := $(addprefix -I, $(INCLUDE_DIRS)) 
 
-TARGET_SOURCES = $(wildcard $(TARGET_DIR)/**/main.c)
+TARGET_SOURCES = $(wildcard $(TARGET_DIR)/*.c $(TARGET_DIR)/**/*.c)
 TARGET_OBJECTS = $(patsubst %.c, %.o, \
 			   $(TARGET_SOURCES))
 TARGET ?= $(patsubst %.c, %, \
@@ -34,11 +34,11 @@ COMPONENTS_SOURCES = $(shell find $(COMPONENTS_DIR) -name "*.c" -or -name "*.s")
 COMPONENTS = $(patsubst %.c, %.o, \
 			 	$(COMPONENTS_SOURCES))
 
-DEFINE_FLAGS = -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME)
+DEFINE_COMPUTED ?= 
+DEFINE_FLAGS = -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME) -DTIMESTAMP=$(shell date +%s) $(DEFINE_COMPUTED)
 CFLAGS ?= -Wall $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) 
 COMPILE = $(CC) $(CFLAGS)
 
-DEFINE_FLAGS = -DF_CPU=$(CLOCK) -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME)
 CFLAGS   = -mstm8 --std-sdcc99 --stack-auto
 LIBS     = -lstm8 
 
@@ -53,7 +53,7 @@ all: $(PNAME)
 	$(CC) -o $(dir $@) $(INCLUDE_FLAGS) $(CFLAGS) $*.c $(RELS) $(LIBS)
 
 %.e.c: %.c
-	@echo "Pressing $*.c"
+	@echo "Processing $*.c"
 	$(COMPILE) -c $*.c -o $@.expanded $(INCLUDE_FLAGS) -E 
 	grep ^[^\#].*$  $@.expanded > $@.unformatted
 	clang-format $@.unformatted > $@

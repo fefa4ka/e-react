@@ -1,21 +1,24 @@
 #pragma once
 
 #include <IO.h>
-#include <Calendar.h>
+#include <Timer.h>
+
+#define PWM(instance, props, state) define(PWM, instance, _(props), _(state))
 
 typedef struct
 {
-    io_handler *         io;
-    void *               pin;
     unsigned int         frequency;
     unsigned char        duty_cycle;
-    struct rtc_datetime *time;
-} PWM_blockProps;
+} PWM_props_t;
 
 typedef struct {
-    volatile unsigned long tick;
-    bool          on_duty;
-} PWM_blockState;
+    io_handler *           io;
+    void *                 pin;
+
+    struct Timer          *timer;
+
+    volatile unsigned long tick;      /* Last state changing timestamp */
+    bool                   on_duty;   /* PWM state */
+} PWM_state_t;
 
 React_Header(PWM);
-#define PWM(instance) component (PWM, instance)

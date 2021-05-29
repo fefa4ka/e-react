@@ -2,6 +2,8 @@
 
 #include <component.h>
 
+#define MMA7455(instance) React_Define(MMA7455, instance)
+
 /* Accelerometer mode */
 enum MMA7455_MODE
 {
@@ -46,13 +48,13 @@ typedef struct {
    unsigned short mode;
 
    void (*onChange)(Component *instance);
-} MMA7455_blockProps;
+} MMA7455_props_t;
 
 typedef struct {
    union MMA7455_xyz force;
    bool ready;
    unsigned char mode;
-} MMA7455_blockState;
+} MMA7455_state_t;
 
 
 // Register names according to the datasheet.
@@ -172,4 +174,3 @@ typedef struct {
 
 
 React_Header(MMA7455);
-#define MMA7455(instance) component(MMA7455, instance)

@@ -1,5 +1,4 @@
 
-BasedOnStyle: GNU 
 
 IndentWidth: 4
 AlignConsecutiveAssignments: true
@@ -9,8 +8,8 @@ AlignEscapedNewlines: Right
 AlignOperands: true 
 BreakBeforeBraces: Custom
 BraceWrapping:
-  AfterEnum: true
-  AfterStruct: true 
+  AfterEnum: false 
+  AfterStruct: false 
   SplitEmptyFunction: true 
   AfterControlStatement: Never
   AfterFunction: true
@@ -21,3 +20,4 @@ IncludeBlocks: Preserve
 IndentPPDirectives: BeforeHash
 MaxEmptyLinesToKeep: 2
 SpaceAfterLogicalNot: false 
+CommentPragmas:  '^\\.+'

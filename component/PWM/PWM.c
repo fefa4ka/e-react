@@ -1,41 +1,47 @@
 #include "PWM.h"
 
+/**
+ * \brief    Configure pin as output
+ */
 willMount(PWM) {
-    props->io->out(props->pin);
+    state->io->out(state->pin);
 }
 
+/**
+ * \brief    Update pin level in desire time
+ */
 shouldUpdate(PWM) {
-    if(props->time->time_us >= state->tick) {
+    if(state->timer->us >= state->tick) {
         return true;
     } 
 
     return false;
 }
 
+/**
+ * \brief    Time of next pin level change depends
+ *           on frequency and duty_cycle
+ */
 willUpdate(PWM) { 
     if(state->on_duty) {
-        state->tick = props->time->time_us + (1000000L / props->frequency / 255) * (255 - props->duty_cycle);
+        state->tick = state->timer->us + (1000000L / props->frequency / 255) * (255 - props->duty_cycle);
         state->on_duty = false;
     } else {
-        state->tick = props->time->time_us + (1000000L / props->frequency / 255) * props->duty_cycle;
+        state->tick = state->timer->us + (1000000L / props->frequency / 255) * props->duty_cycle;
         state->on_duty = true;
     }
 }
 
+/**
+ * \brief     Change pin level
+ */
 release(PWM) {
     if(state->on_duty) {
-        props->io->on(props->pin);
+        state->io->on(state->pin);
     } else {
-        props->io->off(props->pin);
+        state->io->off(state->pin);
     }
 }
 
-didMount(PWM) { }
-didUnmount(PWM) { }
-
-didUpdate(PWM) {
- 
-}
-
-
-React_Constructor(PWM)
+didMount(PWM) {}
+didUpdate(PWM) {}

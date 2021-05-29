@@ -1,34 +1,34 @@
 #include "avr.h"
 
 #include "avr_mcu_section.h"
-AVR_MCU(F_CPU, "atmega168p");
+AVR_MCU(F_CPU, "atmega328p");
 
 
-static void io_in(void *pin);
-static void io_out(void *pin);
-static void io_on(void *pin);
-static void io_off(void *pin);
-static void io_flip(void *pin);
-static void io_pullup(void *pin);
-static bool io_get(void *pin);
+void io_in(void *pin);
+void io_out(void *pin);
+void io_on(void *pin);
+void io_off(void *pin);
+void io_flip(void *pin);
+void io_pullup(void *pin);
+bool io_get(void *pin);
 
-static void adc_mount(void *prescaler);
-static void adc_selectChannel(void *channel);
-static void adc_startConvertion(void *channel);
-static bool adc_isConvertionReady(void *channel);
-static int adc_readConvertion(void *channel);
+void adc_mount(void *prescaler);
+void adc_selectChannel(void *channel);
+void adc_startConvertion(void *channel);
+bool adc_isConvertionReady(void *channel);
+int adc_readConvertion(void *channel);
 
-static void uart_init(void *baudrate);
-static bool uart_isDataReceived();
-static bool uart_isTransmitReady();
-static void uart_transmit(unsigned char data);
-static unsigned char uart_receive();
+void uart_init(void *baudrate);
+bool uart_isDataReceived();
+bool uart_isTransmitReady();
+void uart_transmit(unsigned char data);
+unsigned char uart_receive();
 
-static void timer_init(void *config);
-static unsigned int timer_get();
-static void timer_set(unsigned int ticks, void(*callback)(void *args), void *args);
-static void timer_off();
-static unsigned int timer_usFromTicks(unsigned int ticks);
+void timer_init(void *config);
+unsigned int timer_get();
+void timer_set(unsigned int ticks, void(*callback)(void *args), void *args);
+void timer_off();
+unsigned int timer_usFromTicks(unsigned int ticks);
 
 
 HAL hw = {
@@ -64,7 +64,7 @@ HAL hw = {
     }
 };
 
-static void
+void
 io_in(void *pin)
 {
     pin_t *Pin = (pin_t *)pin;
@@ -73,7 +73,7 @@ io_in(void *pin)
     bit_set(*Pin->port.port, Pin->number);
 }
 
-static void 
+void 
 io_out(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
@@ -81,33 +81,33 @@ io_out(void *pin) {
 }
 
 
-static void 
+void 
 io_on(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     bit_set(*Pin->port.port, Pin->number);
 }
 
-static void 
+void 
 io_off(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     bit_clear(*Pin->port.port, Pin->number);
 }
 
-static void 
+void 
 io_flip(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     bit_flip(*Pin->port.port, Pin->number);
 }
 
-static void 
+void 
 io_pullup(void *pin) {
     io_on(pin);
 }
 
-static bool
+bool
 io_get(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
@@ -117,7 +117,7 @@ io_get(void *pin) {
 
 // ADC 
 
-static void
+void
 adc_mount(void *prescaler) {
     // AREF = AVcc
     ADMUX = (1<<REFS0);
@@ -127,7 +127,7 @@ adc_mount(void *prescaler) {
     ADCSRA = (1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
 }
 
-static inline void
+inline void
 adc_selectChannel(void *channel) {
     char ch = *(char *)channel;
     // char ch = 2;
@@ -138,26 +138,26 @@ adc_selectChannel(void *channel) {
     ADMUX = (ADMUX & 0xF8) | ch; // clears the bottom 3 bits before ORing
 }
 
-static inline void
+inline void
 adc_startConvertion(void *channel) {
   // start single convertion
   // write ’1′ to ADSC
   ADCSRA |= (1<<ADSC);
 }
 
-static inline bool 
+inline bool 
 adc_isConvertionReady(void *channel) {
     return (ADCSRA & (1 << ADSC)) == 0;
 }
 
-static inline int
+inline int
 adc_readConvertion(void *channel) {
     return (ADC);
 }
 
 
 // UART
-static void 
+void 
 uart_init(void *baudrate) {
     unsigned int baud = hw_uart_baudrate(*(unsigned int*)baudrate);
 
@@ -171,22 +171,22 @@ uart_init(void *baudrate) {
     UCSR0C = (1 << UCSZ01) | (3 << UCSZ00);
 }
 
-static inline bool 
+inline bool 
 uart_isDataReceived() {
     return (UCSR0A & (1 << RXC0));
 }
 
-static inline bool 
+inline bool 
 uart_isTransmitReady() {
     return (UCSR0A & (1 << UDRE0));
 }
 
-static inline void 
+inline void 
 uart_transmit(unsigned char data) {
     UDR0 = data;
 }
 
-static inline unsigned char 
+inline unsigned char 
 uart_receive() {
     return UDR0;
 }
@@ -208,7 +208,7 @@ uart_receive() {
 #define SPI_MSTR	MSTR
 #define SPI_SPR0	SPR0
 #define SPI_SPR1	SPR1
-static void 
+void 
 spi_init(void *config) {
 	// make the MOSI, SCK, and SS pins outputs
 	SPI_DDR |= ( 1 << SPI_MOSI ) | ( 1 << SPI_SCK ) | ( 1 << SPI_SS );
@@ -222,7 +222,7 @@ spi_init(void *config) {
 	SPI_SPSR = 1;     // set double SPI speed for F_osc/2
 }
 
-static inline bool 
+inline bool 
 spi_isDataReceived() {
     if(!(SPI_SPSR & (1 << SPI_SPIF))) {
         SPI_SPDR = 0xFF;
@@ -231,29 +231,29 @@ spi_isDataReceived() {
     }
 }
 
-static inline bool 
+inline bool 
 spi_isTransmitReady() {
     return !(SPI_SPSR & (1 << SPI_SPIF));
 }
 
-static inline void 
+inline void 
 spi_transmit(unsigned char data) {
     SPI_SPDR = data;
 }
 
-static inline unsigned char 
+inline unsigned char 
 spi_receive() {
     return SPI_SPDR;
 }
 
 
 /* Time */
-static void
+void
 timer_init(void *config) {
     TCCR1B |= (1 << CS11);// | (1 << WGM12);// | (1 << CS10);
 }
 
-static inline unsigned int
+inline unsigned int
 timer_get() {
     return TCNT1;
 }
@@ -265,7 +265,7 @@ ISR(TIMER1_COMPA_vect) {
 	_timer_func(_timer_func_args);
 }
 
-static void
+void
 timer_set(unsigned int ticks, void(*callback)(void *args), void *args) {
     cli();
     TIMSK1 &= ~(1 << OCIE1A); // Disable interrupts
@@ -280,12 +280,12 @@ timer_set(unsigned int ticks, void(*callback)(void *args), void *args) {
     sei();
 }
 
-static void 
+void 
 timer_off() {
     TIMSK1 &= ~(1 << OCIE1A); // Disable interrupts
 }
 
-static unsigned int timer_usFromTicks(unsigned int ticks) {
+unsigned int timer_usFromTicks(unsigned int ticks) {
     return ticks >> 1;
 }
 

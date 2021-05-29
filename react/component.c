@@ -1,21 +1,22 @@
 #include "component.h"
 
-void React_Mount (Component *instance);
-void React_Release (Component *instance);
 
-void
-React_Mount (Component *instance)
-{
-    instance->stage = released;
-    instance->WillMount (instance);
-    instance->Release (instance);
-    instance->DidMount (instance);
+bool React_Component(Component *instance, void *next_props) {
+    if (instance->stage == REACT_STAGE_RELEASED
+        && instance->ShouldUpdate(instance, next_props)) {
+        instance->stage = REACT_STAGE_PREPARED;
+        instance->WillUpdate(instance, next_props);
+    } else if (instance->stage == REACT_STAGE_PREPARED) {
+        instance->stage = REACT_STAGE_RELEASED;
+        instance->Release(instance);
+        instance->DidUpdate(instance);
+    } else if (instance->stage == REACT_STAGE_DEFINED) {
+        instance->WillMount(instance, next_props);
+        instance->Release(instance);
+        instance->DidMount(instance);
+        instance->stage = REACT_STAGE_RELEASED;
+    }
+
+    return true;
 }
 
-void
-React_Release (Component *instance)
-{
-    instance->stage = released;
-    instance->Release (instance);
-    instance->DidUpdate (instance);
-}

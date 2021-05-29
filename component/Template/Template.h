@@ -1,17 +1,17 @@
 #pragma once 
 
-#include <stdbool.h>
 #include <component.h>
+
+#define Template(instance, props) define(Template, instance, _(props), {0})
 
 typedef struct
 {
     pin_t      pin;
     void       (*callback)(Component *instance);
-} Template_blockProps;
+} Template_props_t;
 
 typedef struct {
     bool level;
-} Template_blockState;
+} Template_state_t;
 
 React_Header(Template);
-#define Template(instance) component(Template, instance)
