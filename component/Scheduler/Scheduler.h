@@ -1,6 +1,18 @@
 #pragma once
 
-#include <Timer.h>
+#include <Clock.h>
+
+/*
+ *  ┌─────┐ Scheduler_enqueue() ┌─────┐  get closest  ┌─────────────────┐
+ *  │event├────────────────────►│QUEUE├──────────────►│Fire or set Timer│
+ *  └─────┘                     └─────┘               └─────────────────┘
+ *
+ *  ┌───────────◄──┐      ┌────────────┐       ┌─────────┐      ┌─────────┐
+ *  │ ShouldUpdate ├─────►│ WillUpdate ├──────►│ Release │      │ Release │        Release
+ *  └──────────────┘      └────────────┘       └─────────┘      └─────────┘
+ *   if in queue           Prioritity queue     Fire event
+ *   new closest event     and clean timer      or set timer
+ */
 
 #define Scheduler(instance, scheduler_capacity, props)                         \
     struct event instance##_events[scheduler_capacity];                        \
@@ -32,7 +44,7 @@ struct events_queue {
 typedef struct {
     timer_handler *timer; /* Use timer callback on tick comparasion */
 
-    struct Timer *time; /* TODO: For longer events that timer can't handle */
+    struct Clock *clock; /* TODO: For longer events that timer can't handle */
 } Scheduler_props_t;
 
 typedef struct {

@@ -2,6 +2,20 @@
 
 #include <stdbool.h>
 
+
+struct callback {
+    void (*method)(void *trigger, void *argument);
+    void *argument;
+};
+
+typedef struct {
+    bool (*is_available)(void *trigger);
+    void (*mount)(void *trigger, void(*callback)(void *args), void *args);
+    void (*umount)(void *trigger);
+    void (*enable)(void *trigger, void *args);
+    void (*disable)(void *trigger);
+} isr_handler;
+
 typedef struct {
     void (*in)(void *pin);
     void (*out)(void *pin);
@@ -10,19 +24,20 @@ typedef struct {
     void (*flip)(void *pin);
     void (*pullup)(void *pin);
     bool (*get)(void *pin);
-} io_handler;
 
+    isr_handler isr;
+} io_handler;
 
 enum communication_mode {
     COMMUNICATION_MODE_TRANSCIEVER,
     COMMUNICATION_MODE_RECEIVER
-}; 
+};
 
 enum pin_mode {
     PIN_MODE_OFF,
     PIN_MODE_OUTPUT,
     PIN_MODE_INPUT,
-    PIN_MODE_PULLUP 
+    PIN_MODE_PULLUP
 };
 
 typedef struct {
@@ -31,6 +46,8 @@ typedef struct {
     void (*startConvertion)(void *channel);
     bool (*isConvertionReady)(void *channel);
     int  (*readConvertion)(void *channel);
+
+    isr_handler isr;
 } adc_handler;
 
 typedef struct {
@@ -39,6 +56,8 @@ typedef struct {
     bool          (*isTransmitReady)();
     void          (*transmit)(unsigned char data);
     unsigned char (*receive)();
+
+    isr_handler isr;
 } serial_handler;
 
 typedef struct {
@@ -47,6 +66,8 @@ typedef struct {
     void         (*set)(unsigned int ticks, void(*callback)(void *args), void *args);
     void         (*off)();
     unsigned int (*usFromTicks)(unsigned int ticks);
+
+    isr_handler isr;
 } timer_handler;
 
 typedef struct
@@ -56,4 +77,5 @@ typedef struct
     serial_handler uart;
     serial_handler spi;
     timer_handler  timer;
+    isr_handler    isr;
 } HAL;

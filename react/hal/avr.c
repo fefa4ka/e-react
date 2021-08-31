@@ -68,12 +68,12 @@ void
 io_in(void *pin)
 {
     pin_t *Pin = (pin_t *)pin;
-    
+
     bit_clear(*Pin->port.ddr, Pin->number);
     bit_set(*Pin->port.port, Pin->number);
 }
 
-void 
+void
 io_out(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
@@ -81,28 +81,28 @@ io_out(void *pin) {
 }
 
 
-void 
+void
 io_on(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     bit_set(*Pin->port.port, Pin->number);
 }
 
-void 
+void
 io_off(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     bit_clear(*Pin->port.port, Pin->number);
 }
 
-void 
+void
 io_flip(void *pin) {
     pin_t *Pin = (pin_t *)pin;
 
     bit_flip(*Pin->port.port, Pin->number);
 }
 
-void 
+void
 io_pullup(void *pin) {
     io_on(pin);
 }
@@ -113,15 +113,31 @@ io_get(void *pin) {
 
     return *(Pin->port.pin) & (1 << (Pin->number));
 }
+void (*_io_isr_INT0)(void *args);
+void *_io_isr_INT0_args = 0;
+
+ISR(INT0_vect) {
+	_io_isr_INT0(_io_isr_INT0_args);
+}
+void
+io_isr_mount(void *pin, void(*callback)(void *args), void *args) {
+    pin_t *Pin = (pin_t *)pin;
+    if(Pin->port.pin == &PIND && Pin->number == 2) {
+        _io_isr_INT0 = callback;
+        _io_isr_INT0_args = args;
+    }
+
+}
 
 
-// ADC 
+
+// ADC
 
 void
 adc_mount(void *prescaler) {
     // AREF = AVcc
     ADMUX = (1<<REFS0);
- 
+
     // ADC Enable and prescaler of 128
     // 16000000/128 = 125000
     ADCSRA = (1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
@@ -145,7 +161,7 @@ adc_startConvertion(void *channel) {
   ADCSRA |= (1<<ADSC);
 }
 
-inline bool 
+inline bool
 adc_isConvertionReady(void *channel) {
     return (ADCSRA & (1 << ADSC)) == 0;
 }
@@ -157,7 +173,7 @@ adc_readConvertion(void *channel) {
 
 
 // UART
-void 
+void
 uart_init(void *baudrate) {
     unsigned int baud = hw_uart_baudrate(*(unsigned int*)baudrate);
 
@@ -171,28 +187,28 @@ uart_init(void *baudrate) {
     UCSR0C = (1 << UCSZ01) | (3 << UCSZ00);
 }
 
-inline bool 
+inline bool
 uart_isDataReceived() {
     return (UCSR0A & (1 << RXC0));
 }
 
-inline bool 
+inline bool
 uart_isTransmitReady() {
     return (UCSR0A & (1 << UDRE0));
 }
 
-inline void 
+inline void
 uart_transmit(unsigned char data) {
     UDR0 = data;
 }
 
-inline unsigned char 
+inline unsigned char
 uart_receive() {
     return UDR0;
 }
 
 
-// SPI 
+// SPI
 #define SPI_DDR		DDRB
 #define SPI_PORT	PORTB
 #define SPI_MISO	PORTB4
@@ -208,7 +224,7 @@ uart_receive() {
 #define SPI_MSTR	MSTR
 #define SPI_SPR0	SPR0
 #define SPI_SPR1	SPR1
-void 
+void
 spi_init(void *config) {
 	// make the MOSI, SCK, and SS pins outputs
 	SPI_DDR |= ( 1 << SPI_MOSI ) | ( 1 << SPI_SCK ) | ( 1 << SPI_SS );
@@ -222,7 +238,7 @@ spi_init(void *config) {
 	SPI_SPSR = 1;     // set double SPI speed for F_osc/2
 }
 
-inline bool 
+inline bool
 spi_isDataReceived() {
     if(!(SPI_SPSR & (1 << SPI_SPIF))) {
         SPI_SPDR = 0xFF;
@@ -231,17 +247,17 @@ spi_isDataReceived() {
     }
 }
 
-inline bool 
+inline bool
 spi_isTransmitReady() {
     return !(SPI_SPSR & (1 << SPI_SPIF));
 }
 
-inline void 
+inline void
 spi_transmit(unsigned char data) {
     SPI_SPDR = data;
 }
 
-inline unsigned char 
+inline unsigned char
 spi_receive() {
     return SPI_SPDR;
 }
@@ -272,7 +288,7 @@ timer_set(unsigned int ticks, void(*callback)(void *args), void *args) {
 
     _timer_func = callback;
     _timer_func_args = args;
-    
+
     OCR1A = ticks;
 
     TIMSK1 |= 1 << OCIE1A;
@@ -280,7 +296,7 @@ timer_set(unsigned int ticks, void(*callback)(void *args), void *args) {
     sei();
 }
 
-void 
+void
 timer_off() {
     TIMSK1 &= ~(1 << OCIE1A); // Disable interrupts
 }

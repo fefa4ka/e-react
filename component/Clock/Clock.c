@@ -1,7 +1,7 @@
-#include "Timer.h"
+#include "Clock.h"
 
-#ifdef _Timer_date
-void Timer_date(unsigned long seconds, struct calendar *tm)
+#ifdef _Clock_date
+void Clock_date(unsigned long seconds, struct calendar *tm)
 {
     unsigned int minutes, hours, days, year, month;
     unsigned int day_of_week;
@@ -68,21 +68,21 @@ void Timer_date(unsigned long seconds, struct calendar *tm)
 ///
 /// \brief Configure timer handler
 ///
-willMount(Timer)
+willMount(Clock)
 {
     void *ptr = 0;
     props->timer->init(ptr);
 }
 
 ///
-/// \brief Timer should update everytime
+/// \brief Clock should update everytime
 ///
-shouldUpdate(Timer) { return true; }
+shouldUpdate(Clock) { return true; }
 
 ///
 /// \brief Calculate total passed timer ticks
 ///
-willUpdate(Timer)
+willUpdate(Clock)
 {
     unsigned int tick = props->timer->get();
 
@@ -98,7 +98,7 @@ willUpdate(Timer)
 ///
 /// \brief Update us, ms and s timestamps
 ///
-release(Timer)
+release(Clock)
 {
     unsigned int us_passed = props->timer->usFromTicks(state->passed);
     state->time.step_us    = us_passed;
@@ -116,18 +116,24 @@ release(Timer)
             state->time.timestamp += s_passed;
             state->ms -= s_passed * 1000;
 
-            if (props->onSecond)
+            if (props->onSecond) {
                 props->onSecond(self);
+
+#ifdef _Clock_date
+                if (props->calendar)
+                    Clock_date(state->time.timestamp, props->calendar);
+#endif
+            }
         }
     }
 }
 
-didMount(Timer)
+didMount(Clock)
 {
-#ifdef _Timer_date
+#ifdef _Clock_date
     if (props->calendar)
-        Timer_date(state->time.timestamp, props->calendar);
+        Clock_date(state->time.timestamp, props->calendar);
 #endif
 }
 
-didUpdate(Timer) {}
+didUpdate(Clock) {}

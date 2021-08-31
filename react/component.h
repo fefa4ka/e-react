@@ -3,6 +3,18 @@
 #include "macros.h"
 #include <hal.h>
 #include <stdbool.h>
+/*
+ *
+ *        ┌───────┐  willMount   ┌────────┐   shouldUpdate?   ┌────────┐
+ *        │DEFINED├─────────────►│RELEASED├──────────────────►│PREPARED├──┐
+ *        └───────┘  release     └────────┘   willUpdate      └────────┘  │
+ *                   didMount         ▲                        release    │
+ *                                    ├───────────────────────────────────┘
+ *                                    ▼                        didUpdate
+ *                               ┌─────────┐
+ *                               │UNMOUNTED│
+ *                               └─────────┘
+ */
 
 typedef struct {
     enum {
@@ -10,6 +22,7 @@ typedef struct {
         REACT_STAGE_DEFINED,
         REACT_STAGE_PREPARED,
         REACT_STAGE_RELEASED,
+        REACT_STAGE_UNMOUNTED
     } stage;
 
     void (*WillMount)(void *instance, void *next_props);
@@ -24,6 +37,7 @@ typedef struct {
     void (*DidUnmount)(void *instance);
 } Component;
 
+bool Stage_Component(Component *instance, void *next_props);
 bool React_Component(Component *instance, void *next_props);
 
 // Component Creation
@@ -37,19 +51,20 @@ bool React_Component(Component *instance, void *next_props);
 #define React_Props(Type, instance, attribute)                                 \
     React_Instance_Props(Type, instance)->attribute
 
-#define React_Header(Type)                                                     \
-    typedef struct {                                                           \
-        Component      instance;                                               \
-        Type##_props_t props;                                                  \
-        Type##_state_t state;                                                  \
-    } Type##_Component;                                                        \
-    typedef Type##_Component Type##_t;                                         \
-    void             Type##_willMount(void *instance, void *next_props);       \
-    bool             Type##_shouldUpdate(void *instance, void *next_props);    \
-    void             Type##_willUpdate(void *instance, void *next_props);      \
-    void             Type##_release(void *instance);                           \
-    void             Type##_didMount(void *instance);                          \
-    void             Type##_didUpdate(void *instance)
+#define React_Header(Type)                                                       \
+    typedef struct {                                                             \
+        Component      instance;                                                 \
+        Type##_props_t props;                                                    \
+        Type##_state_t state;                                                    \
+    } Type##_Component;                                                          \
+    typedef Type##_Component Type##_t;                                           \
+    void                     Type##_willMount(void *instance, void *next_props); \
+    bool Type##_shouldUpdate(void *instance, void *next_props);                  \
+    void Type##_willUpdate(void *instance, void *next_props);                    \
+    void Type##_release(void *instance);                                         \
+    void Type##_didMount(void *instance);                                        \
+    void Type##_didUnmount(void *instance);                                      \
+    void Type##_didUpdate(void *instance)
 
 #define React_Self(Type, instance) Type##_Component *self = instance
 
@@ -71,7 +86,9 @@ bool React_Component(Component *instance, void *next_props);
     void Type##_##stage(void *instance)                                        \
     {                                                                          \
         React_Self(Type, instance);                                            \
+        hw_isr_disable();                                                      \
         Type##_inline_##stage(&self->instance, &self->props, &self->state);    \
+        hw_isr_enable();                                                       \
     }                                                                          \
     React_LifeCycle_Header(Type, stage)
 
@@ -101,8 +118,11 @@ bool React_Component(Component *instance, void *next_props);
         if (!next_props_ptr)                                                   \
             next_props_ptr = &self->props;                                     \
         React_SelfNext(Type, instance);                                        \
-        return Type##_inline_##stage(&self->instance, &self->props,            \
-                                     &self->state, next_props);                \
+        hw_isr_disable();                                                      \
+        returnType result = Type##_inline_##stage(                             \
+            &self->instance, &self->props, &self->state, next_props);          \
+        hw_isr_enable();                                                       \
+        return result;                                                         \
     }                                                                          \
     React_UpdateCycle_Header(Type, stage, returnType)
 
@@ -116,8 +136,10 @@ bool React_Component(Component *instance, void *next_props);
         React_SelfNext(Type, instance);                                        \
         if (&self->props != next_props)                                        \
             self->props = *next_props;                                         \
+        hw_isr_disable();                                                      \
         Type##_inline_willMount(&self->instance, &self->props, &self->state,   \
                                 next_props);                                   \
+        hw_isr_enable();                                                       \
     }                                                                          \
     React_UpdateCycle_Header(Type, willMount, void)
 
@@ -129,8 +151,10 @@ bool React_Component(Component *instance, void *next_props);
         if (!next_props_ptr)                                                   \
             next_props_ptr = &self->props;                                     \
         React_SelfNext(Type, instance);                                        \
+        hw_isr_disable();                                                      \
         Type##_inline_willUpdate(&self->instance, &self->props, &self->state,  \
                                  next_props);                                  \
+        hw_isr_enable();                                                       \
         if (&self->props != next_props)                                        \
             self->props = *next_props;                                         \
     }                                                                          \
@@ -139,6 +163,7 @@ bool React_Component(Component *instance, void *next_props);
 #define release(Type)      React_LifeCycle(Type, release)
 #define shouldUpdate(Type) React_UpdateCycle(Type, shouldUpdate, bool)
 #define didMount(Type)     React_LifeCycle(Type, didMount)
+#define didUnmount(Type)   React_LifeCycle(Type, didUnmount)
 #define didUpdate(Type)    React_LifeCycle(Type, didUpdate)
 
 
@@ -175,6 +200,12 @@ bool React_Component(Component *instance, void *next_props);
     React_Mount(&name)
 
 #define _(...) __VA_ARGS__
+
+#define apply(Type, name, propsValue)                                          \
+    {                                                                          \
+        Type##_props_t next_props = propsValue;                                \
+        Stage_Component(&name.instance, &next_props);                          \
+    }
 #define react(Type, name, propsValue)                                          \
     {                                                                          \
         Type##_props_t next_props = propsValue;                                \
@@ -200,8 +231,14 @@ bool React_Component(Component *instance, void *next_props);
         .state    = instance_state,                                            \
     }
 
-#define apply     react
-#define use_(x)   React_Component(&(x).instance, 0) &&
-#define use(...)  EVAL(MAP(use_, __VA_ARGS__)) true
-#define loop_(x)  React_Component(&x.instance, 0) &&
+#define use_(x)  Stage_Component(&(x).instance, 0) &&
+#define use(...) EVAL(MAP(use_, __VA_ARGS__)) true
+
+#define loop_(x)  Stage_Component(&x.instance, 0) &&
 #define loop(...) while (EVAL(MAP(loop_, __VA_ARGS__)) true)
+
+#define unmount(x)                                                             \
+    {                                                                          \
+        x.instance.stage = REACT_STAGE_UNMOUNTED;                              \
+        Stage_Component(&x.instance, 0);                                       \
+    }
