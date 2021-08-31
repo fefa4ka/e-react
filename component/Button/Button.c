@@ -1,18 +1,46 @@
 #include "Button.h"
 
+#if !defined(_Button_poll)
+static void Button_isr(void *self)
+{
+    Button_Component *button   = self;
+    Component *       instance = &button->instance;
+
+    if (instance->ShouldUpdate(instance, 0)) {
+        instance->WillUpdate(instance, 0);
+        instance->Release(instance);
+    }
+
+    /* Check bounce */
+    if (button->props.bounce_delay_ms) {
+        button->props.timer->set(button->props.bounce_delay_ms, Button_isr,
+                                button);
+    }
+}
+#endif
+
 /**
  * \brief  Configure pins for input and pullup if needed
  */
 willMount(Button)
 {
+    io_handler *io = props->io;
+
     /* Setup pin as input */
-    props->io->in(props->pin);
+    io->in(props->pin);
     state->inverse
         = props->type == BTN_PUSH_PULLUP || props->type == BTN_TOGGLE_PULLUP;
 
     if (state->inverse) {
-        props->io->pullup(props->pin);
+        io->pullup(props->pin);
     }
+
+#if !defined(_Button_poll)
+    /* Use interrupt if available */
+    if (props->timer && io->isr.is_available && io->isr.is_available(props->pin)) {
+        io->isr.mount(props->pin, Button_isr, self);
+    }
+#endif
 }
 
 /**
@@ -24,11 +52,11 @@ shouldUpdate(Button)
     bool level          = props->io->get(props->pin);
     bool is_level_equal = state->level == level;
     bool state_level    = state->inverse ? !state->level : state->level;
-    int  passed         = props->timer->ms - state->tick;
+    int  passed         = props->clock->ms - state->tick;
 
     /* Tick overflow */
     if (passed < 0) {
-        passed = 65535 - state->tick + props->timer->ms;
+        passed = 65535 - state->tick + props->clock->ms;
     }
 
     /* Second check after bounce_delay_ms */
@@ -68,7 +96,7 @@ willUpdate(Button)
 
     /* Set initial tick to start delay counting */
     if (!state->tick && state_level) {
-        state->tick = props->timer->ms;
+        state->tick = props->clock->ms;
     }
 }
 
@@ -77,14 +105,14 @@ willUpdate(Button)
  */
 release(Button)
 {
-    int  passed      = props->timer->ms - state->tick;
+    int  passed      = props->clock->ms - state->tick;
     bool pressed     = false;
     bool state_level = state->inverse ? !state->level : state->level;
 
 
     /* Tick overflow */
     if (passed < 0) {
-        passed = 65535 - state->tick + props->timer->ms;
+        passed = 65535 - state->tick + props->clock->ms;
     }
 
     /* Cache button state for toggling */
@@ -124,3 +152,12 @@ release(Button)
 
 didMount(Button) {}
 didUpdate(Button) {}
+didUnmount(Button)
+{
+#if !defined(_Button_poll)
+    /* Use interrupt if available */
+    if (props->io->isr.is_available(props->pin) && props->scheduler) {
+        props->io->isr.unmount(props->pin);
+    }
+#endif
+}

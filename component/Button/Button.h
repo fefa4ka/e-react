@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Timer.h>
+#include <Clock.h>
+#include <Scheduler.h>
 #include <IO.h>
 
 #define Button(instance, props) define(Button, instance, _(props), {0})
@@ -8,8 +9,8 @@
 
 typedef struct
 {
-    io_handler *io;
-    void       *pin;
+    io_handler  *io;
+    void        *pin;
 
     enum
     {
@@ -20,20 +21,23 @@ typedef struct
     } type;
 
 
-    struct Timer          *timer;             /* Timestamp for bounce filtering */
+    struct Clock          *clock;             /* Timestamp for bounce filtering */
+#if ! defined(_Button_poll)
+    timer_handler         *timer;             /* Scheduler for interrupt implementation */
+#endif
     int                    bounce_delay_ms;
 
     void   (*onPress) (Component *instance);
-    void (*onRelease) (Component *instance);
+    void (*onRelease) (Component *instance);
     void  (*onToggle) (Component *instance);  /* When pressed state changes */
 } Button_props_t;
 
 typedef struct
 {
-    bool          inverse;    /* Is pin operating in pullup configuration */
-    bool          level;
-    bool          pressed;    /* Is button pressed */
-    unsigned long tick;       /* Timestamp when pin state changed */
+    bool            inverse;    /* Is pin operating in pullup configuration */
+    bool            level;
+    bool            pressed;    /* Is button pressed */
+    unsigned long   tick;       /* Timestamp when pin state changed */
 } Button_state_t;
 
 React_Header (Button);

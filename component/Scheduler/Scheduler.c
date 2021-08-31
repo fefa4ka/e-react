@@ -16,8 +16,8 @@ void event_prioritify(struct events_queue *queue, unsigned int now,
 /**
  * \brief    Add event to queue
  */
-bool Scheduler_enqueue(Scheduler_Component *self, unsigned int   timeout_us,
-                       void (*callback)(void *args), void *args)
+bool Scheduler_enqueue(Scheduler_Component *self, unsigned int timeout_us,
+                       void (*callback)(void *args), void *    args)
 {
     struct events_queue *queue = &self->state.queue;
     timer_handler *      timer = self->props.timer;
@@ -42,7 +42,7 @@ void event_prioritify(struct events_queue *queue, unsigned int now,
                       struct event *new_event)
 {
     unsigned char index  = queue->size;
-    struct event *       events = queue->events;
+    struct event *events = queue->events;
 
     queue->events[index] = *new_event;
     queue->size += 1;
@@ -67,11 +67,11 @@ void event_callback(void *instance)
     self->props.timer->off();
 
     struct event triggered_event = {0};
-    triggered_event       = self->state.next_event;
+    triggered_event              = self->state.next_event;
 
     triggered_event.callback(triggered_event.args);
-    struct event null_event            = {0};
-    self->state.next_event = null_event;
+    struct event null_event = {0};
+    self->state.next_event  = null_event;
 }
 
 /**
@@ -161,9 +161,9 @@ void event_heapify(struct events_queue *scheduler, unsigned int now,
  */
 bool Scheduler_dequeue(Scheduler_Component *self, struct event *dequed_event)
 {
-    struct events_queue *queue = &self->state.queue;
-    timer_handler *      timer = self->props.timer;
-    struct event *              events     = queue->events;
+    struct events_queue *queue      = &self->state.queue;
+    timer_handler *      timer      = self->props.timer;
+    struct event *       events     = queue->events;
     unsigned int         last_index = queue->size - 1;
 
     /* Empty queue */
@@ -174,7 +174,7 @@ bool Scheduler_dequeue(Scheduler_Component *self, struct event *dequed_event)
     }
 
     struct event closest_event = {0};
-    closest_event       = events[0];
+    closest_event              = events[0];
 
     events[0] = events[last_index];
     queue->size -= 1;
@@ -203,14 +203,14 @@ bool Scheduler_dequeue(Scheduler_Component *self, struct event *dequed_event)
  */
 willMount(Scheduler)
 {
-    // void *ptr;
+    /* comment if used with timer */
     // props->timer->init(ptr);
-    struct event null_event  = {0};
-    state->next_event = null_event;
+    struct event null_event = {0};
+    state->next_event       = null_event;
 }
 
 /**
- * \brief     Update if no sheduled event 
+ * \brief     Update if no sheduled event
  *            or new closest event available
  */
 shouldUpdate(Scheduler)
@@ -227,7 +227,7 @@ shouldUpdate(Scheduler)
     //            && closest_event->timeout_us == state->next_event.timeout_us)
     //            {
 
-    /* If next event closest that in queue */ 
+    /* If next event closest that in queue */
     if (closest_event->callback && state->next_event.callback
         && event_compare(props->timer->get(), &state->next_event,
                          closest_event)) {
@@ -245,7 +245,8 @@ willUpdate(Scheduler)
     if (state->next_event.callback) {
         /* Event allready scheduled, back it to queue */
         props->timer->off();
-        event_prioritify(&state->queue, props->timer->get(), &state->next_event);
+        event_prioritify(&state->queue, props->timer->get(),
+                         &state->next_event);
     }
 
     /* Get new event with highest priority */
@@ -287,3 +288,17 @@ release(Scheduler)
 
 didMount(Scheduler) {}
 didUpdate(Scheduler) {}
+
+#define Scheduler_timer(scheduler)                                             \
+    void Scheduler_timer_set(unsigned int timeout_ms,                          \
+                             void (*callback)(void *args), void *args)         \
+    {                                                                          \
+        Scheduler_enqueue(scheduler, timeout_ms, callback, args);              \
+    }                                                                          \
+    timer_handler Scheduler_handler                                            \
+        = {         \
+    .init                = scheduler->props.timer->init,                       \
+                    .get = scheduler->props.timer->get,                        \
+                    .set = Scheduler_timer_set,                                \
+                    .off = scheduler->props.timer->off.usFromTicks(            \
+                        unsigned int ticks)}
