@@ -33,12 +33,12 @@ COMPONENTS = $(patsubst %.c, %.o, \
 MACHINE_FLAGS = -DF_CPU=$(CLOCK)
 OPTIMIZATION_FLAGS ?=
 DEBUG_FLAGS ?=
-DEFINE_COMPUTED ?= 
+DEFINE_COMPUTED ?=
 DEFINE_FLAGS = $(DEFINE_COMPUTED) -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME) -DTIMESTAMP=$(shell date +%s)
-CFLAGS ?= -fcompare-debug-second -Wall -g -Og $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu11 -lglfw -lGL -lm -lX11 -lXrandr -lrt  -lGLU -lpthread -lsimavr -lelf
+CFLAGS ?= -Wall -g -Og $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu11 -lm -lpthread -lsimavr -lelf
 COMPILE = $(CC) $(CFLAGS)
 
-$(TARGET): $(OBJECTS) 
+$(TARGET): $(OBJECTS)
 	@echo $(DEPENDENCIES)
 	$(COMPILE) -o $@ $(OBJECTS)
 

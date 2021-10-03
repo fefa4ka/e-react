@@ -1,11 +1,12 @@
 #include <Button.h>
 #include <IO.h>
-#include <Scheduler.h>
+#include <Clock.h>
+#include <ISR.h>
+
+enum ISR_system(GPIO, SPI, TIMER);
 
 /* Datetime couting */
-Clock(timer, &hw.timer, TIMESTAMP);
-Scheduler(scheduler, 3, _({.timer = &hw.timer}));
-timer_handler *scheduler_timer_handler = Scheduler_handler(scheduler);
+Clock(clock, &hw.timer, TIMESTAMP);
 
 /* Indicator */
 IO(led);
@@ -17,8 +18,8 @@ Button(pusher, _({
                    .io  = &hw.io,
                    .pin = &push_pin,
 
-                   .clock = &timer.state.time,
-                   .timer = &scheduler_timer_handler,
+                   .clock = &clock.state.time,
+                   .timer = &hw.timer,
 
                    .type            = BTN_PUSH_PULLUP,
                    .bounce_delay_ms = 100,
@@ -34,7 +35,7 @@ void  switcher_toggle(Component *trigger)
     if (enabled) {
         use(pusher);
     } else {
-        unmount(pusher);
+        shut(pusher);
     }
 
     react(IO, led,
@@ -47,8 +48,8 @@ Button(switcher, _({
                      .io  = &hw.io,
                      .pin = &switcher_pin,
 
-                     .clock = &timer.state.time,
-                     .timer = scheduler_timer_handler,
+                     .clock = &clock.state.time,
+                     .timer = &hw.timer,
 
                      .type            = BTN_TOGGLE_PULLUP,
                      .bounce_delay_ms = 1000,
@@ -62,7 +63,7 @@ int main(void)
     /* Interrupt implementation */
     use(switcher);
 
-    loop(timer, scheduler);
+    loop(clock);
 
     return 0;
 }

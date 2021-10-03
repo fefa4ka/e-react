@@ -6,7 +6,7 @@ avr
 -DARCH_AVR=1
 -DTIMESTAMP=0
 -DBUILD_NUM=0
--I/usr/local/Cellar/avr-gcc/9.3.0/avr/include
+-I/usr/local/Cellar/avr-gcc@9/9.3.0_3/avr/include
 -I/usr/avr/include
 -I/usr/local/include/simavr
 -I./component/ADC
@@ -15,7 +15,7 @@ avr
 -I./component/PWM
 -I./component/Scheduler
 -I./component/Servo
--I./component/Timer
+-I./component/Clock
 -I./component/UART
 -I./component/Serial
 -I./component/Menu
@@ -30,3 +30,4 @@ avr
 -I./component/Text
 -I./component/Text
 -I./component/Square
+-I./component/ISR

@@ -15,7 +15,7 @@ typedef struct {
 typedef struct {
     io_handler *         io;
     void *               pin;
-    Scheduler_Component *scheduler;
+    timer_handler        *timer;
 
     unsigned int duty_cycle;
     unsigned int remain_time;

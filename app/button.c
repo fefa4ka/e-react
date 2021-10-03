@@ -3,7 +3,7 @@
 #include <Clock.h>
 
 /* Datetime couting */
-Clock(clock, &hw.clock, 0);
+Clock(clock, &hw.timer, 0);
 
 /* Indicator */
 IO(led);

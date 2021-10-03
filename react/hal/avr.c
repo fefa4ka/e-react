@@ -1,4 +1,5 @@
 #include "avr.h"
+#include "hash.h"
 
 #include "avr_mcu_section.h"
 AVR_MCU(F_CPU, "atmega328p");
@@ -113,21 +114,65 @@ io_get(void *pin) {
 
     return *(Pin->port.pin) & (1 << (Pin->number));
 }
-void (*_io_isr_INT0)(void *args);
-void *_io_isr_INT0_args = 0;
 
-ISR(INT0_vect) {
-	_io_isr_INT0(_io_isr_INT0_args);
-}
+/*
+#define HW_ISR_VECTOR_SIZE 8
+unsigned int isr_index[HW_ISR_VECTOR_SIZE];
+struct callback isr_handlers[HW_ISR_VECTOR_SIZE];
+
+union isr_vector_index {
+    struct {
+        char port;
+        char num;
+    } pin;
+    unsigned int index;
+};
+
+struct hash_table isr_vectors = {
+    .index = isr_index,
+    .data = (void **)&isr_handlers,
+    .size = HW_ISR_VECTOR_SIZE
+};
+
 void
-io_isr_mount(void *pin, void(*callback)(void *args), void *args) {
-    pin_t *Pin = (pin_t *)pin;
-    if(Pin->port.pin == &PIND && Pin->number == 2) {
-        _io_isr_INT0 = callback;
-        _io_isr_INT0_args = args;
+io_isr_handler(char vector) {
+     for(unsigned int index = 0; index <= isr_vectors.used; index++) {
+        union isr_vector_index vector_index;
+        vector_index.index = isr_vectors.index[index];
+        if((vector_index.pin.port ^ vector) == 0) {
+            struct callback *isr_handler = isr_vectors.data[index];
+            isr_handler->method(0, isr_handler->argument);
+        }
     }
-
 }
+*/
+
+
+
+
+/*
+ *  The pin change interrupt PCI1 will trigger if any enabled PCINT14..8 pin toggles.
+ *  The pin change interrupt PCI0 will trigger if any enabled PCINT7..0 pin toggles.
+*/
+void
+io_isr_mount(void *pin, struct callback *callback) {
+//    pin_t *Pin = (pin_t *)pin;
+//    union isr_vector_index vector_index = { .pin = { .num = 2 } };
+//    /* INT0 */
+//    if(Pin->port.pin == &PIND && Pin->number == 2) {
+//        vector_index.pin.port = 'A';
+//    } else if() {
+//    }
+
+//    hash_write(&isr_vectors, vector_index.index, callback);
+    /* INT1 */
+    /* PCINT7..0 */
+    /* Enabled interrupt, enable pin */
+    /* When mount for different ports one interrupt we need list of vectros */
+    /* Dispatcher needed for each ISR 8 pointers */
+    /* Save index as high byte use port and low pin */
+}
+
 
 
 

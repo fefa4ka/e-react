@@ -37,8 +37,8 @@ willMount(Button)
 
 #if !defined(_Button_poll)
     /* Use interrupt if available */
-    if (props->timer && io->isr.is_available && io->isr.is_available(props->pin)) {
-        io->isr.mount(props->pin, Button_isr, self);
+    if (props->timer && io->isr && io->isr->is_available(props->pin)) {
+        io->isr->mount(props->pin, Button_isr, self);
     }
 #endif
 }
@@ -156,8 +156,8 @@ didUnmount(Button)
 {
 #if !defined(_Button_poll)
     /* Use interrupt if available */
-    if (props->io->isr.is_available(props->pin) && props->scheduler) {
-        props->io->isr.unmount(props->pin);
+    if (props->timer && props->io->isr && props->io->isr->is_available(props->pin)) {
+        props->io->isr->umount(props->pin);
     }
 #endif
 }

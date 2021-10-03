@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 
-
 struct callback {
     void (*method)(void *trigger, void *argument);
     void *argument;
@@ -25,7 +24,7 @@ typedef struct {
     void (*pullup)(void *pin);
     bool (*get)(void *pin);
 
-    isr_handler isr;
+    isr_handler *isr;
 } io_handler;
 
 enum communication_mode {
@@ -47,7 +46,7 @@ typedef struct {
     bool (*isConvertionReady)(void *channel);
     int  (*readConvertion)(void *channel);
 
-    isr_handler isr;
+    isr_handler *isr;
 } adc_handler;
 
 typedef struct {
@@ -67,7 +66,7 @@ typedef struct {
     void         (*off)();
     unsigned int (*usFromTicks)(unsigned int ticks);
 
-    isr_handler isr;
+    isr_handler *isr;
 } timer_handler;
 
 typedef struct
@@ -77,5 +76,4 @@ typedef struct
     serial_handler uart;
     serial_handler spi;
     timer_handler  timer;
-    isr_handler    isr;
 } HAL;

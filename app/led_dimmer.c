@@ -38,7 +38,7 @@ PWM(led, {0},
     _({
         .io    = &hw.io,
         .pin   = &led_pin,
-        .timer = &timer.state.time,
+        .timer = &timer.state.time,   , void *next_props))
     }));
 
 ///
@@ -51,6 +51,12 @@ void sensor_readed(Component *adc)
 int main(void)
 {
     // Event-loop
+    use(scheduler, sensor, led);
+    Scheduler_plan(scheduler, STEP_TIME_MS, React_Component, timer);
+    Scheduler_task(scheduler, React_Component, timer);
+    Beat_task(beat, )
+    Beat_schedule(beat, TIMEOUT_MS, React_Component, timer);
+
     loop(timer, sensor)
     {
         apply(PWM, led,
