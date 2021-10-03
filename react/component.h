@@ -163,8 +163,8 @@ bool React_Component(Component *instance, void *next_props);
 #define release(Type)      React_LifeCycle(Type, release)
 #define shouldUpdate(Type) React_UpdateCycle(Type, shouldUpdate, bool)
 #define didMount(Type)     React_LifeCycle(Type, didMount)
-#define didUnmount(Type)   React_LifeCycle(Type, didUnmount)
 #define didUpdate(Type)    React_LifeCycle(Type, didUpdate)
+#define didUnmount(Type)   React_LifeCycle(Type, didUnmount)
 
 
 #define React_Define_WithProps(Type, instance_name, instance_props)            \
@@ -237,8 +237,6 @@ bool React_Component(Component *instance, void *next_props);
 #define loop_(x)  Stage_Component(&x.instance, 0) &&
 #define loop(...) while (EVAL(MAP(loop_, __VA_ARGS__)) true)
 
-#define unmount(x)                                                             \
-    {                                                                          \
-        x.instance.stage = REACT_STAGE_UNMOUNTED;                              \
-        Stage_Component(&x.instance, 0);                                       \
-    }
+#define shut(x)                                                             \
+    x.instance.stage = REACT_STAGE_UNMOUNTED;                                  \
+    Stage_Component(&x.instance, 0);

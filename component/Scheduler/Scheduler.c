@@ -289,16 +289,4 @@ release(Scheduler)
 didMount(Scheduler) {}
 didUpdate(Scheduler) {}
 
-#define Scheduler_timer(scheduler)                                             \
-    void Scheduler_timer_set(unsigned int timeout_ms,                          \
-                             void (*callback)(void *args), void *args)         \
-    {                                                                          \
-        Scheduler_enqueue(scheduler, timeout_ms, callback, args);              \
-    }                                                                          \
-    timer_handler Scheduler_handler                                            \
-        = {         \
-    .init                = scheduler->props.timer->init,                       \
-                    .get = scheduler->props.timer->get,                        \
-                    .set = Scheduler_timer_set,                                \
-                    .off = scheduler->props.timer->off.usFromTicks(            \
-                        unsigned int ticks)}
+

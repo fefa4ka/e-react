@@ -22,6 +22,25 @@
                          .capacity = scheduler_capacity},                      \
            }))
 
+/* Define with Timer handler */
+#define Scheduler_timer_handler(instance)                                      \
+    extern timer_handler instance##_timer_handler;                             \
+    void                 instance##_timer_init(void *args)                     \
+    {                                                                          \
+        if (!instance##_timer_handler.get) {                                   \
+            instance##_timer_handler.get = instance.props.timer->get;          \
+            instance##_timer_handler.off = instance.props.timer->off;          \
+        }                                                                      \
+        instance.props.timer->init(args);                                      \
+    }                                                                          \
+    void instance##_timer_set(unsigned int timeout_ms,                         \
+                              void (*callback)(void *args), void *args)        \
+    {                                                                          \
+        Scheduler_enqueue(&instance, timeout_ms, callback, args);              \
+    }                                                                          \
+    timer_handler instance##_timer_handler                                     \
+        = {.init = instance##_timer_init, .set = instance##_timer_set}
+
 ///
 /// \brief Scheduled event with callback and args
 ///

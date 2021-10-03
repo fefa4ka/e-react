@@ -37,7 +37,7 @@ Scheduler_timer_handler(scheduler);
               .timer = &scheduler_timer_handler,                               \
           }))
 #define Servo_drive(instance, servo_angle)                                     \
-    react(Servo, instance,                                                     \
+    apply(Servo, instance,                                                     \
           _({                                                                  \
               .speed = state.motors_enabled ? SERVO_SPEED : 0,                 \
               .angle = servo_angle,                                            \
@@ -61,7 +61,6 @@ Button(switcher, _({
                      .type = BTN_PUSH_PULLUP,
 
                      .clock = &timer.state.time,
-                     .timer = scheduler_timer_handler,
                      .bounce_delay_ms = 100,
 
                      .onRelease = switch_motor,
@@ -77,14 +76,9 @@ void sensor_readed(Component *trigger)
     if (state.sensor == SENSOR_POTENTIOMETER) {
         state.angle  = value;
         state.sensor = SENSOR_SOLAR_POWER;
-
-        Servo_drive(left_actuator, state.angle);
-        Servo_drive(right_actuator, 180 - state.angle);
     } else {
         state.thrust = value;
         state.sensor = SENSOR_POTENTIOMETER;
-
-        Servo_drive(engine, state.thrust);
     }
 }
 ADC(sensor, _({
@@ -97,9 +91,13 @@ ADC(sensor, _({
 
 int main(void)
 {
-    use(switcher, sensor);
-
-    loop(clock, scheduler);
+    loop(clock, scheduler, switcher, sensor)
+    {
+        /* Servos */
+        Servo_drive(engine, state.thrust);
+        Servo_drive(left_actuator, state.angle);
+        Servo_drive(right_actuator, 180 - state.angle);
+    }
 
     return 0;
 }

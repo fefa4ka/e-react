@@ -28,7 +28,7 @@ shouldUpdate(Servo) {
     return false;
 }
 
-willUpdate(Servo) { 
+willUpdate(Servo) {
     state->duty_cycle = 1000 + props->angle * 50 / 9;
     state->remain_time = props->speed * 1000 - state->duty_cycle;
 
@@ -51,14 +51,13 @@ release(Servo) {
             state->on_duty = SERVO_ON_DUTY;
         }
 
-        bool scheduled = Scheduler_enqueue(
-                state->scheduler, 
-                (state->on_duty 
+        props->timer->set(
+                (state->on_duty
                     ? state->duty_cycle
-                    : state->remain_time) 
+                    : state->remain_time)
                 + (state->on_duty
-                    ? 0 
-                    : fast_random()), 
+                    ? 0
+                    : fast_random()),
                 self->Release, self
         );
     } else {

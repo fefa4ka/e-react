@@ -19,6 +19,8 @@ extern HAL hw;
 
 void free_pins();
 
+#define hw_isr_enable() {}
+#define hw_isr_disable() {}
 #define debug(port, pin)                                                      \
     ({                                                                        \
         pin_t debug_pin = hw_pin (port, pin);                                 \
