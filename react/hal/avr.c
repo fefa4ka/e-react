@@ -1,10 +1,6 @@
 #include "avr.h"
 #include "hash.h"
 
-#include "avr_mcu_section.h"
-AVR_MCU(F_CPU, "atmega328p");
-
-
 void io_in(void *pin);
 void io_out(void *pin);
 void io_on(void *pin);

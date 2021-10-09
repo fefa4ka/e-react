@@ -1,6 +1,6 @@
 DEVICE     = atmega328p
 CLOCK      = 16000000
-PROGRAMMER = -c 2ftbb 
+PROGRAMMER = -c 2ftbb
 FUSES      = -U lfuse:w:0xee:m -U hfuse:w:0xdf:m
 
 BUILD_NUMBER=$(shell cat BUILD.num)
@@ -16,18 +16,20 @@ ARCH ?= x86
 ifeq ($(ARCH), AVR)
 	CC = avr-gcc
 else
-	CC = clang 
+	CC = clang
 endif
 AVRDUDE = avrdude -V $(PROGRAMMER) -p $(DEVICE)
 
 VPATH = react:app:component
 
+uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
+
 SOURCES := $(shell find $(SOURCES_DIR) \( -name "*.c" -or -name "*.s" \) -and -not -path "./third_party/*")
 OBJECTS ?= $(SOURCES:%.c=%.o)
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
-INCLUDE_DIRS := $(shell find $(SOURCES_DIR) -type f \( -name '*.c' -or -name '*.s' \) -and -not -path "./third_party/*" | sed -E 's|\/[^\/]+$$||' |sort -u)
-INCLUDE_FLAGS := $(addprefix -I, $(INCLUDE_DIRS)) -I/usr/local/include/simavr/avr -I/usr/avr/include
+INCLUDE_DIRS := $(call uniq,$(dir $(OBJECTS)))
+INCLUDE_FLAGS := $(addprefix -I, $(INCLUDE_DIRS)) -I/usr/avr/include
 
 TARGET_SOURCES = $(wildcard $(TARGET_DIR)/*.c $(TARGET_DIR)/**/*.c)
 TARGET_OBJECTS = $(patsubst %.c, %.o, \
@@ -48,7 +50,7 @@ else
 endif
 DEFINE_COMPUTED ?=
 DEFINE_FLAGS = -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME) -DTIMESTAMP=$(shell date +%s) $(DEFINE_COMPUTED)
-CFLAGS ?= -Wall -g -Og $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu11 
+CFLAGS ?= -Wall -g -Og $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu11
 COMPILE = $(CC) $(CFLAGS)
 
 %.hex: %.elf %.map
@@ -60,7 +62,7 @@ COMPILE = $(CC) $(CFLAGS)
 	$(COMPILE) -Wl,-Map,$@ -o $* $(OBJECTS)
 	avr-objdump -h -S $* > $*.lst
 
-%.elf: $(OBJECTS) 
+%.elf: $(OBJECTS)
 	@echo $(DEPENDENCIES)
 	$(COMPILE) -o $@ $(OBJECTS)
 
