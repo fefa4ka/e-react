@@ -237,6 +237,6 @@ bool React_Component(Component *instance, void *next_props);
 #define loop_(x)  Stage_Component(&x.instance, 0) &&
 #define loop(...) while (EVAL(MAP(loop_, __VA_ARGS__)) true)
 
-#define shut(x)                                                             \
+#define shut(x)                                                                \
     x.instance.stage = REACT_STAGE_UNMOUNTED;                                  \
     Stage_Component(&x.instance, 0);
