@@ -17,6 +17,8 @@ typedef struct
 
 extern HAL hw;
 
+void free_pins();
+
 #define debug(port, pin)                                                      \
     ({                                                                        \
         pin_t debug_pin = hw_pin (port, pin);                                 \

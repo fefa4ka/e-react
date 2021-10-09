@@ -98,7 +98,7 @@ unsigned int hash_pin(pin_t *pin)
 static pin_t * get_pin(pin_t *pin)
 {
     pin_t *Pin;
-    if (hash_read(&pins, hash_pin(pin), &Pin) == ERROR_NONE) {
+    if (hash_read(&pins, hash_pin(pin), (void **)&Pin) == ERROR_NONE) {
         //printf("Pin PORT_%s_%d — cached\r\n", Pin->name, Pin->number);
         return Pin;
     }
@@ -183,14 +183,14 @@ static bool get(void *pin)
 
 // ADC
 
-static void adc_mount(void *prescaler) { 
-
+static void adc_mount(void *prescaler) {
     srand(time(NULL));
-    printf("ADC init\r\n"); }
+    //printf("ADC init\r\n");
+}
 
 static void adc_selectChannel(void *channel)
 {
-    unsigned short *ch = (unsigned short *)channel;
+    //unsigned short *ch = (unsigned short *)channel;
 
     //printf("ADC selectChannel %d\r\n", *ch);
 }
@@ -202,7 +202,7 @@ static void adc_startConvertion(void *channel)
 
 static bool adc_isConvertionReady(void *channel)
 {
-    unsigned short *ch = (unsigned short *)channel;
+    //unsigned short *ch = (unsigned short *)channel;
     //printf("ADC isConvertionReady %d\r\n", *ch);
 
     return true;
@@ -210,7 +210,7 @@ static bool adc_isConvertionReady(void *channel)
 
 static int adc_readConvertion(void *channel)
 {
-    unsigned short *ch = (unsigned short *)channel;
+    //unsigned short *ch = (unsigned short *)channel;
     //printf("ADC readConvertion %d\r\n", *ch);
 
     return rand();
@@ -263,7 +263,7 @@ struct timer_callback {
     void (*callback)(void *args);
     void *args;
     size_t index;
-    pthread_t thread; 
+    pthread_t thread;
 };
 
 #define TIMERS_NR 10
@@ -275,6 +275,8 @@ void *timer_timeout(void *ptr) {
     usleep(callback->timeout);
     callback->callback(callback->args);
     *callback = (struct timer_callback){0};
+
+    return NULL;
 }
 
 static void timer_set(unsigned int ticks, void (*callback)(void *args),
@@ -287,7 +289,7 @@ static void timer_set(unsigned int ticks, void (*callback)(void *args),
             *timer = timer_callback;
             pthread_create(&timer->thread, NULL, *timer_timeout, (void *)timer);
 
-            printf("Timer #%d set: %d\r\n", i, ticks);
+            printf("Timer #%ld set: %d\r\n", i, ticks);
             break;
         }
     }

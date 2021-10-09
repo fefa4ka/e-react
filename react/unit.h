@@ -28,7 +28,7 @@
 #define test_execute_(test_method) \
     pthread_t test_method##_thread; \
     int test_method##_thread_id; \
-    pthread_create(&test_method##_thread, NULL, *test_method, (void *)test_method##_thread_id);
+    pthread_create(&test_method##_thread, NULL, test_method, (void *)&test_method##_thread_id);
 
 #define test_execute(...) EVAL(MAP(test_execute_, __VA_ARGS__))
 
@@ -43,7 +43,7 @@ main (void) \
 { \
     pthread_t program_thread; \
     int program_thread_id; \
-    pthread_create(&program_thread, NULL, *program, (void *)program_thread_id); \
+    pthread_create(&program_thread, NULL, program, (void *)&program_thread_id); \
     test_execute(__VA_ARGS__); \
     test_wait(__VA_ARGS__); \
     free_pins(); \

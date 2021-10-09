@@ -70,7 +70,7 @@ void Timer_date(unsigned long seconds, struct calendar *tm)
 ///
 willMount(Timer)
 {
-    void *ptr;
+    void *ptr = 0;
     props->timer->init(ptr);
 }
 

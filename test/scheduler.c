@@ -15,8 +15,13 @@ void scheduler_trigger(void *trigger) {
 }
 
 
+int count = 0;
 test(queue_push_pop) {
-    loop(timer, scheduler) {}
+    loop(timer, scheduler) {
+        count++;
+    }
+
+    return NULL;
 }
 
 void queue_push_pop() {
@@ -34,6 +39,9 @@ void queue_push_pop() {
     Scheduler_enqueue(&scheduler, c, scheduler_trigger, &c);
     Scheduler_enqueue(&scheduler, d, scheduler_trigger, &d);
     Scheduler_enqueue(&scheduler, e, scheduler_trigger, &e);
+    Scheduler_enqueue(&scheduler, e, scheduler_trigger, &h);
+    Scheduler_enqueue(&scheduler, e, scheduler_trigger, &g);
+    Scheduler_enqueue(&scheduler, e, scheduler_trigger, &f);
 
     sleep(2);
 }

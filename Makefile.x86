@@ -11,13 +11,14 @@ CC = gcc-11
 
 VPATH = react:app:component
 
+uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 SOURCES := $(shell find $(SOURCES_DIR) \( -name "*.c" -or -name "*.s" \) -and -not -path "./third_party/*")
 OBJECTS ?= $(SOURCES:%.c=%.o)
 DEPENDENCIES := $(OBJECTS:.o=.d)
 
-INCLUDE_DIRS := $(shell find $(SOURCES_DIR) -type f \( -name '*.c' -or -name '*.s' \) -and -not -path "./third_party/*" | sed -E 's|\/[^\/]+$$||' |sort -u)
+INCLUDE_DIRS := $(call uniq,$(dir $(OBJECTS)))
 INCLUDE_FLAGS := $(addprefix -I, $(INCLUDE_DIRS))
-INCLUDE_FLAGS += -I./third_party/simavr/simavr/sim -I./third_party/simavr/simavr/ -I./third_party/simavr/include -I/usr/local/include/simavr
+INCLUDE_FLAGS +=
 
 TARGET_SOURCES = $(wildcard $(TARGET_DIR)/*.c $(TARGET_DIR)/**/*.c)
 TARGET_OBJECTS = $(patsubst %.c, %.o, \
@@ -51,7 +52,8 @@ $(TARGET): $(OBJECTS)
 
 %.o: %.c
 	@echo "Make object for $@"
-	$(COMPILE) -c $*.c -o $@ $(INCLUDE_FLAGS)
+	make -f Makefile.x86 $*.e.c
+	$(COMPILE) -c $*.e.c -o $@ $(INCLUDE_FLAGS)
 
 %.d: %.c
 	$(CC) $(CFLAGS) $< -MM $(INCLUDE_FLAGS) > $@
