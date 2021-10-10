@@ -1,12 +1,12 @@
 #include "unit.h"
 
 #include <IO.h>
-#include <Clock.h>
 #include <Button.h>
+#include <Clock.h>
 
 
 /* Datetime couting */
-Clock(clock, &hw.timer, 0);
+Clock(clk, &hw.timer, 0);
 
 /* Indicator */
 IO(led);
@@ -24,7 +24,7 @@ Button(switcher,
            .io  = &hw.io,
            .pin = &switcher_pin,
 
-           .clock = &clock.state.time,
+           .clock = &clk.state.time,
 
            .type            = BUTTON_TOGGLE,
            .bounce_delay_ms = 1000,
@@ -44,7 +44,7 @@ Button(pusher,
            .io  = &hw.io,
            .pin = &pusher_pin,
 
-           .clock = &clock.state.time,
+           .clock = &clk.state.time,
 
            .type            = BUTTON_PUSH,
            .bounce_delay_ms = 100,
@@ -57,7 +57,7 @@ Button(pusher,
 
 test(long_push) {
     // Event-loop
-    loop(clock, switcher)
+    loop(clk, switcher)
     {
         if (enabled) {
             use(pusher);
