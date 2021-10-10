@@ -20,7 +20,7 @@ Button(switcher,
 
            .clock = &clock.state.time,
 
-           .type            = BTN_TOGGLE_PULLUP,
+           .type            = BUTTON_TOGGLE_PULLUP,
            .bounce_delay_ms = 1000,
 
            .onToggle = switcher_toggle,
@@ -35,7 +35,7 @@ Button(pusher,
 
            .clock = &clock.state.time,
 
-           .type            = BTN_PUSH_PULLUP,
+           .type            = BUTTON_PUSH_PULLUP,
            .bounce_delay_ms = 100,
        }));
 

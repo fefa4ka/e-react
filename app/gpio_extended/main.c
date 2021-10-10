@@ -86,7 +86,7 @@ main (void)
         react (Button, pusher,
                _ ({ .io              = &hw.io,
                     .pin             = &state.btn_pin,
-                    .type            = BTN_PUSH_PULLUP,
+                    .type            = BUTTON_PUSH_PULLUP,
                     .time            = &state.time,
                     .bounce_delay_ms = 100,
 

@@ -18,7 +18,7 @@ Button(counter, _({
                     .io  = &hw.io,
                     .pin = &counter_pin,
 
-                    .type            = BTN_PUSH_PULLUP,
+                    .type            = BUTTON_PUSH_PULLUP,
                     .timer           = &timer.state.time,
                     .bounce_delay_ms = 1000,
 

@@ -12,10 +12,10 @@ typedef struct {
     void *      pin;
 
     enum {
-        BTN_PUSH_PULLUP, /* Button pressed only when pushed */
-        BTN_PUSH,
-        BTN_TOGGLE_PULLUP, /* Pressed state change after every push */
-        BTN_TOGGLE
+        BUTTON_PUSH_PULLUP, /* Button pressed only when pushed */
+        BUTTON_PUSH,
+        BUTTON_TOGGLE_PULLUP, /* Pressed state change after every push */
+        BUTTON_TOGGLE
     } type;
 
 

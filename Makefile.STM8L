@@ -1,3 +1,4 @@
+ARCH ?= STM8L
 CC = sdcc
 DEVICE     = stm8l105k6
 CLOCK      = 16000000

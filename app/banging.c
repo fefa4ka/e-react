@@ -48,7 +48,7 @@ Button(counter, _({
 
                     .timer = &timer.state.time,
 
-                    .type            = BTN_PUSH_PULLUP,
+                    .type            = BUTTON_PUSH_PULLUP,
                     .bounce_delay_ms = 100,
 
                     .onRelease = send_number,

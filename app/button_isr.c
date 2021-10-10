@@ -21,7 +21,7 @@ Button(pusher, _({
                    .clock = &clock.state.time,
                    .timer = &hw.timer,
 
-                   .type            = BTN_PUSH_PULLUP,
+                   .type            = BUTTON_PUSH_PULLUP,
                    .bounce_delay_ms = 100,
                }));
 
@@ -51,7 +51,7 @@ Button(switcher, _({
                      .clock = &clock.state.time,
                      .timer = &hw.timer,
 
-                     .type            = BTN_TOGGLE_PULLUP,
+                     .type            = BUTTON_TOGGLE_PULLUP,
                      .bounce_delay_ms = 1000,
 
                      .onToggle = switcher_toggle,

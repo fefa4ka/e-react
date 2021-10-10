@@ -29,7 +29,7 @@ willMount(Button)
     /* Setup pin as input */
     io->in(props->pin);
     state->inverse
-        = props->type == BTN_PUSH_PULLUP || props->type == BTN_TOGGLE_PULLUP;
+        = props->type == BUTTON_PUSH_PULLUP || props->type == BUTTON_TOGGLE_PULLUP;
 
     if (state->inverse) {
         io->pullup(props->pin);
@@ -75,7 +75,7 @@ shouldUpdate(Button)
     }
 
     /* Another checks after pressed */
-    if ((props->type == BTN_PUSH_PULLUP || props->type == BTN_PUSH)
+    if ((props->type == BUTTON_PUSH_PULLUP || props->type == BUTTON_PUSH)
         && state->pressed && (level == 0 || state->inverse)) {
         /* Push button unpressed after release */
         return true;
@@ -116,14 +116,14 @@ release(Button)
     }
 
     /* Cache button state for toggling */
-    if (props->type == BTN_TOGGLE_PULLUP || props->type == BTN_TOGGLE) {
+    if (props->type == BUTTON_TOGGLE_PULLUP || props->type == BUTTON_TOGGLE) {
         pressed = state->pressed;
     }
 
     /* Change state if bounce filtered */
     if (state->tick && passed > props->bounce_delay_ms) {
         if (state_level) {
-            if (props->type == BTN_TOGGLE_PULLUP || props->type == BTN_TOGGLE) {
+            if (props->type == BUTTON_TOGGLE_PULLUP || props->type == BUTTON_TOGGLE) {
                 pressed = !state->pressed;
             } else {
                 pressed = true;

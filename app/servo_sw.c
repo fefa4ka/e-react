@@ -58,7 +58,7 @@ Button(switcher, _({
                      .io  = &hw.io,
                      .pin = &switcher_pin,
 
-                     .type = BTN_PUSH_PULLUP,
+                     .type = BUTTON_PUSH_PULLUP,
 
                      .clock = &timer.state.time,
                      .timer = scheduler_timer_handler,
