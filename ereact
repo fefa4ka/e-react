@@ -36,14 +36,15 @@ else
     ARCH="$2"
 fi
 
+MAKE="make -f Makefile.${ARCH}"
 echo "Building $1"
 
-make -f Makefile.${ARCH} clean
+$MAKE clean
 
-cat BUILD.num | awk '{ print $1 + 1 }' | tee BUILD.num 
+cat BUILD.num | awk '{ print $1 + 1 }' | tee BUILD.num
 
 # Get dependencies
-make -f Makefile.${ARCH} ${TARGET}.d ARCH=$ARCH
+$MAKE ${TARGET}.d ARCH=$ARCH
 DEP_DEFS=""
 
 DEPS=`cat ${TARGET}.d | cut -d':' -f2`
@@ -86,7 +87,7 @@ DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/
 DEFS="ARCH=$ARCH PRODUCT_NAME=$1"
 
 if [ "$ARCH" == "AVR" ]; then
-    make -f Makefile.${ARCH} "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
+    $MAKE "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
     if [[ -f "${TARGET}_test.c" ]]; then
         echo "Test exists"
         # mv ${TARGET}.elf ${TARGET}.fw
@@ -97,16 +98,16 @@ if [ "$ARCH" == "AVR" ]; then
 
     SIMULATOR="target/$1/sim"
     #make "${SIMULATOR}.sim.elf"
-    make -f Makefile.${ARCH} flash TARGET="${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
+    $MAKE flash TARGET="${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
 fi
 
 if [ "$ARCH" == "STM8L" ]; then
-    make -f Makefile.${ARCH} "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
+    $MAKE "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
     sudo stm8flash -c stlinkv2 -p stm8l152k6 -w ${TARGET}.ihx
 fi
 
 if [ "$ARCH" == "x86" ]; then
-    make -f Makefile.${ARCH} "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 
+    $MAKE "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS"
 fi
 
 if [ "$1" == "test" ]; then
