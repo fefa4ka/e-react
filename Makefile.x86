@@ -1,67 +1,15 @@
-BUILD_NUMBER=$(shell cat BUILD.num)
-
-BUILD_DIR ?= ./build
-
-TARGET_DIR ?= ./app
-COMPONENTS_DIR = ./component
-SOURCES_DIR = .
-
 ARCH ?= x86
 CC = gcc-11
 
-VPATH = react:app:component
-
-uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
-SOURCES := $(shell find $(SOURCES_DIR) \( -name "*.c" -or -name "*.s" \) -and -not -path "./third_party/*")
-OBJECTS ?= $(SOURCES:%.c=%.o)
-DEPENDENCIES := $(OBJECTS:.o=.d)
-
-INCLUDE_DIRS := $(call uniq,$(dir $(OBJECTS)))
-INCLUDE_FLAGS := $(addprefix -I, $(INCLUDE_DIRS))
-INCLUDE_FLAGS +=
-
-TARGET_SOURCES = $(wildcard $(TARGET_DIR)/*.c $(TARGET_DIR)/**/*.c)
-TARGET_OBJECTS = $(patsubst %.c, %.o, \
-			   $(TARGET_SOURCES))
-TARGET ?= $(patsubst %.c, %, \
-		 	$(TARGET_SOURCES))
-PRODUCT_NAME ?= unnamed
-
-COMPONENTS_SOURCES = $(shell find $(COMPONENTS_DIR) -name "*.c" -or -name "*.s")
-COMPONENTS = $(patsubst %.c, %.o, \
-			 	$(COMPONENTS_SOURCES))
-
 MACHINE_FLAGS = -DF_CPU=$(CLOCK)
-OPTIMIZATION_FLAGS ?=
-DEBUG_FLAGS ?=
-DEFINE_COMPUTED ?=
-DEFINE_FLAGS = $(DEFINE_COMPUTED) -DBUILD_NUM=$(BUILD_NUMBER) -DARCH_$(ARCH)=1 -DPRODUCT_NAME=$(PRODUCT_NAME) -DTIMESTAMP=$(shell date +%s)
-CFLAGS ?= -fcompare-debug-second -Wall -g -Og $(OPTIMIZATION_FLAGS) $(DEBUG_FLAGS) $(DEFINE_FLAGS) $(MACHINE_FLAGS) --std=gnu11 -lpthread
-COMPILE = $(CC) $(CFLAGS)
+OPTIMIZATION_FLAGS ?= -fcompare-debug-second -g -Og
+
+include Makefile.base
 
 $(TARGET): $(OBJECTS)
 	@echo $(DEPENDENCIES)
 	$(COMPILE) -o $@ $(OBJECTS)
 
-%.e.c: %.c
-	@echo "Processing $*.c"
-	$(COMPILE) -c $*.c -o $@.expanded $(INCLUDE_FLAGS) -E
-	grep ^[^\#].*$  $@.expanded > $@.unformatted
-	clang-format $@.unformatted > $@
-	rm $@.*
-
-%.o: %.c
-	@echo "Make object for $@"
-	make -f Makefile.x86 $*.e.c
-	$(COMPILE) -c $*.e.c -o $@ $(INCLUDE_FLAGS)
-
-%.d: %.c
-	$(CC) $(CFLAGS) $< -MM $(INCLUDE_FLAGS) > $@
-
 clean:
 	rm -rf $(TARGET) $(OBJECTS) $(DEPENDENCIES)
 	find . -type f -name '*.map' -or -name '*.sym' -or -name '*.ihx' -or -name '*.asm' -or -name '*.rst' -or -name '*.rel' -or -name '*.lst' -or -name '*.elf' -or -name '*.e.c' -or -name '*.hex' | xargs rm -rf
-
-
-MKDIR_P ?= mkdir -p
-
