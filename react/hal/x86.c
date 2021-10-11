@@ -247,7 +247,6 @@ static inline unsigned char uart_receive()
 static void timer_init(void *config)
 {
     srand(time(NULL));
-    printf("Timer init\r\n");
 }
 
 

@@ -6,8 +6,8 @@ if [ $1 == "component" ]; then
     cp -rf component/Template component/$name
     mv component/$name/Template.h component/$name/$name.h
     mv component/$name/Template.c component/$name/$name.c
-    sed -i "s/Template/$name/g" component/$name/$name.h
-    sed -i "s/Template/$name/g" component/$name/$name.c
+    gsed -i "s/Template/$name/g" component/$name/$name.h
+    gsed -i "s/Template/$name/g" component/$name/$name.c
     echo "-I./component/$name" >> .ccls
     echo "component/$name created."
 
@@ -44,7 +44,7 @@ $MAKE clean
 cat BUILD.num | awk '{ print $1 + 1 }' | tee BUILD.num
 
 # Get dependencies
-$MAKE ${TARGET}.d ARCH=$ARCH
+$MAKE ${TARGET}.d
 DEP_DEFS=""
 
 DEPS=`cat ${TARGET}.d | cut -d':' -f2`
@@ -98,16 +98,23 @@ if [ "$ARCH" == "AVR" ]; then
 
     SIMULATOR="target/$1/sim"
     #make "${SIMULATOR}.sim.elf"
-    $MAKE flash TARGET="${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" ARCH=$ARCH
+    if [ "$3" == "flash" ]; then
+        $MAKE flash TARGET="${TARGET}.hex"
+    fi
 fi
 
 if [ "$ARCH" == "STM8L" ]; then
     $MAKE "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
-    sudo stm8flash -c stlinkv2 -p stm8l152k6 -w ${TARGET}.ihx
+    if [ "$3" == "flash" ]; then
+        sudo stm8flash -c stlinkv2 -p stm8l152k6 -w ${TARGET}.ihx
+    fi
 fi
 
 if [ "$ARCH" == "x86" ]; then
     $MAKE "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS"
+    if [ "$3" == "flash" ]; then
+        ${TARGET}
+    fi
 fi
 
 if [ "$1" == "test" ]; then

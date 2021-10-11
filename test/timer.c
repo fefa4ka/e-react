@@ -1,29 +1,29 @@
 #include "unit.h"
 
-#include <Timer.h>
-#define  _Timer_date
+#include <Clock.h>
+#define  _Clock_date
 
 /* Datetime couting */
-Timer(timer, &hw.timer, 0);
+Clock(clk, &hw.timer, 0);
 struct calendar now;
 
 
 test(ticks) {
-    timer.props.calendar = &now;
+    clk.props.calendar = &now;
 
-    loop(timer) {}
+    loop(clk) {}
 }
 
 
 void ticks()
 {
-    test_assert(timer.state.time.timestamp == 0, "Timer shoud be 0 at start");
+    test_assert(clk.state.time.timestamp == 0, "Clock shoud be 0 at start");
     usleep(1100000);
-    test_assert(timer.state.time.timestamp == 1, "Timer shoud be 1");
+    test_assert(clk.state.time.timestamp == 1, "Clock shoud be 1");
     usleep(1100000);
-    test_assert(timer.state.time.timestamp == 2, "Timer shoud be 2");
+    test_assert(clk.state.time.timestamp == 2, "Clock shoud be 2");
     usleep(1100000);
-    test_assert(timer.state.time.timestamp == 3, "Timer shoud be 3");
+    test_assert(clk.state.time.timestamp == 3, "Clock shoud be 3");
 
     test_assert(now.year == 1970, "Year should be 1970");
 }

@@ -13,12 +13,11 @@ IO(led);
 pin_t led_pin = hw_pin(B, 1);
 
 /* Mode switcher. Led could blink When enabled. */
-bool  enabled      = false;
-pin_t switcher_pin = hw_pin(D, 1);
-void  switcher_toggle(Component *trigger) { log_info("Switch toggled"); enabled = !enabled; }
-void  switcher_pressed(Component *trigger) { log_info("Switch pressed"); }
-void  switcher_released(Component *trigger) { log_info("Switch released"); }
-
+bool   enabled      = false;
+pin_t  switcher_pin = hw_pin(D, 1);
+void   switcher_toggle(Component *trigger) { log_info("Switch toggled"); enabled = !enabled; }
+void   switcher_pressed(Component *trigger) { log_info("Switch pressed"); }
+void   switcher_released(Component *trigger) { log_info("Switch released"); }
 Button(switcher,
        _({
            .io  = &hw.io,
@@ -35,10 +34,10 @@ Button(switcher,
        }));
 
 /* Push button for led blinking */
-pin_t pusher_pin = hw_pin(D, 0);
-void  pusher_toggle(Component *trigger) { log_info("Push toggle"); }
-void  pusher_pressed(Component *trigger) { log_info("Push pressed"); }
-void  pusher_released(Component *trigger) { log_info("Push released"); }
+pin_t  pusher_pin = hw_pin(D, 0);
+void   pusher_toggle(Component *trigger) { log_info("Push toggle"); }
+void   pusher_pressed(Component *trigger) { log_info("Push pressed"); }
+void   pusher_released(Component *trigger) { log_info("Push released"); }
 Button(pusher,
        _({
            .io  = &hw.io,
@@ -80,9 +79,9 @@ void long_push()
     hw.io.on(&switcher_pin);
     usleep(500000);
     hw.io.off(&switcher_pin);
-    sleep(1);
     test_assert(enabled == false, "Should disabled after half sec");
 
+    sleep(1);
     hw.io.on(&switcher_pin);
     usleep(1100000);
     hw.io.off(&switcher_pin);
