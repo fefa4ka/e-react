@@ -37,7 +37,7 @@ else
     ARCH="$2"
 fi
 
-MAKE="make -f Makefile.${ARCH}"
+MAKE="make --debug=b -f Makefile.${ARCH}"
 echo "Building $1"
 
 $MAKE clean
@@ -138,7 +138,7 @@ build(){
 
 if [ -z $2 ]; then
     local targets=()
-    for target in ./$TARGET_DIR/*.c; do
+    for target in $TARGET_DIR/*.c; do
         target=${target%.*}
         targets+=("$target")
         build $target $TARGET_DIR $ARCH
