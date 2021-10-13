@@ -17,14 +17,14 @@ test(ticks) {
 
 void ticks()
 {
-    test_assert(clk.state.time.timestamp == 0, "Clock shoud be 0 at start");
-    usleep(1100000);
-    test_assert(clk.state.time.timestamp == 1, "Clock shoud be 1");
-    usleep(1100000);
-    test_assert(clk.state.time.timestamp == 2, "Clock shoud be 2");
-    usleep(1100000);
-    test_assert(clk.state.time.timestamp == 3, "Clock shoud be 3");
+    test_assert(clk.state.time.timestamp == 0, "Clock should be 0 at start, but %d", clk.state.ms);
+    sleep(1);
+    test_assert(clk.state.time.timestamp == 1, "Clock should be 1, but %d", clk.state.time.timestamp);
+    sleep(1);
+    test_assert(clk.state.time.timestamp == 2, "Clock should be 2, but %d", clk.state.time.timestamp);
+    sleep(1);
+    test_assert(clk.state.time.timestamp == 3, "Clock should be 3");
 
-    test_assert(now.year == 1970, "Year should be 1970");
+    test_assert(now.year == 1970, "Year should be 1970, but %d", now.year);
 }
 

@@ -14,24 +14,24 @@
 #define Clock_getYear(instance) Clock_time(instance).timestamp / 31536000 + 1970
 
 struct Clock {
-    unsigned long timestamp; /* Unix timestamp in seconds */
-    unsigned int  ms;        /* Tick counter in ms */
-    unsigned long us;        /* Tick counter in us */
-    unsigned int  step_us;   /* Tick length in us */
+    uint32_t timestamp; /* Unix timestamp in seconds */
+    uint16_t ms;        /* Tick counter in ms */
+    uint32_t us;        /* Tick counter in us */
+    uint16_t step_us;   /* Tick length in us */
 };
 
 struct calendar {
-    int   sec;    /* seconds after the minute [0-60] */
-    int   min;    /* minutes after the hour [0-59] */
-    int   hour;   /* hours since midnight [0-23] */
-    int   mday;   /* day of the month [1-31] */
-    int   mon;    /* months since January [0-11] */
-    int   year;   /* years since 1900 */
-    int   wday;   /* days since Sunday [0-6] */
-    int   yday;   /* days since January 1 [0-365] */
-    int   isdst;  /* Daylight Savings Time flag */
-    long  gmtoff; /* offset from CUT in seconds */
-    char *zone;   /* timezone abbreviation */
+    uint8_t  sec;    /* seconds after the minute [0-60] */
+    uint8_t  min;    /* minutes after the hour [0-59] */
+    uint8_t  hour;   /* hours since midnight [0-23] */
+    uint8_t  mday;   /* day of the month [1-31] */
+    uint8_t  mon;    /* months since January [0-11] */
+    uint16_t  year;  /* years since 1900 */
+    uint8_t  wday;   /* days since Sunday [0-6] */
+    uint16_t yday;   /* days since January 1 [0-365] */
+    uint8_t  isdst;  /* Daylight Savings Time flag */
+    uint16_t gmtoff; /* offset from CUT in seconds */
+    uint8_t *zone;   /* timezone abbreviation */
 };
 
 typedef struct {
@@ -43,10 +43,10 @@ typedef struct {
 typedef struct {
     struct Clock time;
 
-    unsigned int ms;     /* Collect ms for seconds tick */
-    unsigned int us;     /* Collect us for ms tick */
-    unsigned int tick;   /* Last timer value */
-    unsigned int passed; /* Passed from last check in timer ticks */
+    uint16_t ms;     /* Collect ms for seconds tick */
+    uint16_t us;     /* Collect us for ms tick */
+    uint16_t tick;   /* Last timer value */
+    uint16_t passed; /* Passed from last check in timer ticks */
 } Clock_state_t;
 
 React_Header(Clock);

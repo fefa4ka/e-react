@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define IO(instance) React_Define(IO, instance)
-#define IO_new(instance, props) React_Define_WithProps(IO, instance, props)
+#define IO_new(instance, props) React_Define_WithProps(IO, instance, _(props))
 
 typedef struct
 {

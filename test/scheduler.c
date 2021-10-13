@@ -1,10 +1,10 @@
 #include "unit.h"
 
-#include <Timer.h>
+#include <Clock.h>
 #include <Scheduler.h>
 
 /* Timer and callback scheduler */
-Timer(timer, &hw.timer, TIMESTAMP);
+Clock(clk, &hw.timer, TIMESTAMP);
 Scheduler(scheduler, 15, _({.timer = &hw.timer}));
 
 
@@ -17,7 +17,7 @@ void scheduler_trigger(void *trigger) {
 
 int count = 0;
 test(queue_push_pop) {
-    loop(timer, scheduler) {
+    loop(clk, scheduler) {
         count++;
     }
 

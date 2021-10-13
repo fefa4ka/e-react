@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <stdbool.h>
 
 struct callback {
@@ -9,7 +10,7 @@ struct callback {
 
 typedef struct {
     bool (*is_available)(void *trigger);
-    void (*mount)(void *trigger, void(*callback)(void *args), void *args);
+    void (*mount)(void *trigger, void (*callback)(void *args), void *args);
     void (*umount)(void *trigger);
     void (*enable)(void *trigger, void *args);
     void (*disable)(void *trigger);
@@ -44,33 +45,32 @@ typedef struct {
     void (*selectChannel)(void *channel);
     void (*startConvertion)(void *channel);
     bool (*isConvertionReady)(void *channel);
-    int  (*readConvertion)(void *channel);
+    int16_t (*readConvertion)(void *channel);
 
     isr_handler *isr;
 } adc_handler;
 
 typedef struct {
-    void          (*init)(void *baudrate);
-    bool          (*isDataReceived)();
-    bool          (*isTransmitReady)();
-    void          (*transmit)(unsigned char data);
+    void (*init)(void *baudrate);
+    bool (*isDataReceived)();
+    bool (*isTransmitReady)();
+    void (*transmit)(unsigned char data);
     unsigned char (*receive)();
 
     isr_handler isr;
 } serial_handler;
 
 typedef struct {
-    void         (*init)(void *config);
-    unsigned int (*get)();
-    void         (*set)(unsigned int ticks, void(*callback)(void *args), void *args);
-    void         (*off)();
-    unsigned int (*usFromTicks)(unsigned int ticks);
+    void (*init)(void *config);
+    uint16_t (*get)();
+    void (*set)(uint16_t ticks, void (*callback)(void *args), void *args);
+    void (*off)();
+    uint16_t (*usFromTicks)(uint16_t ticks);
 
     isr_handler *isr;
 } timer_handler;
 
-typedef struct
-{
+typedef struct {
     io_handler     io;
     adc_handler    adc;
     serial_handler uart;

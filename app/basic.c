@@ -7,24 +7,23 @@
 #endif
 
 pin_t debug_pin = DEBUG_PIN;
-IO (pin);
+IO(pin);
 
-int
-main (void)
+int main(void)
 {
     bool debug = false;
 
     // Event-loop
-    while(true) {
+    while (true) {
         // Debug Step
         debug = !debug;
 
-        react (IO, pin,
-               _ ({
-                   .io    = &hw.io,
-                   .pin   = &debug_pin,
-                   .mode  = IO_OUTPUT,
-                   .level = debug,
-               }));
+        react(IO, pin,
+              _({
+                  .io    = &hw.io,
+                  .pin   = &debug_pin,
+                  .mode  = IO_OUTPUT,
+                  .level = debug,
+              }));
     }
 }

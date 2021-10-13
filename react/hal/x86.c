@@ -1,24 +1,24 @@
 #include "x86.h"
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
 #include <string.h>
-#include <pthread.h>
+#include <time.h>
+#include <unistd.h>
 
-static void in(void *pin);
-static void out(void *pin);
-static void on(void *pin);
-static void off(void *pin);
-static void flip(void *pin);
-static void pullup(void *pin);
-static bool get(void *pin);
+static void gpio_in(void *pin);
+static void gpio_out(void *pin);
+static void gpio_on(void *pin);
+static void gpio_off(void *pin);
+static void gpio_flip(void *pin);
+static void gpio_pullup(void *pin);
+static bool gpio_get(void *pin);
 
-static void adc_mount(void *prescaler);
-static void adc_selectChannel(void *channel);
-static void adc_startConvertion(void *channel);
-static bool adc_isConvertionReady(void *channel);
-static int  adc_readConvertion(void *channel);
+static void    adc_mount(void *prescaler);
+static void    adc_selectChannel(void *channel);
+static void    adc_startConvertion(void *channel);
+static bool    adc_isConvertionReady(void *channel);
+static int16_t adc_readConvertion(void *channel);
 
 
 static void          uart_init(void *baudrate);
@@ -28,20 +28,20 @@ static void          uart_transmit(unsigned char data);
 static unsigned char uart_receive();
 
 
-static void         timer_init(void *config);
-static unsigned int timer_get();
-static void         timer_set(unsigned int ticks, void (*callback)(void *args),
-                              void *       args);
-static void         timer_off();
-static unsigned int timer_usFromTicks(unsigned int ticks);
+static void     timer_init(void *config);
+static uint16_t timer_get();
+static void     timer_set(uint16_t ticks, void (*callback)(void *args),
+                          void *       args);
+static void     timer_off();
+static uint16_t timer_usFromTicks(uint16_t ticks);
 
-HAL hw = {.io    = {.in     = in,
-                 .out    = out,
-                 .on     = on,
-                 .off    = off,
-                 .flip   = flip,
-                 .get    = get,
-                 .pullup = pullup,},
+HAL hw = {.io    = {.in     = gpio_in,
+                    .out    = gpio_out,
+                    .on     = gpio_on,
+                    .off    = gpio_off,
+                    .flip   = gpio_flip,
+                    .get    = gpio_get,
+                    .pullup = gpio_pullup,},
           .adc   = {.mount             = adc_mount,
                   .selectChannel     = adc_selectChannel,
                   .startConvertion   = adc_startConvertion,
@@ -95,35 +95,56 @@ unsigned int hash_pin(pin_t *pin)
     return (hash % MAX_TABLE_SIZE);
 }
 
-static pin_t * get_pin(pin_t *pin)
+
+pthread_mutex_t get_pin_lock;
+void            gpio_init() {
+     pthread_mutex_init(&get_pin_lock, NULL);
+}
+
+static pin_t *get_pin(pin_t *pin)
 {
     pin_t *Pin;
+    pthread_mutex_lock(&get_pin_lock);
     if (hash_read(&pins, hash_pin(pin), (void **)&Pin) == ERROR_NONE) {
-        //printf("Pin PORT_%s_%d — cached\r\n", Pin->name, Pin->number);
+        pthread_mutex_unlock(&get_pin_lock);
+        // printf("Pin PORT_%s_%d — cached\r\n", Pin->name, Pin->number);
         return Pin;
     }
 
-    Pin = malloc(sizeof(pin_t));
-    *Pin = *pin;
-    Pin->name = strdup(pin->name);
+    Pin            = malloc(sizeof(pin_t));
+    Pin->name      = strdup(pin->name);
+    Pin->number    = pin->number;
+    Pin->port.port = 0;
+    Pin->port.pin  = 0;
+    Pin->port.ddr  = 0;
 
-    //printf("%s - %d - %d\n", pin->name, hash_pin(pin), hash_pin(Pin));
+    // printf("%s - %d - %d\n", pin->name, hash_pin(pin), hash_pin(Pin));
     hash_write(&pins, hash_pin(Pin), Pin);
 
-    //printf("Pin PORT_%s_%d — new\r\n", Pin->name, Pin->number);
+    // printf("Pin PORT_%s_%d = (#%d %x) new\r\n", Pin->name, Pin->number,
+    // hash_pin(pin), &(Pin->port));
+    pthread_mutex_unlock(&get_pin_lock);
     return Pin;
+}
+
+void dump_pin(pin_t *pin)
+{
+    pin_t *Pin = get_pin((pin_t *)pin);
+    printf("Pin PORT_%s_%d #%d = %d\n", Pin->name, Pin->number, hash_pin(pin),
+           gpio_get(pin));
 }
 
 void free_pins()
 {
     for (unsigned int index = 0; index < pins.used; index++) {
-        pin_t *Pin= pins.data[index];
+        pin_t *Pin = pins.data[index];
         free(Pin->name);
         free(Pin);
     }
+    pthread_mutex_destroy(&get_pin_lock);
 }
 
-static void in(void *pin)
+static void gpio_in(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
@@ -133,85 +154,101 @@ static void in(void *pin)
     // printf("Pin PORT_%s_%d — in\r\n", Pin->port, Pin->number);
 }
 
-static void out(void *pin)
+static void gpio_out(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
     bit_set(Pin->port.ddr, Pin->number);
 
-    //printf("Pin PORT_%s_%d — out\r\n", Pin->port, Pin->number);
+    // printf("Pin PORT_%s_%d — out\r\n", Pin->port, Pin->number);
 }
 
 
-static void on(void *pin)
+static void gpio_on(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
-    bit_set(Pin->port.port, Pin->number);
-    //printf("Pin PORT_%s_%d — on - %d - %d\r\n", Pin->name, Pin->number, Pin->port.port, 1 << Pin->number);
+    bit_set(Pin->port.pin, Pin->number);
+
+    // printf("On %x ", &(Pin->port));
+    // dump_pin(pin);
+    // printf("Pin PORT_%s_%d — on - %d - %d\r\n", Pin->name, Pin->number,
+    // Pin->port.port, 1 << Pin->number);
 }
 
 
-static void off(void *pin)
+static void gpio_off(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
-    bit_clear(Pin->port.port, Pin->number);
-    //printf("Pin PORT_%s_%d — off - %d\r\n", Pin->name, Pin->number, Pin->port.port);
+    bit_clear(Pin->port.pin, Pin->number);
+
+    // printf("Off %x ", &(Pin->port));
+    // dump_pin(pin);
+    // printf("Pin PORT_%s_%d — off - %d\r\n", Pin->name, Pin->number,
+    // Pin->port.port);
 }
 
 
-static void flip(void *pin)
+static void gpio_flip(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
-    bit_flip(Pin->port.port, Pin->number);
-    // printf("Pin PORT_%s_%d — flip\r\n", Pin->port, Pin->number);
+    bit_flip(Pin->port.pin, Pin->number);
+    // printf("Flip ");
+    // dump_pin(pin);
 }
 
 
-static void pullup(void *pin) { on(pin); }
-
-static bool get(void *pin)
+static void gpio_pullup(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
-    //printf("Pin PORT_%s_%d — get - %d - %d\r\n", Pin->name, Pin->number, Pin->port.port, 1 << Pin->number);
-    return (Pin->port.port) & (1 << Pin->number);
+    bit_set(Pin->port.pin, Pin->number);
+}
+
+static bool gpio_get(void *pin)
+{
+    pin_t *Pin = get_pin((pin_t *)pin);
+
+    // printf("Pin PORT_%s_%d — get - %d - %d\r\n", Pin->name, Pin->number,
+    // Pin->port.port, 1 << Pin->number);
+    return (Pin->port.pin) & (1 << Pin->number);
 }
 
 
 // ADC
 
-static void adc_mount(void *prescaler) {
+static void adc_mount(void *prescaler)
+{
     srand(time(NULL));
-    //printf("ADC init\r\n");
+    // printf("ADC init\r\n");
 }
 
 static void adc_selectChannel(void *channel)
 {
-    //unsigned short *ch = (unsigned short *)channel;
+    // unsigned short *ch = (unsigned short *)channel;
 
-    //printf("ADC selectChannel %d\r\n", *ch);
+    // printf("ADC selectChannel %d\r\n", *ch);
 }
 
 static void adc_startConvertion(void *channel)
 {
-    //printf("ADC startConvertion\r\n");
+    // printf("ADC startConvertion\r\n");
 }
 
 static bool adc_isConvertionReady(void *channel)
 {
-    //unsigned short *ch = (unsigned short *)channel;
-    //printf("ADC isConvertionReady %d\r\n", *ch);
+    // unsigned short *ch = (unsigned short *)channel;
+    // printf("ADC isConvertionReady %d\r\n", *ch);
 
     return true;
 }
 
-static int adc_readConvertion(void *channel)
+static int16_t adc_readConvertion(void *channel)
 {
-    //unsigned short *ch = (unsigned short *)channel;
-    //printf("ADC readConvertion %d\r\n", *ch);
+    // unsigned short *ch = (unsigned short *)channel;
+    // printf("ADC readConvertion %d\r\n", *ch);
 
     return rand();
 }
@@ -228,7 +265,7 @@ static void uart_init(void *baudrate)
 
 static inline bool uart_isDataReceived()
 {
-    //printf("UART isDataReceived\r\n");
+    // printf("UART isDataReceived\r\n");
 
     return false;
 }
@@ -244,31 +281,30 @@ static inline unsigned char uart_receive()
 }
 
 /* Time */
-static void timer_init(void *config)
-{
-    srand(time(NULL));
-}
+static void timer_init(void *config) { srand(time(NULL)); }
 
 
-static inline unsigned int timer_get()
+static inline uint16_t timer_get()
 {
     clock_t tick = clock();
-    //printf("Timer get: %ld, %ld, %d\r\n", tick, CLOCKS_PER_SEC, tick / CLOCKS_PER_SEC);
-    return (unsigned int)tick;
+    // printf("Timer get: %ld, %ld, %d\r\n", tick, CLOCKS_PER_SEC, tick /
+    // CLOCKS_PER_SEC);
+    return tick;
 }
 
 struct timer_callback {
     unsigned int timeout;
     void (*callback)(void *args);
-    void *args;
-    size_t index;
+    void *    args;
+    size_t    index;
     pthread_t thread;
 };
 
 #define TIMERS_NR 10
 struct timer_callback timer_callback_buffer[TIMERS_NR] = {0};
 
-void *timer_timeout(void *ptr) {
+void *timer_timeout(void *ptr)
+{
     struct timer_callback *callback = ptr;
 
     usleep(callback->timeout);
@@ -278,24 +314,26 @@ void *timer_timeout(void *ptr) {
     return NULL;
 }
 
-static void timer_set(unsigned int ticks, void (*callback)(void *args),
+static void timer_set(uint16_t ticks, void (*callback)(void *args),
                       void *       args)
 {
-    for(size_t i = 0; i < TIMERS_NR; i++) {
-        if(timer_callback_buffer[i].callback == NULL) {
-            struct timer_callback timer_callback = { ticks, callback, args, i };
-            struct timer_callback *timer = timer_callback_buffer + i;
-            *timer = timer_callback;
+    for (size_t i = 0; i < TIMERS_NR; i++) {
+        if (timer_callback_buffer[i].callback == NULL) {
+            struct timer_callback  timer_callback = {ticks, callback, args, i};
+            struct timer_callback *timer          = timer_callback_buffer + i;
+            *timer                                = timer_callback;
             pthread_create(&timer->thread, NULL, *timer_timeout, (void *)timer);
 
             printf("Timer #%ld set: %d\r\n", i, ticks);
             break;
         }
     }
-
 }
 
 static void timer_off() { printf("Timer off\r\n"); }
 
 #define CLOCKS_PER_USEC (CLOCKS_PER_SEC / 1000000)
-static unsigned int timer_usFromTicks(unsigned int ticks) { return ticks / CLOCKS_PER_USEC; }
+static uint16_t timer_usFromTicks(uint16_t ticks)
+{
+    return ticks / CLOCKS_PER_USEC;
+}

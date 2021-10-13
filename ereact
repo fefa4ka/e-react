@@ -18,6 +18,7 @@ if [ $1 == "clean" ]; then
     make -f Makefile.AVR clean
     make -f Makefile.STM8L clean
     make -f Makefile.x86 clean
+    make -f Makefile.x86 clean TARGET_DIR="./test"
 
     exit
 fi
@@ -43,81 +44,118 @@ $MAKE clean
 
 cat BUILD.num | awk '{ print $1 + 1 }' | tee BUILD.num
 
-# Get dependencies
-$MAKE ${TARGET}.d
-DEP_DEFS=""
+build(){
+    local TARGET=$1
+    local TARGET_DIR=$2
+    local ARCH=$3
+    local DEP_DEFS=""
+    local DEPS
+    local DEPENDENT_OBJECTS=""
 
-DEPS=`cat ${TARGET}.d | cut -d':' -f2`
-DEPENDENT_OBJECTS=""
-for filename in ${DEPS}; do
-    sourcename=${filename/.h/.c}
+    $MAKE ${TARGET}.d
+    DEPS=`cat ${TARGET}.d | cut -d':' -f2`
 
-    if [[ "$filename" == *"third_party/"* ]]; then
-        continue
-    fi
+    for filename in ${DEPS}; do
+        local sourcename=${filename/.h/.c}
 
-    if [ -f $sourcename ]; then
-        if [ "$ARCH" == "AVR" ]; then
-            object=${sourcename/.c/.o}
+        if [[ "$filename" == *"third_party/"* ]]; then
+            continue
         fi
 
-        if [ "$ARCH" == "x86" ]; then
-            object=${sourcename/.c/.o}
-        fi
+        if [ -f $sourcename ]; then
+            local object
+            local source_extended=${sourcename/.c/.e.c}
 
-        if [ "$ARCH" == "STM8L" ]; then
-            if [[ "$filename" == *"$1.c" || "$filename" == *"main.c" ]]; then
-                continue
+            if [ "$ARCH" == "AVR" ]; then
+                object=${sourcename/.c/.o}
             fi
-            object=${sourcename/.c/.rel}
+
+            if [ "$ARCH" == "x86" ]; then
+                object=${sourcename/.c/.o}
+            fi
+
+            if [ "$ARCH" == "STM8L" ]; then
+                if [[ "$filename" == *"$1.c" || "$filename" == *"main.c" ]]; then
+                    continue
+                fi
+                object=${sourcename/.c/.rel}
+            fi
+
+            if [[ "$sourcename" == "component/"* ]]; then
+                local component=$(echo $sourcename | cut -d'/' -f2)
+                while read definition; do
+                    local def=$(echo $definition | rev | cut -d' ' -f1 | rev)
+                    DEP_DEFS="$DEP_DEFS -D${def}=1"
+                    rm -rf $object
+                    rm -rf $source_extended
+                    echo "$PWD"
+
+                    echo "rm -rf $object"
+                    echo "rm -rf $source_extended"
+                done < <(grep "^#define.*_${component}_" ${TARGET}.c)
+            fi
+
+            DEPENDENT_OBJECTS="${DEPENDENT_OBJECTS} ${object}"
+        fi
+    done
+    DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/[^/]*/\.\./|/|' -e 't a'`
+
+    local product_name=$(echo $TARGET | sed "s/.*\///")
+    DEFS="ARCH=$ARCH PRODUCT_NAME=$product_name"
+
+    if [ "$ARCH" == "AVR" ]; then
+        $MAKE "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
+        if [[ -f "${TARGET}_test.c" ]]; then
+            echo "Test exists"
+            # mv ${TARGET}.elf ${TARGET}.fw
+            # ./ereact ${1}_test x86
+            # mv ${TARGET}.fw ${TARGET}.elf
+            # exit 0
         fi
 
-        if [[ "$sourcename" == "component/"* ]]; then
-            component=$(echo $sourcename | cut -d'/' -f2)
-            while read definition; do
-                def=$(echo $definition | rev | cut -d' ' -f1 | rev)
-                DEP_DEFS="$DEP_DEFS -D${def}"
-            done < <(grep "^#define.*_${component}_" ${TARGET}.c)
+        #SIMULATOR="target/$1/sim"
+        #make "${SIMULATOR}.sim.elf"
+        if [ "$3" == "flash" ]; then
+            $MAKE flash TARGET="${TARGET}.hex"
         fi
-
-    DEPENDENT_OBJECTS="${DEPENDENT_OBJECTS} ${object}"
-fi
-done
-DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/[^/]*/\.\./|/|' -e 't a'`
-DEFS="ARCH=$ARCH PRODUCT_NAME=$1"
-
-if [ "$ARCH" == "AVR" ]; then
-    $MAKE "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
-    if [[ -f "${TARGET}_test.c" ]]; then
-        echo "Test exists"
-        # mv ${TARGET}.elf ${TARGET}.fw
-        # ./ereact ${1}_test x86
-        # mv ${TARGET}.fw ${TARGET}.elf
-        # exit 0
     fi
 
-    SIMULATOR="target/$1/sim"
-    #make "${SIMULATOR}.sim.elf"
-    if [ "$3" == "flash" ]; then
-        $MAKE flash TARGET="${TARGET}.hex"
+    if [ "$ARCH" == "STM8L" ]; then
+        $MAKE "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
+        if [ "$3" == "flash" ]; then
+            sudo stm8flash -c stlinkv2 -p stm8l152k6 -w ${TARGET}.ihx
+        fi
+    fi
+
+    if [ "$ARCH" == "x86" ]; then
+        echo "$MAKE \"${TARGET}\" TARGET_DIR=$TARGET_DIR OBJECTS=\"$DEPENDENT_OBJECTS\" $DEFS DEFINE_COMPUTED=\"$DEP_DEFS\""
+        $MAKE "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS"
+        if [ "$3" == "flash" ]; then
+            ${TARGET}
+        fi
+    fi
+}
+
+if [ -z $2 ]; then
+    local targets=()
+    for target in ./$TARGET_DIR/*.c; do
+        target=${target%.*}
+        targets+=("$target")
+        build $target $TARGET_DIR $ARCH
+    done
+    if [ "$1" == "test" ]; then
+        for target in "${targets[@]}"; do
+            echo -e "\n\n$target test started\n"
+            $target
+        done
+    fi
+    exit
+else
+    build $TARGET $TARGET_DIR $ARCH
+
+    if [ "$1" == "test" ]; then
+        echo -e "\n\n$2 test started\n"
+        ./test/$2
     fi
 fi
 
-if [ "$ARCH" == "STM8L" ]; then
-    $MAKE "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
-    if [ "$3" == "flash" ]; then
-        sudo stm8flash -c stlinkv2 -p stm8l152k6 -w ${TARGET}.ihx
-    fi
-fi
-
-if [ "$ARCH" == "x86" ]; then
-    $MAKE "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS"
-    if [ "$3" == "flash" ]; then
-        ${TARGET}
-    fi
-fi
-
-if [ "$1" == "test" ]; then
-    echo -e "\n\n$2 test started\n"
-    ./test/$2
-fi

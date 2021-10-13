@@ -1,14 +1,12 @@
 #pragma once
 
-#include <stdlib.h>
-#include "api.h"
 #include "../hash.h"
-typedef struct
-{
+#include "api.h"
+#include <stdlib.h>
+typedef struct {
     unsigned char number;
-    char  *name;
-    struct
-    {
+    char *        name;
+    struct {
         unsigned char ddr;
         unsigned char port;
         unsigned char pin;
@@ -18,18 +16,26 @@ typedef struct
 extern HAL hw;
 
 void free_pins();
+void dump_pin(pin_t *pin);
+void gpio_init();
 
-#define hw_isr_enable() {}
-#define hw_isr_disable() {}
-#define debug(port, pin)                                                      \
-    ({                                                                        \
-        pin_t debug_pin = hw_pin (port, pin);                                 \
-        hw.io.out (&debug_pin);                                               \
-        hw.io.flip (&debug_pin);                                              \
-        hw.io.flip (&debug_pin);                                              \
+#define test(...) test_program({ gpio_init(); }, { free_pins(); }, __VA_ARGS__)
+
+#define hw_isr_enable()                                                        \
+    {                                                                          \
+    }
+#define hw_isr_disable()                                                       \
+    {                                                                          \
+    }
+#define debug(port, pin)                                                       \
+    ({                                                                         \
+        pin_t debug_pin = hw_pin(port, pin);                                   \
+        hw.io.out(&debug_pin);                                                 \
+        hw.io.flip(&debug_pin);                                                \
+        hw.io.flip(&debug_pin);                                                \
     })
 
-#define hw_pin(port, pin)                                                     \
-    {                                                                         \
-        pin, #port, {0}                                                           \
+#define hw_pin(port, pin)                                                      \
+    {                                                                          \
+        pin, #port, { 0 }                                                      \
     }
