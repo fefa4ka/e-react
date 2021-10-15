@@ -1,7 +1,7 @@
 #pragma once
 
 #include <IO.h>
-#include <Timer.h>
+#include <Clock.h>
 
 #define PWM(instance, props, state) define(PWM, instance, _(props), _(state))
 
@@ -15,7 +15,7 @@ typedef struct {
     io_handler *           io;
     void *                 pin;
 
-    struct Timer          *timer;
+    struct Clock          *clock;
 
     volatile unsigned long tick;      /* Last state changing timestamp */
     bool                   on_duty;   /* PWM state */

@@ -11,9 +11,9 @@ willMount(PWM) {
  * \brief    Update pin level in desire time
  */
 shouldUpdate(PWM) {
-    if(state->timer->us >= state->tick) {
+    if(state->clock->us >= state->tick) {
         return true;
-    } 
+    }
 
     return false;
 }
@@ -22,12 +22,12 @@ shouldUpdate(PWM) {
  * \brief    Time of next pin level change depends
  *           on frequency and duty_cycle
  */
-willUpdate(PWM) { 
+willUpdate(PWM) {
     if(state->on_duty) {
-        state->tick = state->timer->us + (1000000L / props->frequency / 255) * (255 - props->duty_cycle);
+        state->tick = state->clock->us + (1000000L / props->frequency / 255) * (255 - props->duty_cycle);
         state->on_duty = false;
     } else {
-        state->tick = state->timer->us + (1000000L / props->frequency / 255) * props->duty_cycle;
+        state->tick = state->clock->us + (1000000L / props->frequency / 255) * props->duty_cycle;
         state->on_duty = true;
     }
 }

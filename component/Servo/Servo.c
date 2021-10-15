@@ -51,7 +51,7 @@ release(Servo) {
             state->on_duty = SERVO_ON_DUTY;
         }
 
-        props->timer->set(
+        state->timer->set(
                 (state->on_duty
                     ? state->duty_cycle
                     : state->remain_time)

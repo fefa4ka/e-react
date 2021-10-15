@@ -60,7 +60,7 @@ Button(switcher, _({
 
                      .type = BUTTON_PUSH_PULLUP,
 
-                     .clock = &timer.state.time,
+                     .clock = &clock.state.time,
                      .bounce_delay_ms = 100,
 
                      .onRelease = switch_motor,

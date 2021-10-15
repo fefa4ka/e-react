@@ -1,6 +1,6 @@
 #include <ADC.h>
 #include <PWM.h>
-#include <Timer.h>
+#include <Clock.h>
 
 #ifdef ARCH_STM8L
     #define SENSOR_POTENTIOMETER 15
@@ -23,7 +23,7 @@ struct device {
 };
 
 
-Timer(timer, &hw.timer, TIMESTAMP);
+Clock(clock, &hw.timer, TIMESTAMP);
 
 /* Sensor reader */
 ADC(sensor, _({
@@ -38,7 +38,7 @@ PWM(led, {0},
     _({
         .io    = &hw.io,
         .pin   = &led_pin,
-        .timer = &timer.state.time,   , void *next_props))
+        .clock = &clock.state.time
     }));
 
 ///
@@ -51,13 +51,8 @@ void sensor_readed(Component *adc)
 int main(void)
 {
     // Event-loop
-    use(scheduler, sensor, led);
-    Scheduler_plan(scheduler, STEP_TIME_MS, React_Component, timer);
-    Scheduler_task(scheduler, React_Component, timer);
-    Beat_task(beat, )
-    Beat_schedule(beat, TIMEOUT_MS, React_Component, timer);
 
-    loop(timer, sensor)
+    loop(clock, sensor)
     {
         apply(PWM, led,
               _({

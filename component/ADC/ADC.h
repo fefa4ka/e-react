@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <component.h>
 
+#undef ADC
 #define ADC(instance, props) define(ADC, instance, _(props), {0})
 
 typedef struct
