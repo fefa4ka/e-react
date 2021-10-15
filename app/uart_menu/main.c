@@ -1,15 +1,15 @@
 /* Used components */
 #include "routines.h"
 #include <Button.h>
+#include <Clock.h>
 #include <IO.h>
 #include <Menu.h>
 #include <Serial.h>
-#include <Timer.h>
 #include <circular.h>
 #include <common.h>
 
 
-Timer(timer, &hw.timer, TIMESTAMP);
+Clock(clock, &hw.timer, TIMESTAMP);
 
 
 /* Button counter */
@@ -19,7 +19,7 @@ Button(counter, _({
                     .pin = &counter_pin,
 
                     .type            = BUTTON_PUSH_PULLUP,
-                    .timer           = &timer.state.time,
+                    .clock           = &clock.state.time,
                     .bounce_delay_ms = 1000,
 
                     .onPress = print_counter,
@@ -31,19 +31,18 @@ pin_t led_pin = hw_pin(B, 1);
 
 /* Menu commands and state */
 Menu(tty);
-struct menu_command commands[] = {
-    {"time", print_time},
-    {"version", print_version},
-    {"counter", print_counter},
-    {"read", print_memory, command},
-    {0}
-};
-unsigned char command[COMMAND_BUFFER_SIZE];
+struct menu_command commands[] = {{"time", print_time},
+                                  {"version", print_version},
+                                  {"counter", print_counter},
+                                  {"read", print_memory, command},
+                                  {0}};
+unsigned char       command[COMMAND_BUFFER_SIZE];
 
 /**
  * \brief    Echo each symbol from input to output
  */
-void read_symbol(Component *trigger) { 
+void read_symbol(Component *trigger)
+{
     struct ring_buffer *input_buffer = React_State(Serial, &uart, rx_buffer);
     Serial_write(&uart, input_buffer->data[input_buffer->write - 1]);
 }
@@ -51,12 +50,12 @@ void read_symbol(Component *trigger) {
 /**
  * \brief    Read command from buffer
  */
-void read_command(Component *trigger) 
+void read_command(Component *trigger)
 {
     unsigned char *command_symbol = command;
-    unsigned char data;
+    unsigned char  data;
 
-    while(Serial_read(&uart, &data) == ERROR_NONE && data) {
+    while (Serial_read(&uart, &data) == ERROR_NONE && data) {
         *command_symbol++ = data;
     }
     *--command_symbol = 0;
@@ -79,14 +78,14 @@ int main(void)
     print_version(0);
     print_shell(0);
 
-    loop(timer, uart, counter)
+    loop(clock, uart, counter)
     {
         apply(Menu, tty,
               _({
                   .menu    = commands,
                   .command = command,
 
-                  .onCommand = print_shell,
+                  .onCommand         = print_shell,
                   .onCommandNotFound = print_command_not_found,
               }));
 

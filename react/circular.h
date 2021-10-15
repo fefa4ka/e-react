@@ -1,10 +1,6 @@
 #pragma once
 #include "macros.h"
-
-struct callback {
-    void (*method)(void *trigger, void *argument);
-    void *argument;
-};
+#include "api.h"
 
 struct ring_buffer {
     unsigned char  *data;

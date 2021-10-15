@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Serial.h>
-#include <Timer.h>
+#include <Clock.h>
 #include <component.h>
 
 #define BAUDRATE            9600
@@ -10,7 +10,7 @@
 
 extern unsigned char    command[COMMAND_BUFFER_SIZE];
 extern Serial_Component uart;
-extern Timer_Component timer;
+extern Clock_Component clock;
 
 void log_string(char *message);
 void log_num(char *message, long number);

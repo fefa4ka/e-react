@@ -2,22 +2,22 @@
 
 static int counter_index = 0;
 
-void log_string(char *message) 
+void log_string(char *message)
 {
     Serial_write_string(&uart, message);
 }
 
-void log_num(char *message, long number) 
+void log_num(char *message, long number)
 {
     log_string(message);
     log_string(itoa(number));
-} 
+}
 // function to convert decimal to binary
 void log_binary(char n)
 {
     // array to store binary number
     int binaryNum[8];
- 
+
     // counter for binary array
     int i = 0;
     while (n > 0) {
@@ -26,7 +26,7 @@ void log_binary(char n)
         n = n / 2;
         i++;
     }
- 
+
     // printing binary array in reverse order
     for (int j = 8; j >= 0; j--)
         Serial_write(&uart, (binaryNum[j] == 1) ? '1' : '0');
@@ -73,7 +73,7 @@ hexdec (unsigned const char *hex)
     return ret;
 }
 
-void print_shell(Component *trigger) 
+void print_shell(Component *trigger)
 {
     *command = 0;
 
@@ -89,14 +89,14 @@ void print_command_not_found(Component *trigger) {
     print_shell(trigger);
 }
 
-void print_counter(Component *trigger) 
+void print_counter(Component *trigger)
 {
     counter_index += 1;
     log_nl();
     log_num("counter: ", counter_index);
 }
 
-void print_version(Component *trigger) 
+void print_version(Component *trigger)
 {
     log_nl();
     log_num("e-react ver. ", BUILD_NUM);
@@ -130,16 +130,16 @@ void write_memory(char *request) {
     void *value = hexdec(value_hex);
 }
 
-void log_memory(char *data)
+void log_memory(char *data) {
     log_nl();
-    log_string(address_hex);
+    log_string(data);
     log_string(": ");
     log_binary(*data);
 }
 
-void print_time(Component *trigger) 
+void print_time(Component *trigger)
 {
-    struct Timer *time = &Timer_time(&timer);
+    struct Clock *time = &Clock_time(&clock);
     log_nl();
     log_string("Timestamp: ");
     log_string(utoa(time->timestamp));
