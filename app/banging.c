@@ -9,7 +9,7 @@ pin_t mosi_pin = hw_pin(D, 3);
 pin_t miso_pin = hw_pin(D, 4);
 
 
-Timer(timer, &hw.timer, TIMESTAMP);
+Clock(clock, &hw.timer, TIMESTAMP);
 
 /* Bitbang SPI output */
 unsigned char      input_buffer[BUFFER_SIZE];
@@ -23,10 +23,10 @@ struct ring_buffer *spi_buffers[]     = {&spi_output_buffer, &spi_input_buffer};
 enum pin_mode       spi_modes[]       = {PIN_MODE_OUTPUT, PIN_MODE_INPUT};
 Bitbang(spi, _({
                  .io       = &hw.io,
-                 .timer    = &timer.state.time,
+                 .clock    = &clock.state.time,
                  .baudrate = 9600,
                  .pins     = (void **) spi_pins,
-                 .clock    = &clk_pin,
+                 .clk_pin  = &clk_pin,
                  .modes    = spi_modes,
                  .buffers  = spi_buffers,
              }));
@@ -46,7 +46,7 @@ Button(counter, _({
                     .io  = &hw.io,
                     .pin = &counter_pin,
 
-                    .timer = &timer.state.time,
+                    .clock = &clock.state.time,
 
                     .type            = BUTTON_PUSH_PULLUP,
                     .bounce_delay_ms = 100,
@@ -63,7 +63,7 @@ pin_t led_pin = hw_pin(B, 0);
 
 int main(void)
 {
-    loop(timer, spi, counter)
+    loop(clock, spi, counter)
     {
         apply(IO, led,
               _({

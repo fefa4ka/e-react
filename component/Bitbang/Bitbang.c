@@ -5,7 +5,7 @@
     pin_t **pin;                                                               \
     for (pin = pins; *pin; pin++)
 
-unsigned char 
+unsigned char
 reverse(unsigned char b) {
    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
@@ -62,7 +62,7 @@ shouldUpdate(Bitbang)
 
     // Change state on baudrate
     unsigned long bit_duration = 1000000 / props->baudrate;
-    if (props->timer->us + props->timer->step_us - state->tick
+    if (props->clock->us + props->clock->step_us - state->tick
         >= bit_duration) {
 
         return true;
@@ -82,7 +82,7 @@ willUpdate(Bitbang)
     struct ring_buffer **buffer  = props->buffers;
     bool                 sending = state->sending;
 
-    state->tick = props->timer->us;
+    state->tick = props->clock->us;
 
     foreach_pins(pin, props->pins)
     {

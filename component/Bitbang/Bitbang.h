@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Timer.h>
+#include <Clock.h>
 #include <circular.h>
 #include <stddef.h>
 
@@ -13,7 +13,7 @@
 
 typedef struct {
     io_handler *  io;
-    struct Timer *timer;
+    struct Clock *clock;
 
     unsigned int baudrate;
 
@@ -23,7 +23,7 @@ typedef struct {
     void **        pins;        /* List of pins used for lines */
     enum pin_mode *modes; /* Related pins mapping for IO mode configuration */
     struct ring_buffer **buffers; /* Bitbang data buffers for each line */
-    void *               clock;   /* Optional clock pin */
+    void *               clk_pin; /* Optional clock pin */
 
     struct callback *onStart;
     struct callback *onTransmitted;
