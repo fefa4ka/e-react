@@ -18,7 +18,7 @@ int main(void)
         // Debug Step
         debug = !debug;
 
-        react(IO, pin,
+        apply(IO, pin,
               _({
                   .io    = &hw.io,
                   .pin   = &debug_pin,

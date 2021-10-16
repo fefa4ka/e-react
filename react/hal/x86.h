@@ -2,7 +2,7 @@
 
 #include "../hash.h"
 #include "api.h"
-#include <stdlib.h>
+
 typedef struct {
     unsigned char number;
     char *        name;

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <math.h>
 
 static void gpio_in(void *pin);
 static void gpio_out(void *pin);
@@ -255,41 +256,66 @@ static int16_t adc_readConvertion(void *channel)
 
 
 // UART
+pthread_t uart_thread;
+char uart_received = 0;
+void *uart_receiver(void *ptr)
+{
+    while(true) {
+//        uart_received = getchar();
+        scanf("%c", &uart_received);
+        printf("CHAR %c ", uart_received);
+    }
+}
 static void uart_init(void *baudrate)
 {
     unsigned int baud = *(unsigned int *)baudrate;
-
-
-    printf("UART init baudrate %d\r\n", baud);
+    pthread_create(&uart_thread, NULL, *uart_receiver, NULL);
 }
 
 static inline bool uart_isDataReceived()
 {
     // printf("UART isDataReceived\r\n");
 
-    return false;
+    return uart_received != 0;
 }
 
-static inline bool uart_isTransmitReady() { return true; }
+static inline bool uart_isTransmitReady() {
+    return true;
+}
 
 static inline void uart_transmit(unsigned char data) { putchar(data); }
 
 static inline unsigned char uart_receive()
 {
-    char c = getchar();
+    char c = uart_received;
+    uart_received = 0;
     return c;
 }
 
 /* Time */
 static void timer_init(void *config) { srand(time(NULL)); }
 
+long tick = 0;
+long time_in_ns() {
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  return now.tv_sec * 1e9 + now.tv_nsec;
+}
 
 static inline uint16_t timer_get()
 {
-    clock_t tick = clock();
+    //clock_t tick = clock();
+    long tock = time_in_ns();
+    long passed = tock - tick;
+    if(tick) {
+        tick = tock;
+        return passed;
+    }
+
+    tick = tock;
+    return 0;
     // printf("Timer get: %ld, %ld, %d\r\n", tick, CLOCKS_PER_SEC, tick /
     // CLOCKS_PER_SEC);
-    return tick;
 }
 
 struct timer_callback {
@@ -332,8 +358,7 @@ static void timer_set(uint16_t ticks, void (*callback)(void *args),
 
 static void timer_off() { printf("Timer off\r\n"); }
 
-#define CLOCKS_PER_USEC (CLOCKS_PER_SEC / 1000000)
 static uint16_t timer_usFromTicks(uint16_t ticks)
 {
-    return ticks / CLOCKS_PER_USEC;
+    return ticks / 1e3;
 }

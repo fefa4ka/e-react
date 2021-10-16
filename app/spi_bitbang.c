@@ -1,13 +1,13 @@
 #include <Bitbang.h>
 #include <Button.h>
-#include <Timer.h>
+#include <Clock.h>
 
 #define BAUDRATE    9600
 #define BUFFER_SIZE 8
 
 
 /* React components */
-Timer(timer, &hw.timer, TIMESTAMP);
+Clock(clock, &hw.timer, TIMESTAMP);
 
 
 /* SPI on top of Bitbang */
@@ -44,7 +44,7 @@ void write_address(unsigned char address, unsigned char value,
 }
 
 /**
- * \brief    Fire callback after data will be written to SPI bus 
+ * \brief    Fire callback after data will be written to SPI bus
  */
 void send_command_callback(unsigned char address, unsigned char value,
                            pin_t *chip_select_pin, struct callback *callback)
@@ -63,7 +63,7 @@ void read_address(unsigned char address, pin_t *chip_select_pin,
 }
 
 /*
- * \brief    Select chip before data transmission 
+ * \brief    Select chip before data transmission
  */
 void spi_start(Component *instance)
 {
@@ -97,12 +97,12 @@ enum pin_mode       spi_modes[]   = {PIN_MODE_OUTPUT, PIN_MODE_INPUT};
 
 Bitbang(spi, _({
                  .io       = &hw.io,
-                 .timer    = &timer.state.time,
+                 .clock    = &clock.state.time,
 
                  .baudrate = BAUDRATE,
 
                  .pins     = spi_pins,
-                 .clock    = &spi_state.clk_pin,
+                 .clk_pin  = &spi_state.clk_pin,
                  .modes    = spi_modes,
                  .buffers  = spi_buffers,
 
@@ -126,7 +126,7 @@ Button(counter, _({
                     .io              = &hw.io,
                     .pin             = &counter_pin,
 
-                    .timer           = &timer.state.time,
+                    .clock           = &clock.state.time,
 
                     .type            = BUTTON_PUSH_PULLUP,
                     .bounce_delay_ms = 100,
@@ -141,7 +141,7 @@ int main(void)
     /* Welcome count */
     counter_increment(NULL);
 
-    loop(timer, counter, spi) {}
+    loop(clock, counter, spi) {}
 
     return 0;
 }
