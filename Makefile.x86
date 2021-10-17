@@ -1,7 +1,7 @@
 ARCH ?= x86
 CC = gcc-11
 
-MACHINE_FLAGS = -DF_CPU=$(CLOCK)
+MACHINE_FLAGS = -DF_CPU=$(CLOCK) -DREACT_PROFILER
 OPTIMIZATION_FLAGS ?= -fcompare-debug-second -g -Og
 
 include Makefile.base

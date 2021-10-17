@@ -7,7 +7,7 @@ ARCH ?= AVR
 CC = avr-gcc
 AVRDUDE = avrdude -V $(PROGRAMMER) -p $(DEVICE)
 
-OPTIMIZATION_FLAGS = -Os -g -Og
+OPTIMIZATION_FLAGS = -g -Og
 MACHINE_FLAGS = -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 
 include Makefile.base

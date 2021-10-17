@@ -7,7 +7,11 @@
 #endif
 
 pin_t debug_pin = DEBUG_PIN;
-IO(pin);
+IO_new(pin, _({
+                .io   = &hw.io,
+                .pin  = &debug_pin,
+                .mode = IO_OUTPUT,
+            }));
 
 int main(void)
 {
@@ -20,9 +24,6 @@ int main(void)
 
         apply(IO, pin,
               _({
-                  .io    = &hw.io,
-                  .pin   = &debug_pin,
-                  .mode  = IO_OUTPUT,
                   .level = debug,
               }));
     }

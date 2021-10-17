@@ -21,7 +21,7 @@ struct device {
 
 
 /* Timer and callback scheduler */
-Clock(clock, &hw.timer, TIMESTAMP);
+Clock(clk, &hw.timer, TIMESTAMP);
 Scheduler(scheduler, 15, _({.timer = &hw.timer}));
 Scheduler_timer_handler(scheduler);
 
@@ -60,7 +60,7 @@ Button(switcher, _({
 
                      .type = BUTTON_PUSH_PULLUP,
 
-                     .clock = &clock.state.time,
+                     .clock = &clk.state.time,
                      .timer = &scheduler_timer_handler,
                      .bounce_delay_ms = 100,
 
@@ -99,7 +99,7 @@ int main(void)
 {
     use(switcher, sensor);
 
-    loop(clock, scheduler);
+    loop(clk, scheduler);
 
     return 0;
 }

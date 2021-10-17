@@ -21,9 +21,9 @@ willMount(Bitbang)
     // setup pins
     enum pin_mode *mode = props->modes;
 
-    if (props->clock) {
-        props->io->out(props->clock);
-        props->io->off(props->clock);
+    if (props->clk_pin) {
+        props->io->out(props->clk_pin);
+        props->io->off(props->clk_pin);
     }
 
     foreach_pins(pin, props->pins)

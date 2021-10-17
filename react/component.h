@@ -3,6 +3,7 @@
 #include "macros.h"
 #include <hal.h>
 #include <stdbool.h>
+
 /*
  *
  *        ┌───────┐  willMount   ┌────────┐   shouldUpdate?   ┌────────┐
@@ -35,7 +36,52 @@ typedef struct {
     void (*DidMount)(void *instance);
     void (*DidUpdate)(void *instance);
     void (*DidUnmount)(void *instance);
+#ifdef REACT_PROFILER
+    char name[128];
+    struct {
+        uint64_t willMount;
+        uint64_t nextProps;
+        uint64_t shouldUpdate;
+        uint64_t willUpdate;
+        uint64_t release;
+        uint64_t didMount;
+        uint64_t didUpdate;
+        uint64_t didUnmount;
+    } counter;
+    struct {
+        struct HAL_calls willMount;
+        struct HAL_calls nextProps;
+        struct HAL_calls shouldUpdate;
+        struct HAL_calls willUpdate;
+        struct HAL_calls release;
+        struct HAL_calls didMount;
+        struct HAL_calls didUpdate;
+        struct HAL_calls didUnmount;
+    } calls;
+    struct {
+        uint64_t willMount;
+        uint64_t nextProps;
+        uint64_t shouldUpdate;
+        uint64_t willUpdate;
+        uint64_t release;
+        uint64_t didMount;
+        uint64_t didUpdate;
+        uint64_t didUnmount;
+    } cpu;
+#endif
 } Component;
+
+#ifdef REACT_PROFILER
+    #define MAX_TABLE_SIZE 10007 // Prime Number
+    #include <time.h>
+unsigned int             frame_depth();
+bool                     dump_usage();
+extern struct HAL_calls *       current_scope;
+extern clock_t           cpu_total;
+uint64_t                 step();
+extern struct hash_table scope;
+extern struct HAL_calls  calls;
+#endif
 
 bool Stage_Component(Component *instance, void *next_props);
 bool React_Component(Component *instance, void *next_props);
@@ -80,6 +126,33 @@ bool React_Component(Component *instance, void *next_props);
 
 #define React_LifeCycle_Headers(Type, stage) React_LifeCycle_Header(Type, stage)
 
+#ifdef REACT_PROFILER
+    #define React_Profiler_Count(func)                                             \
+        if (current_scope) {                                                   \
+            current_scope->func += 1;                                 \
+        } else {                                                               \
+            calls.func += 1;                                               \
+        }
+    #define React_Profiler_Tick(component, stage)                                     \
+        clock_t begin, end, passed;                                            \
+        begin         = clock();                                               \
+        current_scope = &component->instance.calls.stage
+    #define React_Profiler_Tock(component, stage)                              \
+        end    = clock();                                                      \
+        passed = end - begin;                                                  \
+        cpu_total += passed;                                                   \
+        component->instance.cpu.stage += passed;                               \
+        component->instance.counter.stage++;                                   \
+        current_scope = NULL
+
+#else
+    #define React_Profiler_Tick(self, stage)                                          \
+        {                                                                      \
+        }
+    #define React_Profiler_Tock(component, stage)                              \
+        {                                                                      \
+        }
+#endif
 
 #define React_LifeCycle(Type, stage)                                           \
     React_LifeCycle_Headers(Type, stage);                                      \
@@ -87,7 +160,9 @@ bool React_Component(Component *instance, void *next_props);
     {                                                                          \
         React_Self(Type, instance);                                            \
         hw_isr_disable();                                                      \
+        React_Profiler_Tick(self, stage);                                             \
         Type##_inline_##stage(&self->instance, &self->props, &self->state);    \
+        React_Profiler_Tock(self, stage);                                      \
         hw_isr_enable();                                                       \
     }                                                                          \
     React_LifeCycle_Header(Type, stage)
@@ -119,8 +194,10 @@ bool React_Component(Component *instance, void *next_props);
             next_props_ptr = &self->props;                                     \
         React_SelfNext(Type, instance);                                        \
         hw_isr_disable();                                                      \
+        React_Profiler_Tick(self, stage);                                             \
         returnType result = Type##_inline_##stage(                             \
             &self->instance, &self->props, &self->state, next_props);          \
+        React_Profiler_Tock(self, stage);                                      \
         hw_isr_enable();                                                       \
         return result;                                                         \
     }                                                                          \
@@ -137,8 +214,10 @@ bool React_Component(Component *instance, void *next_props);
         if (&self->props != next_props)                                        \
             self->props = *next_props;                                         \
         hw_isr_disable();                                                      \
+        React_Profiler_Tick(self, willMount);                                             \
         Type##_inline_willMount(&self->instance, &self->props, &self->state,   \
                                 next_props);                                   \
+        React_Profiler_Tock(self, willMount);                                  \
         hw_isr_enable();                                                       \
     }                                                                          \
     React_UpdateCycle_Header(Type, willMount, void)
@@ -152,8 +231,10 @@ bool React_Component(Component *instance, void *next_props);
             next_props_ptr = &self->props;                                     \
         React_SelfNext(Type, instance);                                        \
         hw_isr_disable();                                                      \
+        React_Profiler_Tick(self, willUpdate);                                             \
         Type##_inline_willUpdate(&self->instance, &self->props, &self->state,  \
                                  next_props);                                  \
+        React_Profiler_Tock(self, willUpdate);                                 \
         hw_isr_enable();                                                       \
         if (&self->props != next_props)                                        \
             self->props = *next_props;                                         \
@@ -169,25 +250,36 @@ bool React_Component(Component *instance, void *next_props);
 
 #define React_Define_WithProps(Type, instance_name, instance_props)            \
     Type##_Component instance_name = {                                         \
-        .instance = React_Define_Component(Type),                              \
+        .instance = React_Define_Component(Type, instance_name),               \
         .props    = instance_props,                                            \
         .state    = {0},                                                       \
     }
 
 #define React_Define_WithState(Type, instance_name, instance_state)            \
     Type##_Component instance_name = {                                         \
-        .instance = React_Define_Component(Type),                              \
+        .instance = React_Define_Component(Type, instance_name),               \
         .props    = {0},                                                       \
         .state    = instance_state,                                            \
     }
 
-#define React_Define_Component(Type)                                           \
-    {                                                                          \
-        .stage = REACT_STAGE_DEFINED, .WillMount = Type##_willMount,           \
-        .ShouldUpdate = Type##_shouldUpdate, .WillUpdate = Type##_willUpdate,  \
-        .Release = Type##_release, .DidMount = Type##_didMount,                \
-        .DidUpdate = Type##_didUpdate,                                         \
-    }
+#ifdef REACT_PROFILER
+    #define React_Define_Component(Type, instance_name)                        \
+        {                                                                      \
+            .stage = REACT_STAGE_DEFINED, .WillMount = Type##_willMount,       \
+            .ShouldUpdate = Type##_shouldUpdate,                               \
+            .WillUpdate = Type##_willUpdate, .Release = Type##_release,        \
+            .DidMount = Type##_didMount, .DidUpdate = Type##_didUpdate,        \
+            .name = #Type " / " #instance_name                                 \
+        }
+#else
+    #define React_Define_Component(Type, name)                                 \
+        {                                                                      \
+            .stage = REACT_STAGE_DEFINED, .WillMount = Type##_willMount,       \
+            .ShouldUpdate = Type##_shouldUpdate,                               \
+            .WillUpdate = Type##_willUpdate, .Release = Type##_release,        \
+            .DidMount = Type##_didMount, .DidUpdate = Type##_didUpdate,        \
+        }
+#endif
 
 #define React_Define(Type, name) React_Define_WithProps(Type, name, {0})
 
@@ -203,8 +295,15 @@ bool React_Component(Component *instance, void *next_props);
 
 #define apply(Type, name, propsValue)                                          \
     {                                                                          \
-        Type##_props_t next_props = propsValue;                                \
-        Stage_Component(&name.instance, &next_props);                          \
+        if (name.instance.stage == REACT_STAGE_RELEASED                        \
+            || name.instance.stage == REACT_STAGE_DEFINED) {                   \
+            React_Profiler_Tick((&name), nextProps);                                      \
+            Type##_props_t next_props = propsValue;                            \
+            React_Profiler_Tock((&name), nextProps);                           \
+            Stage_Component(&name.instance, &next_props);                      \
+        } else {                                                               \
+            Stage_Component(&name.instance, 0);                                \
+        }                                                                      \
     }
 #define react(Type, name, propsValue)                                          \
     {                                                                          \
@@ -226,7 +325,7 @@ bool React_Component(Component *instance, void *next_props);
 
 #define define(Type, instance_name, instance_props, instance_state)            \
     Type##_Component instance_name = {                                         \
-        .instance = React_Define_Component(Type),                              \
+        .instance = React_Define_Component(Type, instance_name),               \
         .props    = instance_props,                                            \
         .state    = instance_state,                                            \
     }
@@ -234,8 +333,18 @@ bool React_Component(Component *instance, void *next_props);
 #define use_(x)  Stage_Component(&(x).instance, 0) &&
 #define use(...) EVAL(MAP(use_, __VA_ARGS__)) true
 
-#define loop_(x)  Stage_Component(&x.instance, 0) &&
-#define loop(...) while (EVAL(MAP(loop_, __VA_ARGS__)) true)
+#define loop_(x) Stage_Component(&x.instance, 0) &&
+#ifdef REACT_PROFILER
+    #include <signal.h>
+void        sighandler(int sig);
+extern bool stop;
+    #define loop(...)                                                          \
+        signal(SIGINT, sighandler);                                            \
+        while (EVAL(MAP(loop_, __VA_ARGS__)) step()                            \
+               && !(stop == true && dump_usage()))
+#else
+    #define loop(...) while (EVAL(MAP(loop_, __VA_ARGS__)) true)
+#endif
 
 #define shut(x)                                                                \
     x.instance.stage = REACT_STAGE_UNMOUNTED;                                  \

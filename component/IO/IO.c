@@ -3,8 +3,14 @@
 /**
  * \brief Initial pin mode configuration
  */
-willMount(IO) {
-    IO_willUpdate(self, next_props);
+willMount(IO)
+{
+    /* Configure pin for operation in certain mode */
+    if (state->mode == IO_INPUT) {
+        state->io->in(state->pin);
+    } else {
+        state->io->out(state->pin);
+    }
 }
 
 /**
@@ -13,35 +19,18 @@ willMount(IO) {
  */
 shouldUpdate(IO)
 {
-    if (props->mode == IO_INPUT) {
+    if (state->mode == IO_INPUT) {
         return true;
     }
 
-    if (props->level != next_props->level || props->mode != next_props->mode
-        || props->io->in != next_props->io->in || props->pin != next_props->pin) {
+    if (props->level != next_props->level) {
         return true;
     }
 
     return false;
 }
 
-/**
- * \brief Configure pin mode if needed
- */
-willUpdate(IO)
-{
-    if (props->mode != next_props->mode
-        || props->io->in != next_props->io->in 
-            || props->pin != next_props->pin 
-                || self->stage == REACT_STAGE_DEFINED) {
-        /* Configure pin for operation in certain mode */
-        if (props->mode == IO_INPUT) {
-            props->io->in(next_props->pin);
-        } else {
-            props->io->out(next_props->pin);
-        }
-    }
-}
+willUpdate(IO) {}
 
 /**
  * \brief Actual pin state configuration
@@ -49,26 +38,26 @@ willUpdate(IO)
  */
 release(IO)
 {
-    if (props->mode == IO_OUTPUT) {
-        /* Configure pin level */
+    if (state->mode == IO_OUTPUT) {
+        /* Set pin level */
         if (props->level == IO_HIGH) {
-            props->io->on(props->pin);
+            state->io->on(state->pin);
         } else {
-            props->io->off(props->pin);
+            state->io->off(state->pin);
         }
     } else {
-        bool level = props->io->get(props->pin);
+        bool level = state->io->get(state->pin);
         if (state->level != level) {
             state->level = level;
 
-            if (props->onChange) {
-                props->onChange(self);
+            if (state->onChange) {
+                state->onChange(self);
             }
 
-            if (level != 0 && props->onHigh) {
-                props->onHigh(self);
-            } else if (level == 0 && props->onLow) {
-                props->onLow(self);
+            if (level != 0 && state->onHigh) {
+                state->onHigh(self);
+            } else if (level == 0 && state->onLow) {
+                state->onLow(self);
             }
         }
     }
@@ -79,10 +68,9 @@ release(IO)
  */
 didMount(IO)
 {
-    if (props->onChange) {
-        props->onChange(self);
+    if (state->onChange) {
+        state->onChange(self);
     }
 }
 
 didUpdate(IO) {}
-

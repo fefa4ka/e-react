@@ -4,8 +4,12 @@
 
 
 /* Indicator */
-IO(led);
 pin_t led_pin = hw_pin(B, 0);
+IO_new(led, _({
+            .io    = &hw.io,
+                 .pin   = &led_pin,
+                 .mode  = IO_OUTPUT,
+            }));
 
 bool  enabled    = false;
 pin_t sensor_pin = hw_pin(B, 1);
@@ -26,9 +30,7 @@ test(toggle_led, toggle_sensor)
     // Event-loop
     loop(sensor) {
         apply(IO, led,
-              _({.io    = &hw.io,
-                 .pin   = &led_pin,
-                 .mode  = IO_OUTPUT,
+              _({
                  .level = hw.io.get(&led_control_pin)}));
     }
 }

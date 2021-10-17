@@ -77,3 +77,34 @@ typedef struct {
     serial_handler spi;
     timer_handler  timer;
 } HAL;
+
+#ifdef REACT_PROFILER
+struct HAL_calls {
+    uint64_t gpio_in;
+    uint64_t gpio_out;
+    uint64_t gpio_on;
+    uint64_t gpio_off;
+    uint64_t gpio_flip;
+    uint64_t gpio_pullup;
+    uint64_t gpio_get;
+
+    uint64_t adc_mount;
+    uint64_t adc_selectChannel;
+    uint64_t adc_startConvertion;
+    uint64_t adc_isConvertionReady;
+    uint64_t adc_readConvertion;
+
+    uint64_t uart_init;
+    uint64_t uart_isDataReceived;
+    uint64_t uart_isTransmitReady;
+    uint64_t uart_transmit;
+    uint64_t uart_receive;
+
+    uint64_t timer_init;
+    uint64_t timer_get;
+    uint64_t timer_set;
+    uint64_t timer_off;
+    uint64_t timer_usFromTicks;
+};
+#endif
+

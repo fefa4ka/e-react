@@ -2,6 +2,7 @@
 
 #include "../hash.h"
 #include "api.h"
+#include <component.h>
 
 typedef struct {
     unsigned char number;

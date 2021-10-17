@@ -23,7 +23,7 @@ struct device {
 };
 
 
-Clock(clock, &hw.timer, TIMESTAMP);
+Clock(clk, &hw.timer, TIMESTAMP);
 
 /* Sensor reader */
 ADC(sensor, _({
@@ -38,7 +38,7 @@ PWM(led, {0},
     _({
         .io    = &hw.io,
         .pin   = &led_pin,
-        .clock = &clock.state.time
+        .clock = &clk.state.time
     }));
 
 ///
@@ -52,7 +52,7 @@ int main(void)
 {
     // Event-loop
 
-    loop(clock, sensor)
+    loop(clk, sensor)
     {
         apply(PWM, led,
               _({

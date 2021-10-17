@@ -21,7 +21,7 @@ struct device {
 
 
 /* Timer and callback scheduler */
-Clock(clock, &hw.timer, TIMESTAMP);
+Clock(clk, &hw.timer, TIMESTAMP);
 Scheduler(scheduler, 15, _({.timer = &hw.timer}));
 Scheduler_timer_handler(scheduler);
 
@@ -60,7 +60,7 @@ Button(switcher, _({
 
                      .type = BUTTON_PUSH_PULLUP,
 
-                     .clock = &clock.state.time,
+                     .clock = &clk.state.time,
                      .bounce_delay_ms = 100,
 
                      .onRelease = switch_motor,
@@ -91,7 +91,7 @@ ADC(sensor, _({
 
 int main(void)
 {
-    loop(clock, scheduler, switcher, sensor)
+    loop(clk, scheduler, switcher, sensor)
     {
         /* Servos */
         Servo_drive(engine, state.thrust);

@@ -9,7 +9,7 @@
 #include <common.h>
 
 
-Clock(clock, &hw.timer, TIMESTAMP);
+Clock(clk, &hw.timer, TIMESTAMP);
 
 
 /* Button counter */
@@ -19,15 +19,19 @@ Button(counter, _({
                     .pin = &counter_pin,
 
                     .type            = BUTTON_PUSH_PULLUP,
-                    .clock           = &clock.state.time,
+                    .clock           = &clk.state.time,
                     .bounce_delay_ms = 1000,
 
                     .onPress = print_counter,
                 }));
 
 /* Button push indicator */
-IO(led);
 pin_t led_pin = hw_pin(B, 1);
+IO_new(led, _({
+                  .io    = &hw.io,
+                  .pin   = &led_pin,
+                  .mode  = IO_OUTPUT,
+            }));
 
 /* Menu commands and state */
 Menu(tty);
@@ -78,7 +82,7 @@ int main(void)
     print_version(0);
     print_shell(0);
 
-    loop(clock, uart, counter)
+    loop(clk, uart, counter)
     {
         apply(Menu, tty,
               _({
@@ -91,9 +95,6 @@ int main(void)
 
         apply(IO, led,
               _({
-                  .io    = &hw.io,
-                  .pin   = &led_pin,
-                  .mode  = IO_OUTPUT,
                   .level = Button_isPressed(&counter),
               }));
     }

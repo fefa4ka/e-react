@@ -52,7 +52,8 @@
                        (void *)&program_thread_id);                            \
         test_execute(__VA_ARGS__);                                             \
         test_wait(__VA_ARGS__);                                                \
-        pthread_kill(program_thread, 2);                                       \
+        stop = true;                                                           \
+        pthread_join(program_thread, NULL);                                    \
         after;                                                                 \
         return 0;                                                              \
     }                                                                          \
@@ -62,7 +63,7 @@
 #define test_loop_delay(number, order)                                         \
     for (int i = 0; i < number; i++, usleep(rand() % 10 * order))
 
-// Returns the local date/time formatted as 2014-03-19 11:11:52
+// Returns the local date/time formatted as 2014-03-19 11:11:52.132
 char *get_formatted_time(void)
 {
     // Must be static, otherwise won't work

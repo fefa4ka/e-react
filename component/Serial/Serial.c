@@ -45,7 +45,7 @@ release(Serial) {
 
     } else if(state->mode == COMMUNICATION_MODE_RECEIVER) {
         state->sending = props->handler->receive();
-        rb_write(state->rx_buffer, state->sending); 
+        rb_write(state->rx_buffer, state->sending);
 
         if(props->onReceive) props->onReceive(self);
     }

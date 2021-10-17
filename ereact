@@ -37,6 +37,7 @@ else
     ARCH="$2"
 fi
 
+
 MAKE="make --debug=b -f Makefile.${ARCH}"
 echo "Building $1"
 
@@ -114,15 +115,24 @@ build(){
         fi
 
         #SIMULATOR="target/$1/sim"
-        #make "${SIMULATOR}.sim.elf"
-        if [ "$3" == "flash" ]; then
+        #$MAKE "${TARGET}.sim" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
+        if [ "$4" == "flash" ]; then
             $MAKE flash TARGET="${TARGET}.hex"
+
+             #avarice --program --file ./app/basic.elf --part atmega328p --jtag /dev/tty.usbserial-1413201 :4242
         fi
+
+        if [ "$4" == "debug" ]; then
+            simavr -m atmega328p -f 16000000 ${TARGET}.elf -g &
+            avr-gdb -tui ${TARGET}.elf -ex "target remote :1234"
+            killall -9 simavr
+        fi
+
     fi
 
     if [ "$ARCH" == "STM8L" ]; then
         $MAKE "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
-        if [ "$3" == "flash" ]; then
+        if [ "$4" == "flash" ]; then
             sudo stm8flash -c stlinkv2 -p stm8l152k6 -w ${TARGET}.ihx
         fi
     fi
@@ -130,8 +140,15 @@ build(){
     if [ "$ARCH" == "x86" ]; then
         echo "$MAKE \"${TARGET}\" TARGET_DIR=$TARGET_DIR OBJECTS=\"$DEPENDENT_OBJECTS\" $DEFS DEFINE_COMPUTED=\"$DEP_DEFS\""
         $MAKE "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS"
-        if [ "$3" == "flash" ]; then
+        if [ "$4" == "flash" ]; then
             ${TARGET}
+        fi
+
+        if [ "$4" == "debug" ]; then
+
+            lldb ${TARGET} --one-line "b main"
+
+            exit 0
         fi
     fi
 }
@@ -151,7 +168,7 @@ if [ -z $2 ]; then
     fi
     exit
 else
-    build $TARGET $TARGET_DIR $ARCH
+    build $TARGET $TARGET_DIR $ARCH $3
 
     if [ "$1" == "test" ]; then
         echo -e "\n\n$2 test started\n"

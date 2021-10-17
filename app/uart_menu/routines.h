@@ -10,7 +10,7 @@
 
 extern unsigned char    command[COMMAND_BUFFER_SIZE];
 extern Serial_Component uart;
-extern Clock_Component clock;
+extern Clock_Component clk;
 
 void log_string(char *message);
 void log_num(char *message, long number);
