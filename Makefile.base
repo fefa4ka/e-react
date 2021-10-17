@@ -44,3 +44,4 @@ COMPILE = $(CC) $(CFLAGS)
 	make -f Makefile.$(ARCH) $*.e.c
 	@echo "Make object for $@"
 	$(COMPILE) -c $*.e.c -o $@ $(INCLUDE_FLAGS)
+	$(NM) --print-size --size-sort -t d $@ > $*.size

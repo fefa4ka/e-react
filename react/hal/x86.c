@@ -327,7 +327,9 @@ long time_in_ns()
 
 static inline uint16_t timer_get()
 {
-    // clock_t tick = clock();
+     clock_t tick = clock();
+     return tick;
+    /*
     long tock   = time_in_ns();
     long passed = tock - tick;
 
@@ -339,6 +341,7 @@ static inline uint16_t timer_get()
 
     tick = tock;
     return 0;
+    */
     // printf("Timer get: %ld, %ld, %d\r\n", tick, CLOCKS_PER_SEC, tick /
     // CLOCKS_PER_SEC);
 }
@@ -390,5 +393,5 @@ static void timer_off()
 static uint16_t timer_usFromTicks(uint16_t ticks)
 {
     React_Profiler_Count(timer_usFromTicks);
-    return ticks / 1e3;
+    return ticks / 1;
 }

@@ -4,6 +4,7 @@ avr
 -D__AVR_ATmega328P__=1
 -mccu=atmega328p
 -DARCH_AVR=1
+-DREACT_PROFILER
 -DTIMESTAMP=0
 -DBUILD_NUM=0
 -I/usr/local/Cellar/avr-gcc@9/9.3.0_3/avr/include

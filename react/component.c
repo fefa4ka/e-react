@@ -37,35 +37,36 @@ unsigned int frame_depth()
 
 
     #define dump_call(stage, call)                                             \
-        if(component->calls.stage.call) printf("\t   %lld " #call "\n", component->calls.stage.call)
+        if (component->calls.stage.call)                                       \
+        printf("  " #call " \t \t%lld\n", component->calls.stage.call)
 
     #define dump_stage(stage)                                                  \
-        if(component->counter.stage) {     \
-        printf("\t" #stage "\t%lld\t%lld\t%0.2lf%%\n",                         \
-               component->counter.stage, component->cpu.stage,                 \
-               ((double)component->cpu.stage / (double)cpu_total) * 100);       \
+        if (component->counter.stage) {                                        \
+            printf(#stage " \t \t%lld\t%lld\t%0.2lf%%\n",                     \
+                   component->counter.stage, component->cpu.stage,             \
+                   ((double)component->cpu.stage / (double)cpu_total) * 100);  \
             dump_call(stage, gpio_in);                                         \
-        dump_call(stage, gpio_out);                                            \
-        dump_call(stage, gpio_on);                                             \
-        dump_call(stage, gpio_off);                                            \
-        dump_call(stage, gpio_flip);                                           \
-        dump_call(stage, gpio_pullup);                                         \
-        dump_call(stage, gpio_get); \
-        dump_call(stage, adc_mount); \
-        dump_call(stage, adc_selectChannel); \
-        dump_call(stage, adc_startConvertion); \
-        dump_call(stage, adc_isConvertionReady); \
-        dump_call(stage, adc_readConvertion); \
-        dump_call(stage, uart_init); \
-        dump_call(stage, uart_isDataReceived); \
-        dump_call(stage, uart_isTransmitReady); \
-        dump_call(stage, uart_transmit); \
-        dump_call(stage, uart_receive); \
-        dump_call(stage, timer_init); \
-        dump_call(stage, timer_get); \
-        dump_call(stage, timer_set); \
-        dump_call(stage, timer_off); \
-        dump_call(stage, timer_usFromTicks); \
+            dump_call(stage, gpio_out);                                        \
+            dump_call(stage, gpio_on);                                         \
+            dump_call(stage, gpio_off);                                        \
+            dump_call(stage, gpio_flip);                                       \
+            dump_call(stage, gpio_pullup);                                     \
+            dump_call(stage, gpio_get);                                        \
+            dump_call(stage, adc_mount);                                       \
+            dump_call(stage, adc_selectChannel);                               \
+            dump_call(stage, adc_startConvertion);                             \
+            dump_call(stage, adc_isConvertionReady);                           \
+            dump_call(stage, adc_readConvertion);                              \
+            dump_call(stage, uart_init);                                       \
+            dump_call(stage, uart_isDataReceived);                             \
+            dump_call(stage, uart_isTransmitReady);                            \
+            dump_call(stage, uart_transmit);                                   \
+            dump_call(stage, uart_receive);                                    \
+            dump_call(stage, timer_init);                                      \
+            dump_call(stage, timer_get);                                       \
+            dump_call(stage, timer_set);                                       \
+            dump_call(stage, timer_off);                                       \
+            dump_call(stage, timer_usFromTicks);                               \
         }
 
 
@@ -74,8 +75,8 @@ bool dump_usage()
     enum error r;
     Component *component;
     printf("\n\nCPU usage details:\n\n");
-    printf("\toperation\tsteps\tcpu\t%\n\n");
-    printf("\t%d components\t%lld\t%lld\t100%%\n\n", scope.used, step() - 1,
+    printf("operation\t\tsteps\tcpu\t%\n\n");
+    printf("%d components\t\t%lld\t%lld\t100%%\n\n", scope.used, step() - 1,
            cpu_total);
     for (unsigned int index = 0; index < scope.used; index++) {
         component = (Component *)scope.data[index];
@@ -87,9 +88,7 @@ bool dump_usage()
         double component_cpu_percent
             = ((double)component_cpu_total / (double)cpu_total) * 100;
         printf("%d: ", index);
-        printf("%s\n\n", component->name);
-        printf("\tCPU Usage\t \t%ld\t%0.2lf%%\n\n", component_cpu_percent,
-               component_cpu_total);
+        printf("%s\n", component->name);
         dump_stage(willMount);
         dump_stage(nextProps);
         dump_stage(shouldUpdate);
@@ -97,6 +96,8 @@ bool dump_usage()
         dump_stage(release);
         dump_stage(didMount);
         dump_stage(didUnmount);
+        printf("\t\t\t\t%lld\t%0.2lf%%\n", component_cpu_total,
+               component_cpu_percent);
         printf("\n\n");
     }
 

@@ -1,5 +1,6 @@
 ARCH ?= x86
 CC = gcc-11
+NM = nm
 
 MACHINE_FLAGS = -DF_CPU=$(CLOCK) -DREACT_PROFILER
 OPTIMIZATION_FLAGS ?= -fcompare-debug-second -g -Og
@@ -12,4 +13,4 @@ $(TARGET): $(OBJECTS)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS) $(DEPENDENCIES)
-	find . -type f -name '*.map' -or -name '*.sym' -or -name '*.ihx' -or -name '*.asm' -or -name '*.rst' -or -name '*.rel' -or -name '*.lst' -or -name '*.elf' -or -name '*.e.c' -or -name '*.hex' | xargs rm -rf
+	find . -type f -name '*.map' -or -name '*.size' -or -name '*.sym' -or -name '*.ihx' -or -name '*.asm' -or -name '*.rst' -or -name '*.rel' -or -name '*.lst' -or -name '*.elf' -or -name '*.e.c' -or -name '*.hex' | xargs rm -rf

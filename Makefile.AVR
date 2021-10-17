@@ -5,6 +5,7 @@ FUSES      = -U lfuse:w:0xee:m -U hfuse:w:0xdf:m
 
 ARCH ?= AVR
 CC = avr-gcc
+NM = avr-nm
 AVRDUDE = avrdude -V $(PROGRAMMER) -p $(DEVICE)
 
 OPTIMIZATION_FLAGS = -g -Og
