@@ -4,10 +4,11 @@ NM = nm
 
 MACHINE_FLAGS = -DF_CPU=$(CLOCK) -DREACT_PROFILER
 OPTIMIZATION_FLAGS ?= -fcompare-debug-second -g -Og
+OBJECTS_SIZE := $(OBJECTS:.o=.size)
 
 include Makefile.base
 
-$(TARGET): $(OBJECTS)
+$(TARGET): $(OBJECTS) $(OBJECT_SIZE)
 	@echo $(DEPENDENCIES)
 	$(COMPILE) -o $@ $(OBJECTS)
 
