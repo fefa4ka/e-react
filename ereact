@@ -41,9 +41,20 @@ fi
 MAKE="make --debug=b -f Makefile.${ARCH}"
 echo "Building $1"
 
-$MAKE clean
-
 cat BUILD.num | awk '{ print $1 + 1 }' | tee BUILD.num
+
+size() {
+    [ "$1" != "" ] && numfmt --to si --format "%0.2f" $1
+}
+dump_size() {
+    local size=$1
+    local binary_size="$2.0"
+    local data_bytes=$(grep ' D ' $size | cut -f2 -d' ' | awk '{ sum += $1 } END { print sum }' || 0)
+    local text_bytes=$(grep ' T ' $size | cut -f2 -d' ' | awk '{ sum += $1 } END { print sum }')
+    local total_bytes=$(cat $size | cut -f2 -d' ' | awk '{ sum += $1 } END { print sum }' )
+    local total_part=$(echo $total_bytes $binary_size | awk '{print ($1 / $2) * 100}')
+    echo -e "\t$(size $data_bytes)\t$(size $text_bytes)\t$(size $total_bytes)\t$total_part%"
+}
 
 build(){
     local TARGET=$1
@@ -52,6 +63,8 @@ build(){
     local DEP_DEFS=""
     local DEPS
     local DEPENDENT_OBJECTS=""
+    local components=()
+    local dependencies=()
 
     $MAKE ${TARGET}.d
     DEPS=`cat ${TARGET}.d | cut -d':' -f2`
@@ -84,6 +97,7 @@ build(){
 
             if [[ "$sourcename" == "component/"* ]]; then
                 local component=$(echo $sourcename | cut -d'/' -f2)
+                components+=($component)
                 while read definition; do
                     local def=$(echo $definition | rev | cut -d' ' -f1 | rev)
                     DEP_DEFS="$DEP_DEFS -D${def}=1"
@@ -94,14 +108,19 @@ build(){
                     echo "rm -rf $object"
                     echo "rm -rf $source_extended"
                 done < <(grep "^#define.*_${component}_" ${TARGET}.c)
+            else
+                local dependency=${sourcename/.c/}
+                dependencies+=($dependency)
             fi
 
+            $MAKE $object
             DEPENDENT_OBJECTS="${DEPENDENT_OBJECTS} ${object}"
         fi
     done
     DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/[^/]*/\.\./|/|' -e 't a'`
 
     local product_name=$(echo $TARGET | sed "s/.*\///")
+    local target_file
     DEFS="ARCH=$ARCH PRODUCT_NAME=$product_name"
 
     if [ "$ARCH" == "AVR" ]; then
@@ -113,6 +132,7 @@ build(){
             # mv ${TARGET}.fw ${TARGET}.elf
             # exit 0
         fi
+        target_file="${TARGET}.hex"
 
         #SIMULATOR="target/$1/sim"
         #$MAKE "${TARGET}.sim" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
@@ -135,6 +155,7 @@ build(){
         if [ "$4" == "flash" ]; then
             sudo stm8flash -c stlinkv2 -p stm8l152k6 -w ${TARGET}.ihx
         fi
+        target_file="${TARGET}.ihx"
     fi
 
     if [ "$ARCH" == "x86" ]; then
@@ -143,14 +164,33 @@ build(){
         if [ "$4" == "flash" ]; then
             ${TARGET}
         fi
+        target_file="${TARGET}"
 
         if [ "$4" == "debug" ]; then
-
             lldb ${TARGET} --one-line "b main"
 
             exit 0
         fi
     fi
+
+    total_size=$(wc -c < $target_file)
+    echo -e "\n$target_file $total_size total size is $(numfmt --to si --format "%0.2f" $total_size)\n"
+    echo -e "module\tdata\tcode\ttotal\n"
+
+    echo -e "\nComponents:"
+    for component in ${components[*]}
+    do
+        echo $component
+        dump_size ./component/$component/$component.size $total_size
+    done
+
+    echo -e "\nDependencies:"
+    for dependency in ${dependencies[*]}
+    do
+        local component=$(echo $dependency | rev | cut -d'/' -f1 | rev | cut -d'.' -f1)
+        echo $component
+        dump_size $dependency.size $total_size
+    done
 }
 
 if [ -z $2 ]; then
