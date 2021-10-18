@@ -38,11 +38,11 @@ unsigned int frame_depth()
 
     #define dump_call(stage, call)                                             \
         if (component->calls.stage.call)                                       \
-        printf("  " #call " \t \t%lld\n", component->calls.stage.call)
+        printf("   " #call " \t \t%lld\n", component->calls.stage.call)
 
     #define dump_stage(stage)                                                  \
         if (component->counter.stage) {                                        \
-            printf(#stage " \t \t%lld\t%lld\t%0.2lf%%\n",                     \
+            printf(" " #stage " \t \t%lld\t%lld\t%0.2lf%%\n",                  \
                    component->counter.stage, component->cpu.stage,             \
                    ((double)component->cpu.stage / (double)cpu_total) * 100);  \
             dump_call(stage, gpio_in);                                         \
@@ -74,6 +74,7 @@ bool dump_usage()
 {
     enum error r;
     Component *component;
+
     printf("\n\nCPU usage details:\n\n");
     printf("operation\t\tsteps\tcpu\t%\n\n");
     printf("%d components\t\t%lld\t%lld\t100%%\n\n", scope.used, step() - 1,
@@ -100,6 +101,8 @@ bool dump_usage()
                component_cpu_percent);
         printf("\n\n");
     }
+
+    vcd_clean();
 
     return stop;
 }

@@ -71,8 +71,12 @@ HAL hw = {.io    = {.in     = gpio_in,
  * could be 10007
  */
 #define MAX_TABLE_SIZE 10007 // Prime Number
+static char  pin_index = 33;
 unsigned int pins_index[128];
 pin_t *      pins_buffer[128];
+
+FILE *vcd_file;
+FILE *vcd_file_log;
 
 struct hash_table pins = {
     .index = pins_index,
@@ -97,7 +101,73 @@ unsigned int hash_pin(pin_t *pin)
 
 
 pthread_mutex_t get_pin_lock;
-void            gpio_init() { pthread_mutex_init(&get_pin_lock, NULL); }
+#define vcd_open(filename) fopen(#filename ".vcd", "w")
+void vcd_init()
+{
+    // use appropriate location if you are using MacOS or Linux
+    vcd_file     = vcd_open(dumper);
+    vcd_file_log = vcd_open(dumper_log);
+
+    if (vcd_file == NULL) {
+        printf("Error: can't open vcd file");
+        exit(1);
+    }
+
+    if (vcd_file_log == NULL) {
+        printf("Error: can't open vcd file");
+        exit(1);
+    }
+}
+
+void vcd_clean()
+{
+    char c;
+    fprintf(vcd_file, "$date"
+                      "\n"
+                      "   October 17, 2021."
+                      "\n"
+                      "$end"
+                      "\n"
+                      "$version"
+                      "\n"
+                      "   VCD generator tool version info text."
+                      "\n"
+                      "$end"
+                      "\n"
+                      "$comment"
+                      "\n"
+                      "   Any comment text."
+                      "\n"
+                      "$end"
+                      "\n"
+                      "$timescale 1ns $end"
+                      "\n"
+                      "$scope module logic $end\n");
+    for (unsigned int index = 0; index < pins.used; index++) {
+        pin_t *Pin = pins.data[index];
+        fprintf(vcd_file, "$var wire 1 %c %s_%d$end\n", Pin->index, Pin->name,
+                Pin->number);
+    }
+
+    fprintf(vcd_file,
+            "$upscope $end"
+            "\n"
+            "$enddefinitions $end"
+            "\n");
+    fclose(vcd_file_log);
+    vcd_file_log = fopen("dumper_log.vcd", "r");
+    while ((c = fgetc(vcd_file_log)) != EOF)
+        fputc(c, vcd_file);
+    fclose(vcd_file_log);
+    remove("dumper_log.vcd");
+    fclose(vcd_file);
+}
+
+void gpio_init()
+{
+    vcd_init();
+    pthread_mutex_init(&get_pin_lock, NULL);
+}
 
 static pin_t *get_pin(pin_t *pin)
 {
@@ -119,6 +189,7 @@ static pin_t *get_pin(pin_t *pin)
     // printf("%s - %d - %d\n", pin->name, hash_pin(pin), hash_pin(Pin));
     hash_write(&pins, hash_pin(Pin), Pin);
 
+    Pin->index = pin_index++;
     // printf("Pin PORT_%s_%d = (#%d %x) new\r\n", Pin->name, Pin->number,
     // hash_pin(pin), &(Pin->port));
     pthread_mutex_unlock(&get_pin_lock);
@@ -134,12 +205,14 @@ void dump_pin(pin_t *pin)
 
 void free_pins()
 {
+    printf("exit\n");
     for (unsigned int index = 0; index < pins.used; index++) {
         pin_t *Pin = pins.data[index];
         free(Pin->name);
         free(Pin);
     }
     pthread_mutex_destroy(&get_pin_lock);
+    fclose(vcd_file);
 }
 
 static void gpio_in(void *pin)
@@ -168,6 +241,10 @@ static void gpio_on(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
+    clock_t current_time = clock();
+    if (!((Pin->port.pin) & (1 << Pin->number))) {
+        fprintf(vcd_file_log, "#%ld\n%d%c\n", current_time, 1, Pin->index);
+    }
     bit_set(Pin->port.pin, Pin->number);
 
     // printf("On %x ", &(Pin->port));
@@ -182,6 +259,10 @@ static void gpio_off(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
+    clock_t current_time = clock();
+    if (((Pin->port.pin) & (1 << Pin->number))) {
+        fprintf(vcd_file_log, "#%ld\n%d%c\n", current_time, 0, Pin->index);
+    }
     bit_clear(Pin->port.pin, Pin->number);
 
     // printf("Off %x ", &(Pin->port));
@@ -327,13 +408,13 @@ long time_in_ns()
 
 static inline uint16_t timer_get()
 {
-     clock_t tick = clock();
-     return tick;
+    clock_t tick = clock();
+    React_Profiler_Count(timer_get);
+    return tick;
     /*
     long tock   = time_in_ns();
     long passed = tock - tick;
 
-    React_Profiler_Count(timer_get);
     if (tick) {
         tick = tock;
         return passed;
@@ -378,7 +459,7 @@ static void timer_set(uint16_t ticks, void (*callback)(void *args), void *args)
             *timer                                = timer_callback;
             pthread_create(&timer->thread, NULL, *timer_timeout, (void *)timer);
 
-            printf("Timer #%ld set: %d\r\n", i, ticks);
+            //printf("Timer #%ld set: %d\r\n", i, ticks);
             break;
         }
     }
@@ -387,7 +468,7 @@ static void timer_set(uint16_t ticks, void (*callback)(void *args), void *args)
 static void timer_off()
 {
     React_Profiler_Count(timer_off);
-    printf("Timer off\r\n");
+    //printf("Timer off\r\n");
 }
 
 static uint16_t timer_usFromTicks(uint16_t ticks)

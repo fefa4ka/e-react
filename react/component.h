@@ -76,7 +76,7 @@ typedef struct {
     #include <time.h>
 unsigned int             frame_depth();
 bool                     dump_usage();
-extern struct HAL_calls *       current_scope;
+extern struct HAL_calls *current_scope;
 extern clock_t           cpu_total;
 uint64_t                 step();
 extern struct hash_table scope;
@@ -127,13 +127,13 @@ bool React_Component(Component *instance, void *next_props);
 #define React_LifeCycle_Headers(Type, stage) React_LifeCycle_Header(Type, stage)
 
 #ifdef REACT_PROFILER
-    #define React_Profiler_Count(func)                                             \
+    #define React_Profiler_Count(func)                                         \
         if (current_scope) {                                                   \
-            current_scope->func += 1;                                 \
+            current_scope->func += 1;                                          \
         } else {                                                               \
-            calls.func += 1;                                               \
+            calls.func += 1;                                                   \
         }
-    #define React_Profiler_Tick(component, stage)                                     \
+    #define React_Profiler_Tick(component, stage)                              \
         clock_t begin, end, passed;                                            \
         begin         = clock();                                               \
         current_scope = &component->instance.calls.stage
@@ -146,7 +146,7 @@ bool React_Component(Component *instance, void *next_props);
         current_scope = NULL
 
 #else
-    #define React_Profiler_Tick(self, stage)                                          \
+    #define React_Profiler_Tick(self, stage)                                   \
         {                                                                      \
         }
     #define React_Profiler_Tock(component, stage)                              \
@@ -160,7 +160,7 @@ bool React_Component(Component *instance, void *next_props);
     {                                                                          \
         React_Self(Type, instance);                                            \
         hw_isr_disable();                                                      \
-        React_Profiler_Tick(self, stage);                                             \
+        React_Profiler_Tick(self, stage);                                      \
         Type##_inline_##stage(&self->instance, &self->props, &self->state);    \
         React_Profiler_Tock(self, stage);                                      \
         hw_isr_enable();                                                       \
@@ -194,7 +194,7 @@ bool React_Component(Component *instance, void *next_props);
             next_props_ptr = &self->props;                                     \
         React_SelfNext(Type, instance);                                        \
         hw_isr_disable();                                                      \
-        React_Profiler_Tick(self, stage);                                             \
+        React_Profiler_Tick(self, stage);                                      \
         returnType result = Type##_inline_##stage(                             \
             &self->instance, &self->props, &self->state, next_props);          \
         React_Profiler_Tock(self, stage);                                      \
@@ -214,7 +214,7 @@ bool React_Component(Component *instance, void *next_props);
         if (&self->props != next_props)                                        \
             self->props = *next_props;                                         \
         hw_isr_disable();                                                      \
-        React_Profiler_Tick(self, willMount);                                             \
+        React_Profiler_Tick(self, willMount);                                  \
         Type##_inline_willMount(&self->instance, &self->props, &self->state,   \
                                 next_props);                                   \
         React_Profiler_Tock(self, willMount);                                  \
@@ -231,7 +231,7 @@ bool React_Component(Component *instance, void *next_props);
             next_props_ptr = &self->props;                                     \
         React_SelfNext(Type, instance);                                        \
         hw_isr_disable();                                                      \
-        React_Profiler_Tick(self, willUpdate);                                             \
+        React_Profiler_Tick(self, willUpdate);                                 \
         Type##_inline_willUpdate(&self->instance, &self->props, &self->state,  \
                                  next_props);                                  \
         React_Profiler_Tock(self, willUpdate);                                 \
@@ -297,7 +297,7 @@ bool React_Component(Component *instance, void *next_props);
     {                                                                          \
         if (name.instance.stage == REACT_STAGE_RELEASED                        \
             || name.instance.stage == REACT_STAGE_DEFINED) {                   \
-            React_Profiler_Tick((&name), nextProps);                                      \
+            React_Profiler_Tick((&name), nextProps);                           \
             Type##_props_t next_props = propsValue;                            \
             React_Profiler_Tock((&name), nextProps);                           \
             Stage_Component(&name.instance, &next_props);                      \
@@ -340,6 +340,7 @@ void        sighandler(int sig);
 extern bool stop;
     #define loop(...)                                                          \
         signal(SIGINT, sighandler);                                            \
+        vcd_init();                                                            \
         while (EVAL(MAP(loop_, __VA_ARGS__)) step()                            \
                && !(stop == true && dump_usage()))
 #else

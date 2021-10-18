@@ -7,6 +7,7 @@
 typedef struct {
     unsigned char number;
     char *        name;
+    char          index;
     struct {
         unsigned char ddr;
         unsigned char port;
@@ -19,6 +20,8 @@ extern HAL hw;
 void free_pins();
 void dump_pin(pin_t *pin);
 void gpio_init();
+void vcd_init();
+void vcd_clean();
 
 #define test(...) test_program({ gpio_init(); }, { free_pins(); }, __VA_ARGS__)
 
