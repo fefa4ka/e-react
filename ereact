@@ -65,12 +65,17 @@ build(){
     local DEPENDENT_OBJECTS=""
     local components=()
     local dependencies=()
+    local product_name=$(echo $TARGET | sed "s/.*\///")
+    local target_file
 
     $MAKE ${TARGET}.d
+
     DEPS=`cat ${TARGET}.d | cut -d':' -f2`
+    DEFS="ARCH=$ARCH PRODUCT_NAME=$product_name"
 
     for filename in ${DEPS}; do
         local sourcename=${filename/.h/.c}
+        local component=$(echo $sourcename | cut -d'/' -f2)
 
         if [[ "$filename" == *"third_party/"* ]]; then
             continue
@@ -96,11 +101,11 @@ build(){
             fi
 
             if [[ "$sourcename" == "component/"* ]]; then
-                local component=$(echo $sourcename | cut -d'/' -f2)
                 components+=($component)
                 while read definition; do
                     local def=$(echo $definition | rev | cut -d' ' -f1 | rev)
                     DEP_DEFS="$DEP_DEFS -D${def}=1"
+
                     rm -rf $object
                     rm -rf $source_extended
                     echo "$PWD"
@@ -113,15 +118,12 @@ build(){
                 dependencies+=($dependency)
             fi
 
-            $MAKE $object
+            $MAKE $object $DEFS DEFINE_COMPUTED="$DEP_DEFS" PRODUCT_NAME="$product_name"
             DEPENDENT_OBJECTS="${DEPENDENT_OBJECTS} ${object}"
         fi
     done
     DEPENDENT_OBJECTS=`echo $DEPENDENT_OBJECTS | sed -e 's|/\./|/|g' -e ':a' -e 's|/[^/]*/\.\./|/|' -e 't a'`
 
-    local product_name=$(echo $TARGET | sed "s/.*\///")
-    local target_file
-    DEFS="ARCH=$ARCH PRODUCT_NAME=$product_name"
 
     if [ "$ARCH" == "AVR" ]; then
         $MAKE "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
@@ -159,7 +161,6 @@ build(){
     fi
 
     if [ "$ARCH" == "x86" ]; then
-        echo "$MAKE \"${TARGET}\" TARGET_DIR=$TARGET_DIR OBJECTS=\"$DEPENDENT_OBJECTS\" $DEFS DEFINE_COMPUTED=\"$DEP_DEFS\""
         $MAKE "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS"
         if [ "$4" == "flash" ]; then
             ${TARGET}
