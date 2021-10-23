@@ -1,4 +1,5 @@
 /* Used components */
+#define _Serial_circular
 #include "routines.h"
 #include <Button.h>
 #include <Clock.h>
@@ -48,7 +49,9 @@ unsigned char       command[COMMAND_BUFFER_SIZE];
 void read_symbol(Component *trigger)
 {
     struct ring_buffer *input_buffer = React_State(Serial, &uart, rx_buffer);
-    Serial_write(&uart, input_buffer->data[input_buffer->write - 1]);
+    if(rb_length(input_buffer)) {
+        Serial_write(&uart, input_buffer->data[input_buffer->write - 1]);
+    }
 }
 
 /**

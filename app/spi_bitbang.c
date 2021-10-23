@@ -7,7 +7,7 @@
 
 
 /* React components */
-Clock(clock, &hw.timer, TIMESTAMP);
+Clock(clk, &hw.timer, TIMESTAMP);
 
 
 /* SPI on top of Bitbang */
@@ -65,7 +65,7 @@ void read_address(unsigned char address, pin_t *chip_select_pin,
 /*
  * \brief    Select chip before data transmission
  */
-void spi_start(Component *instance)
+void spi_start(Component *instance, void *arg)
 {
     pin_t *chip_select_pin = chip_select_buffer[spi_state.output_buffer.read];
     if (chip_select_pin) {
@@ -73,8 +73,9 @@ void spi_start(Component *instance)
         hw.io.on(chip_select_pin);
     }
 }
+struct callback spi_start_cb = { spi_start, 0 };
 
-void spi_receive(Component *instance)
+void spi_receive(Component *instance, void *arg)
 {
     pin_t *chip_select_pin    = chip_select_buffer[spi_state.output_buffer.read];
     struct callback *callback = callback_buffer[spi_state.output_buffer.read];
@@ -90,6 +91,7 @@ void spi_receive(Component *instance)
         chip_select_buffer[spi_state.output_buffer.read] = NULL;
     }
 }
+struct callback spi_receive_cb = { spi_receive, 0 };
 
 pin_t *             spi_pins[]    = {&spi_state.mosi_pin, &spi_state.miso_pin, NULL};
 struct ring_buffer *spi_buffers[] = {&spi_state.output_buffer, &spi_state.input_buffer};
@@ -97,7 +99,7 @@ enum pin_mode       spi_modes[]   = {PIN_MODE_OUTPUT, PIN_MODE_INPUT};
 
 Bitbang(spi, _({
                  .io       = &hw.io,
-                 .clock    = &clock.state.time,
+                 .clock    = &clk.state.time,
 
                  .baudrate = BAUDRATE,
 
@@ -106,19 +108,26 @@ Bitbang(spi, _({
                  .modes    = spi_modes,
                  .buffers  = spi_buffers,
 
-                 .onStart       = spi_start,
-                 .onTransmitted = spi_receive,
+                 .onStart       = &spi_start_cb,
+                 .onTransmitted = &spi_receive_cb,
              }));
 
 
 /* Counter */
-unsigned char counter_index = 0;
+unsigned char counter_index = 4;
+pin_t cs_pin = hw_pin(C, 0);
 void counter_increment(Component *trigger)
 {
-    counter_index++;
+    counter_index += 1;
 
     /* To SPI output */
-    rb_write(&spi_state.output_buffer, counter_index);
+    write_address(0x0F, counter_index, &cs_pin);
+}
+
+void read_loop(Component *trigger, void *arg);
+struct callback read_loop_cb = { read_loop, 0 };
+void read_loop(Component *trigger, void *arg) {
+    read_address(counter_index, &cs_pin, &read_loop_cb);
 }
 
 pin_t counter_pin = hw_pin(B, 2);
@@ -126,7 +135,7 @@ Button(counter, _({
                     .io              = &hw.io,
                     .pin             = &counter_pin,
 
-                    .clock           = &clock.state.time,
+                    .clock           = &clk.state.time,
 
                     .type            = BUTTON_PUSH_PULLUP,
                     .bounce_delay_ms = 100,
@@ -139,9 +148,9 @@ Button(counter, _({
 int main(void)
 {
     /* Welcome count */
-    counter_increment(NULL);
-
-    loop(clock, counter, spi) {}
+    counter_increment(0);
+    read_loop(0, 0);
+    loop(clk, counter, spi);
 
     return 0;
 }

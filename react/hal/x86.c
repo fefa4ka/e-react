@@ -218,6 +218,7 @@ void free_pins()
     }
     pthread_mutex_destroy(&get_pin_lock);
     fclose(vcd_file);
+    system ("/bin/stty cooked");
 }
 
 static void gpio_in(void *pin)

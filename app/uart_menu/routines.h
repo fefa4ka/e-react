@@ -1,6 +1,7 @@
 #pragma once
-
+#define _Serial_circular
 #include <Serial.h>
+
 #include <Clock.h>
 #include <component.h>
 

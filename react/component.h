@@ -93,6 +93,8 @@ bool React_Component(Component *instance, void *next_props);
     ((Type##_props_t *)((instance)->props))
 #define React_State(Type, instance, attribute)                                 \
     (((Type##_Component *)instance)->state.attribute)
+#define React_Prop(Type, instance, attribute)                                 \
+    (((Type##_Component *)instance)->props.attribute)
 
 #define React_Props(Type, instance, attribute)                                 \
     React_Instance_Props(Type, instance)->attribute
