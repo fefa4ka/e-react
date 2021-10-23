@@ -22,6 +22,8 @@ void dump_pin(pin_t *pin);
 void gpio_init();
 void vcd_init();
 void vcd_clean();
+unsigned long time_in_ns();
+unsigned long timer_get_ns();
 
 #define test(...) test_program({ gpio_init(); }, { free_pins(); }, __VA_ARGS__)
 

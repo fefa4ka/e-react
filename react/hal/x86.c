@@ -71,12 +71,11 @@ HAL hw = {.io    = {.in     = gpio_in,
  * could be 10007
  */
 #define MAX_TABLE_SIZE 10007 // Prime Number
+pthread_mutex_t get_pin_lock;
+
 static char  pin_index = 33;
 unsigned int pins_index[128];
 pin_t *      pins_buffer[128];
-
-FILE *vcd_file;
-FILE *vcd_file_log;
 
 struct hash_table pins = {
     .index = pins_index,
@@ -85,22 +84,10 @@ struct hash_table pins = {
     .used  = 0,
 };
 
-unsigned int hash_pin(pin_t *pin)
-{
-    unsigned long hash = 0;
-    char *        word = pin->name;
-
-    while (*word != '\0') {
-        hash += *word++;
-    }
-
-    hash += pin->number;
-
-    return (hash % MAX_TABLE_SIZE);
-}
+FILE *vcd_file;
+FILE *vcd_file_log;
 
 
-pthread_mutex_t get_pin_lock;
 #define vcd_open(filename) fopen(#filename ".vcd", "w")
 void vcd_init()
 {
@@ -140,7 +127,7 @@ void vcd_clean()
                       "\n"
                       "$end"
                       "\n"
-                      "$timescale 1ns $end"
+                      "$timescale 1us $end"
                       "\n"
                       "$scope module logic $end\n");
     for (unsigned int index = 0; index < pins.used; index++) {
@@ -163,10 +150,28 @@ void vcd_clean()
     fclose(vcd_file);
 }
 
+unsigned int hash_pin(pin_t *pin)
+{
+    unsigned long hash = 0;
+    char *        word = pin->name;
+
+    while (*word != '\0') {
+        hash += *word++;
+    }
+
+    hash += pin->number;
+
+    return (hash % MAX_TABLE_SIZE);
+}
+
+void gpio_thread()
+{
+}
 void gpio_init()
 {
     vcd_init();
     pthread_mutex_init(&get_pin_lock, NULL);
+    // TODO: thread with gpio manipulation
 }
 
 static pin_t *get_pin(pin_t *pin)
@@ -276,10 +281,10 @@ static void gpio_off(void *pin)
 static void gpio_flip(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
+    clock_t current_time = clock();
 
     bit_flip(Pin->port.pin, Pin->number);
-    // printf("Flip ");
-    // dump_pin(pin);
+    fprintf(vcd_file_log, "#%ld\n%d%c\n", current_time, gpio_get(pin), Pin->index);
     React_Profiler_Count(gpio_flip);
 }
 
@@ -341,7 +346,7 @@ static int16_t adc_readConvertion(void *channel)
     // printf("ADC readConvertion %d\r\n", *ch);
 
     React_Profiler_Count(adc_readConvertion);
-    return rand();
+    return sin(clock() / 1e6) * 100;
 }
 
 
@@ -399,19 +404,15 @@ static void timer_init(void *config)
 }
 
 long tick = 0;
-long time_in_ns()
+unsigned long time_in_ns()
 {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
     return now.tv_sec * 1e9 + now.tv_nsec;
 }
 
-static inline uint16_t timer_get()
+unsigned long timer_get_ns()
 {
-    clock_t tick = clock();
-    React_Profiler_Count(timer_get);
-    return tick;
-    /*
     long tock   = time_in_ns();
     long passed = tock - tick;
 
@@ -422,7 +423,14 @@ static inline uint16_t timer_get()
 
     tick = tock;
     return 0;
-    */
+}
+
+static inline uint16_t timer_get()
+{
+    clock_t tick = clock();
+    //printf("%ld - %ld\n", tick, timer_get_ns());
+    React_Profiler_Count(timer_get);
+    return tick;
     // printf("Timer get: %ld, %ld, %d\r\n", tick, CLOCKS_PER_SEC, tick /
     // CLOCKS_PER_SEC);
 }
