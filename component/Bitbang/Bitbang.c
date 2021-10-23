@@ -102,7 +102,7 @@ willUpdate(Bitbang)
             /* Read new byte for output */
             if (state->sending == false) {
                 if (rb_read(*buffer, data) == ERROR_NONE) {
-                    if (props->little_endian) {
+                    if (props->msb_first) {
                         *data = reverse(*data);
                     }
                     sending = true;
@@ -126,8 +126,8 @@ willUpdate(Bitbang)
     state->sending = sending;
 
     /* Clock tick fall */
-    if (props->clock)
-        props->io->off(props->clock);
+    if (props->clk_pin)
+        props->io->off(props->clk_pin);
 }
 
 /**
@@ -169,9 +169,9 @@ didUpdate(Bitbang)
             state->sending  = false;
             state->position = -1;
 
-            if (props->clock)
+            if (props->clk_pin)
                 /* Clock falling tick */
-                props->io->off(props->clock);
+                props->io->off(props->clk_pin);
 
             if (props->onTransmitted && props->onTransmitted->method)
                 props->onTransmitted->method(self,
@@ -181,8 +181,8 @@ didUpdate(Bitbang)
             state->position++;
 
             /* Clock rise tick */
-            if (props->clock)
-                props->io->on(props->clock);
+            if (props->clk_pin)
+                props->io->on(props->clk_pin);
         }
     }
 }

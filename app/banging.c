@@ -25,10 +25,11 @@ Bitbang(spi, _({
                  .io       = &hw.io,
                  .clock    = &clk.state.time,
                  .baudrate = 9600,
+                 .msb_first= true,
                  .pins     = (void **)spi_pins,
                  .clk_pin  = &clk_pin,
                  .modes    = spi_modes,
-                 .buffers  = spi_buffers,
+                 .buffers  = spi_buffers
              }));
 
 
@@ -66,6 +67,8 @@ IO_new(led, _({
 
 int main(void)
 {
+    send_number(0);
+
     loop(clk, spi, counter)
     {
         apply(IO, led,

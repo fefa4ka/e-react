@@ -17,7 +17,7 @@ typedef struct {
 
     unsigned int baudrate;
 
-    bool little_endian; /* Order in which sending and reading bits */
+    bool msb_first; /* Order in which sending and reading bits */
 
     unsigned short pins_number; /* Number of data lines */
     void **        pins;        /* List of pins used for lines */

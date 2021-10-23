@@ -1,9 +1,10 @@
 #include <Clock.h>
 
 Clock(clk, &hw.timer, TIMESTAMP);
+pin_t tick_pin = hw_pin(B, 0);
 
 void print_time(Component *trigger) {
-    printf("Time: %ld\n", clk.state.time.timestamp);
+    hw.io.flip(&tick_pin);
 }
 
 int main(void) {
