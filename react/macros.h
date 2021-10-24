@@ -1,10 +1,13 @@
 #pragma once
 
+#include <stdbool.h>
+#include <stdint.h>
+
 enum error {
     ERROR_NONE = 0,
     ERROR_BUFFER_FULL,
     ERROR_BUFFER_EMPTY,
-    ERROR_BUFFER_BUSY 
+    ERROR_BUFFER_BUSY
 };
 
 #define bit_value(data, bit) ((data >> bit) & 1) // Return Data.Y value

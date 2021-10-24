@@ -1,5 +1,4 @@
 #include <IO.h>
-#include <sched.h>
 
 #ifdef ARCH_STM8L
     #define DEBUG_PIN hw_pin(D, 6)

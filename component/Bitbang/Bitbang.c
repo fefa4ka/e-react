@@ -5,13 +5,13 @@
     pin_t **pin;                                                               \
     for (pin = pins; *pin; pin++)
 
-unsigned char
-reverse(unsigned char b) {
-   b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
-   b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
-   b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+unsigned char reverse(unsigned char b)
+{
+    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+    b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
 
-   return b;
+    return b;
 }
 /**
  * \brief    Configure used pins for selected modes
@@ -46,9 +46,9 @@ shouldUpdate(Bitbang)
 {
     /* Component free for operation */
     if (*state->data == 0) {
-        if (rb_length(*props->buffers)) {
+        // TODO: Check every OUTPUT pin
+        if (lr_length_owned(props->buffer, lr_owner(*props->pins))) {
             /* Data available */
-
             return true;
         }
 
@@ -77,10 +77,9 @@ shouldUpdate(Bitbang)
  */
 willUpdate(Bitbang)
 {
-    unsigned char *      data    = state->data;
-    enum pin_mode *      mode    = props->modes;
-    struct ring_buffer **buffer  = props->buffers;
-    bool                 sending = state->sending;
+    unsigned char *data    = state->data;
+    enum pin_mode *mode    = props->modes;
+    bool           sending = state->sending;
 
     state->tick = props->clock->us;
 
@@ -89,8 +88,9 @@ willUpdate(Bitbang)
         if (*mode == PIN_MODE_INPUT) {
             if (state->position == -1) {
                 /* Write full byte from input */
-                if (*data)
-                    rb_write(*buffer, *data);
+                if (*data) {
+                    lr_write(props->buffer, *data, lr_owner(*pin));
+                }
             } else {
                 /* Read bit */
                 if (props->io->get(*pin))
@@ -101,7 +101,8 @@ willUpdate(Bitbang)
         } else {
             /* Read new byte for output */
             if (state->sending == false) {
-                if (rb_read(*buffer, data) == ERROR_NONE) {
+                if (lr_read(props->buffer, data, lr_owner(*pin))
+                    == ERROR_NONE) {
                     if (props->msb_first) {
                         *data = reverse(*data);
                     }
@@ -112,7 +113,6 @@ willUpdate(Bitbang)
 
         data++;
         mode++;
-        buffer++;
     }
 
     if (state->position == -1)
@@ -156,7 +156,10 @@ release(Bitbang)
     }
 }
 
-didMount(Bitbang) {}
+didMount(Bitbang)
+{
+    // TODO: Off every pin
+}
 
 /**
  * \brief    Clock ticks and transmitting finishing

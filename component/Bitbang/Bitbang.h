@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Clock.h>
-#include <circular.h>
+#include <linked_ring.h>
 #include <stddef.h>
 
 #define Bitbang(instance, props) define(Bitbang, instance, _(props), {0})
@@ -22,7 +22,7 @@ typedef struct {
     unsigned short pins_number; /* Number of data lines */
     void **        pins;        /* List of pins used for lines */
     enum pin_mode *modes; /* Related pins mapping for IO mode configuration */
-    struct ring_buffer **buffers; /* Bitbang data buffers for each line */
+    struct linked_ring  *buffer; /* Bitbang data buffers for each line */
     void *               clk_pin; /* Optional clock pin */
 
     struct callback *onStart;

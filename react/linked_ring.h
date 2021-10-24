@@ -1,10 +1,11 @@
 #pragma once
-#include <stdint.h>
+
 #include "macros.h"
 
 #define lr_owner_t uintptr_t
 #define lr_data_t unsigned char
 #define lr_owner (uintptr_t)
+
 struct lr_cell {
     lr_data_t   data;
     lr_owner_t      owner;
@@ -21,6 +22,7 @@ struct linked_ring {
 };
 
 unsigned int lr_length(struct linked_ring *lr);
+unsigned int lr_length_owned(struct linked_ring *lr, lr_owner_t owner);
 enum error   lr_write(struct linked_ring *lr, lr_data_t data, lr_owner_t owner);
 enum error   lr_write_string(struct linked_ring *lr, lr_data_t *data, lr_owner_t owner);
 enum error   lr_read(struct linked_ring *lr, lr_data_t *data, lr_owner_t owner);

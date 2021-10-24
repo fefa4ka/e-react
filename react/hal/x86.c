@@ -228,7 +228,7 @@ static void gpio_in(void *pin)
     bit_clear(Pin->port.ddr, Pin->number);
     bit_set(Pin->port.port, Pin->number);
 
-    React_Profiler_Count(gpio_in);
+    REACT_PROFILER_COUNT(gpio_in);
     // printf("Pin PORT_%s_%d — in\r\n", Pin->port, Pin->number);
 }
 
@@ -238,7 +238,7 @@ static void gpio_out(void *pin)
 
     bit_set(Pin->port.ddr, Pin->number);
 
-    React_Profiler_Count(gpio_out);
+    REACT_PROFILER_COUNT(gpio_out);
     // printf("Pin PORT_%s_%d — out\r\n", Pin->port, Pin->number);
 }
 
@@ -257,7 +257,7 @@ static void gpio_on(void *pin)
     // dump_pin(pin);
     // printf("Pin PORT_%s_%d — on - %d - %d\r\n", Pin->name, Pin->number,
     // Pin->port.port, 1 << Pin->number);
-    React_Profiler_Count(gpio_on);
+    REACT_PROFILER_COUNT(gpio_on);
 }
 
 
@@ -275,7 +275,7 @@ static void gpio_off(void *pin)
     // dump_pin(pin);
     // printf("Pin PORT_%s_%d — off - %d\r\n", Pin->name, Pin->number,
     // Pin->port.port);
-    React_Profiler_Count(gpio_off);
+    REACT_PROFILER_COUNT(gpio_off);
 }
 
 
@@ -286,7 +286,7 @@ static void gpio_flip(void *pin)
 
     bit_flip(Pin->port.pin, Pin->number);
     fprintf(vcd_file_log, "#%ld\n%d%c\n", current_time, gpio_get(pin), Pin->index);
-    React_Profiler_Count(gpio_flip);
+    REACT_PROFILER_COUNT(gpio_flip);
 }
 
 
@@ -295,14 +295,14 @@ static void gpio_pullup(void *pin)
     pin_t *Pin = get_pin((pin_t *)pin);
 
     bit_set(Pin->port.pin, Pin->number);
-    React_Profiler_Count(gpio_pullup);
+    REACT_PROFILER_COUNT(gpio_pullup);
 }
 
 static bool gpio_get(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
-    React_Profiler_Count(gpio_get);
+    REACT_PROFILER_COUNT(gpio_get);
     // printf("Pin PORT_%s_%d — get - %d - %d\r\n", Pin->name, Pin->number,
     // Pin->port.port, 1 << Pin->number);
     return (Pin->port.pin) & (1 << Pin->number);
@@ -315,7 +315,7 @@ static void adc_mount(void *prescaler)
 {
     srand(time(NULL));
     // printf("ADC init\r\n");
-    React_Profiler_Count(adc_mount);
+    REACT_PROFILER_COUNT(adc_mount);
 }
 
 static void adc_selectChannel(void *channel)
@@ -323,13 +323,13 @@ static void adc_selectChannel(void *channel)
     // unsigned short *ch = (unsigned short *)channel;
 
     // printf("ADC selectChannel %d\r\n", *ch);
-    React_Profiler_Count(adc_selectChannel);
+    REACT_PROFILER_COUNT(adc_selectChannel);
 }
 
 static void adc_startConvertion(void *channel)
 {
     // printf("ADC startConvertion\r\n");
-    React_Profiler_Count(adc_startConvertion);
+    REACT_PROFILER_COUNT(adc_startConvertion);
 }
 
 static bool adc_isConvertionReady(void *channel)
@@ -337,7 +337,7 @@ static bool adc_isConvertionReady(void *channel)
     // unsigned short *ch = (unsigned short *)channel;
     // printf("ADC isConvertionReady %d\r\n", *ch);
 
-    React_Profiler_Count(adc_isConvertionReady);
+    REACT_PROFILER_COUNT(adc_isConvertionReady);
     return true;
 }
 
@@ -346,7 +346,7 @@ static int16_t adc_readConvertion(void *channel)
     // unsigned short *ch = (unsigned short *)channel;
     // printf("ADC readConvertion %d\r\n", *ch);
 
-    React_Profiler_Count(adc_readConvertion);
+    REACT_PROFILER_COUNT(adc_readConvertion);
     return sin(clock() / 1e6) * 100;
 }
 
@@ -365,13 +365,13 @@ static void uart_init(void *baudrate)
     unsigned int baud = *(unsigned int *)baudrate;
     system("/bin/stty raw");
     pthread_create(&uart_thread, NULL, *uart_receiver, NULL);
-    React_Profiler_Count(uart_init);
+    REACT_PROFILER_COUNT(uart_init);
 }
 
 static inline bool uart_isDataReceived()
 {
     // printf("UART isDataReceived\r\n");
-    React_Profiler_Count(uart_isDataReceived);
+    REACT_PROFILER_COUNT(uart_isDataReceived);
 
     return uart_received != 0;
 }
@@ -379,13 +379,13 @@ static inline bool uart_isDataReceived()
 static inline bool uart_isTransmitReady()
 {
 
-    React_Profiler_Count(uart_isTransmitReady);
+    REACT_PROFILER_COUNT(uart_isTransmitReady);
     return true;
 }
 
 static inline void uart_transmit(unsigned char data)
 {
-    React_Profiler_Count(uart_transmit);
+    REACT_PROFILER_COUNT(uart_transmit);
     putchar(data);
 }
 
@@ -393,14 +393,14 @@ static inline unsigned char uart_receive()
 {
     char c        = uart_received;
     uart_received = 0;
-    React_Profiler_Count(uart_receive);
+    REACT_PROFILER_COUNT(uart_receive);
     return c;
 }
 
 /* Time */
 static void timer_init(void *config)
 {
-    React_Profiler_Count(timer_init);
+    REACT_PROFILER_COUNT(timer_init);
     srand(time(NULL));
 }
 
@@ -430,7 +430,7 @@ static inline uint16_t timer_get()
 {
     clock_t tick = clock();
     //printf("%ld - %ld\n", tick, timer_get_ns());
-    React_Profiler_Count(timer_get);
+    REACT_PROFILER_COUNT(timer_get);
     return tick;
     // printf("Timer get: %ld, %ld, %d\r\n", tick, CLOCKS_PER_SEC, tick /
     // CLOCKS_PER_SEC);
@@ -460,7 +460,7 @@ void *timer_timeout(void *ptr)
 
 static void timer_set(uint16_t ticks, void (*callback)(void *args), void *args)
 {
-    React_Profiler_Count(timer_set);
+    REACT_PROFILER_COUNT(timer_set);
     for (size_t i = 0; i < TIMERS_NR; i++) {
         if (timer_callback_buffer[i].callback == NULL) {
             struct timer_callback  timer_callback = {ticks, callback, args, i};
@@ -476,12 +476,12 @@ static void timer_set(uint16_t ticks, void (*callback)(void *args), void *args)
 
 static void timer_off()
 {
-    React_Profiler_Count(timer_off);
+    REACT_PROFILER_COUNT(timer_off);
     //printf("Timer off\r\n");
 }
 
 static uint16_t timer_usFromTicks(uint16_t ticks)
 {
-    React_Profiler_Count(timer_usFromTicks);
+    REACT_PROFILER_COUNT(timer_usFromTicks);
     return ticks / 1;
 }

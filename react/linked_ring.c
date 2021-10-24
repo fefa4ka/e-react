@@ -10,6 +10,10 @@ lr_length_owned(struct linked_ring *lr, lr_owner_t owner) {
         return 0;
     }
 
+    if(owner && (lr->owners & owner) != owner) {
+        return 0;
+    }
+
     /* Full buffer */
     if(lr->write == 0) {
         return lr->size;

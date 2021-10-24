@@ -1,46 +1,40 @@
 #include <Bitbang.h>
 #include <Button.h>
 
-#define signal_pin  hw_pin(B, 2)
-#define BUFFER_SIZE 8
-
-pin_t clk_pin  = hw_pin(D, 2);
-pin_t mosi_pin = hw_pin(D, 3);
-pin_t miso_pin = hw_pin(D, 4);
-
+#define BUFFER_SIZE 32
+struct lr_cell     cells[BUFFER_SIZE] = {0};
+struct linked_ring buffer             = {cells, BUFFER_SIZE};
 
 Clock(clk, &hw.timer, TIMESTAMP);
 
 /* Bitbang SPI output */
-unsigned char      input_buffer[BUFFER_SIZE];
-struct ring_buffer spi_input_buffer = {input_buffer, BUFFER_SIZE};
-
-unsigned char      output_buffer[BUFFER_SIZE];
-struct ring_buffer spi_output_buffer = {output_buffer, BUFFER_SIZE};
-
-pin_t *             spi_pins[]    = {&mosi_pin, &miso_pin, NULL};
-struct ring_buffer *spi_buffers[] = {&spi_output_buffer, &spi_input_buffer};
-enum pin_mode       spi_modes[]   = {PIN_MODE_OUTPUT, PIN_MODE_INPUT};
-Bitbang(spi, _({
-                 .io       = &hw.io,
-                 .clock    = &clk.state.time,
-                 .baudrate = 9600,
-                 .msb_first= true,
-                 .pins     = (void **)spi_pins,
-                 .clk_pin  = &clk_pin,
-                 .modes    = spi_modes,
-                 .buffers  = spi_buffers
-             }));
+pin_t         clk_pin     = hw_pin(D, 2);
+pin_t         mosi_pin    = hw_pin(D, 3);
+pin_t         miso_pin    = hw_pin(D, 4);
+pin_t         debug_pin   = hw_pin(D, 5);
+pin_t *       spi_pins[]  = {&mosi_pin, &miso_pin, &debug_pin, NULL};
+enum pin_mode spi_modes[] = {PIN_MODE_OUTPUT, PIN_MODE_INPUT, PIN_MODE_OUTPUT};
+Bitbang(spi, _({.io        = &hw.io,
+                .clock     = &clk.state.time,
+                .baudrate  = 9600,
+                .msb_first = true,
+                .pins      = (void **)spi_pins,
+                .clk_pin   = &clk_pin,
+                .modes     = spi_modes,
+                .buffer    = &buffer}));
 
 
 /* Push button that increment counter on release */
 pin_t        counter_pin   = hw_pin(D, 0);
 unsigned int counter_index = 0;
+unsigned int debug_index   = 255;
 void         send_number(Component *trigger)
 {
     counter_index++;
+    debug_index--;
 
-    rb_write(&spi_output_buffer, counter_index);
+    lr_write(&buffer, counter_index, &mosi_pin);
+    lr_write(&buffer, debug_index, &debug_pin);
 }
 
 Button(counter, _({
