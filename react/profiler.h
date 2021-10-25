@@ -2,7 +2,9 @@
 
 #include "hash.h"
 #include <signal.h>
+#include <sys/time.h>
 #include <time.h>
+#include <unistd.h>
 
 #define MAX_TABLE_SIZE 10007 // Prime Number for hash table
 
@@ -40,9 +42,11 @@
     } cpu;
 
 
-#include "component.h""
+#include "component.h"
 
 #define REACT_PROFILER_COUNT(func)                                             \
+    log_info("%p (%d) -> " #func "()", __builtin_return_address(0),            \
+             frame_depth());                                                   \
     if (current_scope) {                                                       \
         current_scope->func += 1;                                              \
     } else {                                                                   \
@@ -52,7 +56,8 @@
 #define REACT_PROFILER_TICK(component, stage)                                  \
     clock_t begin, end, passed;                                                \
     current_scope = &(component)->instance.calls.stage;                        \
-    begin         = clock()
+    log_info("%s." #stage, (component)->instance.name);                        \
+    begin = clock()
 
 #define REACT_PROFILER_TOCK(component, stage)                                  \
     end    = clock();                                                          \
@@ -84,11 +89,24 @@
 #undef loop
 #define loop(...)                                                              \
     signal(SIGINT, sighandler);                                                \
+    log_init(); \
     vcd_init();                                                                \
     while (EVAL(MAP(loop_, __VA_ARGS__)) step())
 
+#define log_print(type, message, ...)                                          \
+    log_printf("%lld [" type "] " message "\n", steps, ##__VA_ARGS__)
+#define debug_print(type, message, ...)                                        \
+    log_print(type, message " (%s:%d)\n", ##__VA_ARGS__, __FILE__, __LINE__)
+
+
+#define log_verbose(message, ...) log_print("VERBOSE", message, ##__VA_ARGS__)
+#define log_info(message, ...)    log_print("INFO", message, ##__VA_ARGS__)
+#define log_ok(message, ...)      log_print("OK", message, ##__VA_ARGS__)
+#define log_error(message, ...)                                                \
+    debug_print("\e[1m\e[31mERROR\e[39m\e[0m", message, ##__VA_ARGS__)
 
 extern struct hash_table scope;
+extern uint64_t          steps;
 extern struct HAL_calls *current_scope;
 extern clock_t           cpu_total;
 extern struct HAL_calls  calls;
@@ -99,3 +117,4 @@ void         sighandler(int sig);
 unsigned int frame_depth();
 bool         dump_usage();
 uint64_t     step();
+char *       timer_formatted_time(void);

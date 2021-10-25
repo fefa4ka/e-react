@@ -5,6 +5,7 @@
 unsigned int scope_index[128];
 Component *  scope_buffer[128];
 
+extern Component *current_component = 0;
 struct HAL_calls *current_scope = NULL;
 struct HAL_calls  calls         = {0};
 
@@ -15,7 +16,8 @@ struct hash_table scope = {
     .used  = 0,
 };
 extern clock_t  cpu_total = 0;
-static uint64_t steps     = 0;
+extern uint64_t steps     = 0;
+
 uint64_t        step()
 {
     if (stop) {
@@ -106,6 +108,7 @@ bool dump_usage()
     }
 
     vcd_clean();
+    log_clean();
 
     return stop;
 }
@@ -135,4 +138,32 @@ unsigned int hash_component(char *word)
     }
 
     return (hash % MAX_TABLE_SIZE);
+}
+ // Returns the local date/time formatted as 2014-03-19 11:11:52.132
+char *timer_formatted_time(void)
+{
+    // Must be static, otherwise won't work
+    static char _retval[37];
+    char        _strtime[20];
+
+    time_t         rawtime;
+    struct tm *    timeinfo;
+    struct timeval tv;
+
+    int millisec;
+
+    time(&rawtime);
+    gettimeofday(&tv, NULL);
+    timeinfo = localtime(&rawtime);
+
+    millisec = lrint(tv.tv_usec / 1000.0);
+    if (millisec >= 1000) {
+        millisec -= 1000;
+        tv.tv_sec++;
+    }
+
+    strftime(_strtime, sizeof(_strtime), "%Y-%m-%d %H:%M:%S", timeinfo);
+    sprintf(_retval, "%s.%03d", _strtime, millisec);
+
+    return _retval;
 }

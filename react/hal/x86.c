@@ -2,6 +2,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -84,16 +85,40 @@ struct hash_table pins = {
     .used  = 0,
 };
 
+FILE *log_file;
+
 FILE *vcd_file;
 FILE *vcd_file_log;
 
+void log_init()
+{
+    log_file = fopen("profiler.log", "w");
+
+    if(log_file == NULL) {
+        printf("Error: can't open profiler.log file");
+        exit(1);
+    }
+}
+
+void log_printf(char *message, ...)
+{
+    va_list args;
+    va_start(args, message);
+    vfprintf(log_file, message, args);
+    va_end(args);
+}
+
+void log_clean()
+{
+    fclose(log_file);
+}
 
 #define vcd_open(filename) fopen(#filename ".vcd", "w")
 void vcd_init()
 {
     // use appropriate location if you are using MacOS or Linux
-    vcd_file     = vcd_open(dumper);
-    vcd_file_log = vcd_open(dumper_log);
+    vcd_file     = vcd_open(profiler);
+    vcd_file_log = vcd_open(profiler_log);
 
     if (vcd_file == NULL) {
         printf("Error: can't open vcd file");
@@ -142,11 +167,11 @@ void vcd_clean()
             "$enddefinitions $end"
             "\n");
     fclose(vcd_file_log);
-    vcd_file_log = fopen("dumper_log.vcd", "r");
+    vcd_file_log = fopen("profiler_log.vcd", "r");
     while ((c = fgetc(vcd_file_log)) != EOF)
         fputc(c, vcd_file);
     fclose(vcd_file_log);
-    remove("dumper_log.vcd");
+    remove("profiler_log.vcd");
     fclose(vcd_file);
 }
 
@@ -169,6 +194,7 @@ void gpio_thread()
 }
 void gpio_init()
 {
+    log_init();
     vcd_init();
     pthread_mutex_init(&get_pin_lock, NULL);
     // TODO: thread with gpio manipulation
@@ -217,7 +243,8 @@ void free_pins()
         free(Pin);
     }
     pthread_mutex_destroy(&get_pin_lock);
-    fclose(vcd_file);
+    vcd_clean();
+    log_clean();
     system ("/bin/stty cooked");
 }
 
@@ -485,3 +512,4 @@ static uint16_t timer_usFromTicks(uint16_t ticks)
     REACT_PROFILER_COUNT(timer_usFromTicks);
     return ticks / 1;
 }
+
