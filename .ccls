@@ -30,3 +30,5 @@
 -I./component/Text
 -I./component/Square
 -I./component/ISR
+-I./component/SPIComputer
+-I./component/SPIPeriphery
