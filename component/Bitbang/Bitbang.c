@@ -45,7 +45,7 @@ willMount(Bitbang)
 shouldUpdate(Bitbang)
 {
     /* Component free for operation */
-    if (*state->data == 0) {
+    if (state->data == 0) {
         // TODO: Check every OUTPUT pin
         if (lr_length_owned(props->buffer, lr_owner(*props->pins))) {
             /* Data available */
@@ -156,10 +156,7 @@ release(Bitbang)
     }
 }
 
-didMount(Bitbang)
-{
-    // TODO: Off every pin
-}
+didMount(Bitbang) {}
 
 /**
  * \brief    Clock ticks and transmitting finishing
@@ -189,3 +186,5 @@ didUpdate(Bitbang)
         }
     }
 }
+
+// TODO: Unmount Off every pin
