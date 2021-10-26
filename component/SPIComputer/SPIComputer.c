@@ -51,22 +51,17 @@ static void SPI_init(void *bitbanger_ptr, void *spi_ptr)
     SPIComputer_Component *spi        = (SPIComputer_Component *)spi_ptr;
     lr_owner_t             copi_owner = lr_owner(spi->props.bus.copi_pin);
 
-    /* Get pointer to pin associated with next data package */
-    spi->state.data = *bitbanger->state.data;
-
     if (lr_read(spi->props.buffer, &spi->state.chip_select_pin,
-                lr_owner_chip_select(copi_owner, spi->state.data))) {
+                lr_owner_chip_select(copi_owner, *bitbanger->state.data))) {
         spi->state.chip_select_pin = NULL;
-        // SPI always with chip select
     }
 
     if (lr_read(spi->props.buffer, &spi->state.callback,
-                lr_owner_callback(copi_owner, spi->state.data))) {
+                lr_owner_callback(copi_owner, *bitbanger->state.data)) == ERROR_BUFFER_EMPTY) {
         spi->state.callback = NULL;
-        // Could be without callback
     }
 
-    if (spi->state.chip_select_pin) {
+    if (spi->state.chip_select_pin == ERROR_BUFFER_EMPTY) {
         spi->props.io->out(spi->state.chip_select_pin);
         spi->props.io->on(spi->state.chip_select_pin);
     }
@@ -100,13 +95,14 @@ void SPI_read(Component *spi_ptr, unsigned char address,
 
 static void SPI_receive(void *bitbanger_ptr, void *spi_ptr)
 {
+    Bitbang_Component *    bitbanger  = (Bitbang_Component *)bitbanger_ptr;
     SPIComputer_Component *spi = (SPIComputer_Component *)spi_ptr;
 
-    lr_read(spi->props.buffer, &spi->state.data,
+    lr_read(spi->props.buffer, bitbanger->state.data,
             lr_owner(spi->props.bus.cipo_pin));
 
     if (spi->state.callback) {
-        spi->state.callback->method(&spi->state.data,
+        spi->state.callback->method(bitbanger->state.data,
                                     spi->state.callback->argument);
     }
     if (spi->state.chip_select_pin) {

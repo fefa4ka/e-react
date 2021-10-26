@@ -4,7 +4,8 @@
 
 #define lr_owner_t uintptr_t
 #define lr_data_t  uintptr_t
-#define lr_owner   (uintptr_t)
+/* Add for bit trimming */
+#define lr_owner(ptr)   ((uintptr_t)ptr + (uintptr_t)ptr)
 
 struct lr_cell {
     lr_data_t       data;

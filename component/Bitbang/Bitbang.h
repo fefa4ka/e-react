@@ -9,21 +9,24 @@
     React_Define_WithState(Bitbang, instance, state)
 
 
-#define BITBANG_MAX_LINES 8
+#ifndef BITBANG_MAX_LINES
+    #define BITBANG_MAX_LINES 8
+#endif
 
 typedef struct {
     io_handler *  io;
     struct Clock *clock;
 
-    unsigned int baudrate;
+    // TODO: use macros and pack to uint8_t
+    uint16_t baudrate;
 
     bool msb_first; /* Order in which sending and reading bits */
 
-    unsigned short pins_number; /* Number of data lines */
+    uint8_t        pins_number; /* Number of data lines */
     void **        pins;        /* List of pins used for lines */
     enum pin_mode *modes; /* Related pins mapping for IO mode configuration */
-    struct linked_ring  *buffer; /* Bitbang data buffers for each line */
-    void *               clk_pin; /* Optional clock pin */
+    struct linked_ring *buffer;  /* Bitbang data buffers for each line */
+    void *              clk_pin; /* Optional clock pin */
 
     struct callback *onStart;
     struct callback *onTransmitted;
@@ -32,11 +35,11 @@ typedef struct {
 typedef struct {
     bool sending;
 
-    unsigned char data[BITBANG_MAX_LINES]; /* Current sending and reading bytes
+    uint8_t data[BITBANG_MAX_LINES]; /* Current sending and reading bytes
                                               for each data line */
-    short position;                        /* Data bit index now operating */
+    uint8_t position;                /* Data bit index now operating */
 
-    unsigned long tick;
+    uint16_t tick;
 } Bitbang_state_t;
 
 React_Header(Bitbang);

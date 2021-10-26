@@ -53,6 +53,7 @@ lr_write(struct linked_ring *lr, lr_data_t data, lr_owner_t owner){
 
     recordable_cell->data = data;
     recordable_cell->owner = owner;
+
     lr->owners |= owner;
 
     /* Initialize next pointer, if not set */
@@ -122,15 +123,19 @@ lr_read(struct linked_ring *lr, lr_data_t *data, lr_owner_t owner) {
                 readable_cell->next = lr->write;
                 lr->write = readable_cell;
             }
+        } else {
+            /* All cells owners digest */
+            lr->owners |= readable_cell->owner;
         }
-
-        /* All cells owners digest */
-        lr->owners |= readable_cell->owner;
 
         /* Cell iteration */
         previous_cell = readable_cell;
         readable_cell = next_cell;
     } while(readable_cell->next);
+
+    if(owner != 0xFFFF) {
+        return ERROR_BUFFER_EMPTY;
+    }
 
     return ERROR_NONE;
 }
