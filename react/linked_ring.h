@@ -2,8 +2,10 @@
 
 #include "macros.h"
 
-#define lr_owner_t uintptr_t
 #define lr_data_t  uintptr_t
+#define lr_data(ptr) (uintptr_t)ptr
+
+#define lr_owner_t uintptr_t
 /* Add for bit trimming */
 #define lr_owner(ptr)   ((uintptr_t)ptr + (uintptr_t)ptr)
 

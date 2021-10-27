@@ -250,7 +250,7 @@ willUpdate(Scheduler)
     }
 
     /* Get new event with highest priority */
-    Scheduler_dequeue((Component *)self, &state->next_event);
+    Scheduler_dequeue((Scheduler_Component *)self, &state->next_event);
 }
 
 /**

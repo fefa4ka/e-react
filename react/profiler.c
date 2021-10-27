@@ -1,11 +1,12 @@
 #include "hash.h"
 #include "profiler.h"
+#include "math.h"
 #include <execinfo.h>
 
 unsigned int scope_index[128];
 Component *  scope_buffer[128];
 
-extern Component *current_component = 0;
+Component *current_component = 0;
 struct HAL_calls *current_scope = NULL;
 struct HAL_calls  calls         = {0};
 
@@ -15,8 +16,8 @@ struct hash_table scope = {
     .size  = 128,
     .used  = 0,
 };
-extern clock_t  cpu_total = 0;
-extern uint64_t steps     = 0;
+clock_t  cpu_total = 0;
+uint64_t steps     = 0;
 
 uint64_t        step()
 {
@@ -43,11 +44,11 @@ unsigned int frame_depth()
 
 #define dump_call(stage, call)                                                 \
     if ((component)->calls.stage.call)                                           \
-    printf("   " #call " \t \t%lld\n", component->calls.stage.call)
+    printf("   " #call " \t \t%llu\n", component->calls.stage.call)
 
 #define dump_stage(stage)                                                      \
     if (component->counter.stage) {                                            \
-        printf(" " #stage " \t \t%lld\t%lld\t%0.2lf%%\n",                      \
+        printf(" " #stage " \t \t%llu\t%llu\t%0.2lf%%\n",                      \
                component->counter.stage, component->cpu.stage,                 \
                ((double)component->cpu.stage / (double)cpu_total) * 100);      \
         dump_call(stage, gpio_in);                                             \
@@ -77,12 +78,11 @@ unsigned int frame_depth()
 
 bool dump_usage()
 {
-    enum error r;
     Component *component;
 
     printf("\n\nCPU usage details:\n\n");
-    printf("operation\t\tsteps\tcpu\t%\n\n");
-    printf("%d components\t\t%lld\t%lld\t100%%\n\n", scope.used, steps,
+    printf("operation\t\tsteps\tcpu\t%%\n\n");
+    printf("%d components\t\t%llu\t%lu\t100%%\n\n", scope.used, steps,
            cpu_total);
     for (unsigned int index = 0; index < scope.used; index++) {
         component = (Component *)scope.data[index];
@@ -102,7 +102,7 @@ bool dump_usage()
         dump_stage(release);
         dump_stage(didMount);
         dump_stage(didUnmount);
-        printf("\t\t\t\t%lld\t%0.2lf%%\n", component_cpu_total,
+        printf("\t\t\t\t%lu\t%0.2lf%%\n", component_cpu_total,
                component_cpu_percent);
         printf("\n\n");
     }

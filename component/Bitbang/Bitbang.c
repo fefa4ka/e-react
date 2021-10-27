@@ -1,8 +1,7 @@
 #include "Bitbang.h"
-#include <common.h>
 
 #define foreach_pins(pin, pins)                                                \
-    pin_t **pin;                                                               \
+    void **pin;                                                               \
     for (pin = pins; *pin; pin++)
 
 unsigned char reverse(unsigned char b)
@@ -13,6 +12,7 @@ unsigned char reverse(unsigned char b)
 
     return b;
 }
+
 /**
  * \brief    Configure used pins for selected modes
  */
@@ -77,7 +77,7 @@ shouldUpdate(Bitbang)
  */
 willUpdate(Bitbang)
 {
-    unsigned char *data    = state->data;
+    uint8_t *data    = state->data;
     enum pin_mode *mode    = props->modes;
     bool           sending = state->sending;
 
@@ -101,7 +101,7 @@ willUpdate(Bitbang)
         } else {
             /* Read new byte for output */
             if (state->sending == false) {
-                if (lr_read(props->buffer, data, lr_owner(*pin))
+                if (lr_read(props->buffer, (lr_data_t *)data, lr_owner(*pin))
                     == ERROR_NONE) {
                     if (props->msb_first) {
                         *data = reverse(*data);
@@ -135,7 +135,7 @@ willUpdate(Bitbang)
  */
 release(Bitbang)
 {
-    unsigned char *data = state->data;
+    uint8_t *data = state->data;
     enum pin_mode *mode = props->modes;
 
     foreach_pins(pin, props->pins)

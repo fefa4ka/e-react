@@ -1,7 +1,6 @@
 #pragma once
 
 #include <component.h>
-#include <stdbool.h>
 
 #define IO(instance) React_Define(IO, instance)
 #define IO_new(instance, state) React_Define_WithState(IO, instance, _(state))

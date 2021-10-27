@@ -47,5 +47,5 @@ void log_printf(char *message, ...);
 
 #define hw_pin(port, pin)                                                      \
     {                                                                          \
-        pin, #port, { 0 }                                                      \
+        pin, #port                                                    \
     }

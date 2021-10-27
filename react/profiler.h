@@ -2,6 +2,7 @@
 
 #include "hash.h"
 #include <signal.h>
+#include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
@@ -118,3 +119,4 @@ unsigned int frame_depth();
 bool         dump_usage();
 uint64_t     step();
 char *       timer_formatted_time(void);
+unsigned int hash_component(char *word);

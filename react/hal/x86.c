@@ -389,7 +389,6 @@ void *    uart_receiver(void *ptr)
 }
 static void uart_init(void *baudrate)
 {
-    unsigned int baud = *(unsigned int *)baudrate;
     system("/bin/stty raw");
     pthread_create(&uart_thread, NULL, *uart_receiver, NULL);
     REACT_PROFILER_COUNT(uart_init);

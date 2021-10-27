@@ -6,7 +6,7 @@
 #include <linked_ring.h>
 
 #define SPIComputer(instance, props)                                           \
-    define(SPIComputer, instance, _(props), {0})
+    define(SPIComputer, instance, _(props), 0)
 
 typedef struct {
     io_handler *  io;
@@ -36,8 +36,8 @@ typedef struct {
 
 React_Header(SPIComputer);
 
-void SPI_write(Component *spi_ptr, unsigned char address, unsigned char value,
+void SPI_write(SPIComputer_Component *spi, unsigned char address, unsigned char value,
                void *chip_select_pin);
 
-void SPI_read(Component *spi_ptr, unsigned char address,
+void SPI_read(SPIComputer_Component *spi, unsigned char address,
               struct callback *callback, void *chip_select_pin);

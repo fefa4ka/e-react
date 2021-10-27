@@ -4,7 +4,7 @@
 #include <linked_ring.h>
 #include <stddef.h>
 
-#define Bitbang(instance, props) define(Bitbang, instance, _(props), {0})
+#define Bitbang(instance, props) define(Bitbang, instance, _(props), 0)
 #define Bitbang_new(instance, state)                                           \
     React_Define_WithState(Bitbang, instance, state)
 
