@@ -18,8 +18,8 @@ typedef struct {
         void *chip_select_pin;
     } bus;
 
-    void onStart(Component *instance);
-    void onReceive(Component *instance);
+    void (*onStart)(Component *instance);
+    void (*onReceive)(Component *instance);
 } SPIPeriphery_props_t;
 
 typedef struct {

@@ -1,8 +1,8 @@
 #include "x86.h"
 #include <math.h>
 #include <pthread.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -94,7 +94,7 @@ void log_init()
 {
     log_file = fopen("profiler.log", "w");
 
-    if(log_file == NULL) {
+    if (log_file == NULL) {
         printf("Error: can't open profiler.log file");
         exit(1);
     }
@@ -108,10 +108,7 @@ void log_printf(char *message, ...)
     va_end(args);
 }
 
-void log_clean()
-{
-    fclose(log_file);
-}
+void log_clean() { fclose(log_file); }
 
 #define vcd_open(filename) fopen(#filename ".vcd", "w")
 void vcd_init()
@@ -161,11 +158,10 @@ void vcd_clean()
                 Pin->number);
     }
 
-    fprintf(vcd_file,
-            "$upscope $end"
-            "\n"
-            "$enddefinitions $end"
-            "\n");
+    fprintf(vcd_file, "$upscope $end"
+                      "\n"
+                      "$enddefinitions $end"
+                      "\n");
     fclose(vcd_file_log);
     vcd_file_log = fopen("profiler_log.vcd", "r");
     while ((c = fgetc(vcd_file_log)) != EOF)
@@ -189,9 +185,7 @@ unsigned int hash_pin(pin_t *pin)
     return (hash % MAX_TABLE_SIZE);
 }
 
-void gpio_thread()
-{
-}
+void gpio_thread() {}
 void gpio_init()
 {
     log_init();
@@ -245,7 +239,7 @@ void free_pins()
     pthread_mutex_destroy(&get_pin_lock);
     vcd_clean();
     log_clean();
-    system ("/bin/stty cooked");
+    system("/bin/stty cooked");
 }
 
 static void gpio_in(void *pin)
@@ -255,7 +249,7 @@ static void gpio_in(void *pin)
     bit_clear(Pin->port.ddr, Pin->number);
     bit_set(Pin->port.port, Pin->number);
 
-    REACT_PROFILER_COUNT(gpio_in);
+    REACT_PROFILER_COUNT_LOG(gpio_in, "(%s_%d)", Pin->name, Pin->number);
     // printf("Pin PORT_%s_%d — in\r\n", Pin->port, Pin->number);
 }
 
@@ -265,7 +259,7 @@ static void gpio_out(void *pin)
 
     bit_set(Pin->port.ddr, Pin->number);
 
-    REACT_PROFILER_COUNT(gpio_out);
+    REACT_PROFILER_COUNT_LOG(gpio_out, "(%s_%d)", Pin->name, Pin->number);
     // printf("Pin PORT_%s_%d — out\r\n", Pin->port, Pin->number);
 }
 
@@ -284,7 +278,7 @@ static void gpio_on(void *pin)
     // dump_pin(pin);
     // printf("Pin PORT_%s_%d — on - %d - %d\r\n", Pin->name, Pin->number,
     // Pin->port.port, 1 << Pin->number);
-    REACT_PROFILER_COUNT(gpio_on);
+    REACT_PROFILER_COUNT_LOG(gpio_on, "(%s_%d)", Pin->name, Pin->number);
 }
 
 
@@ -302,18 +296,19 @@ static void gpio_off(void *pin)
     // dump_pin(pin);
     // printf("Pin PORT_%s_%d — off - %d\r\n", Pin->name, Pin->number,
     // Pin->port.port);
-    REACT_PROFILER_COUNT(gpio_off);
+    REACT_PROFILER_COUNT_LOG(gpio_off, "(%s_%d)", Pin->name, Pin->number);
 }
 
 
 static void gpio_flip(void *pin)
 {
-    pin_t *Pin = get_pin((pin_t *)pin);
+    pin_t * Pin          = get_pin((pin_t *)pin);
     clock_t current_time = clock();
 
     bit_flip(Pin->port.pin, Pin->number);
-    fprintf(vcd_file_log, "#%ld\n%d%c\n", current_time, gpio_get(pin), Pin->index);
-    REACT_PROFILER_COUNT(gpio_flip);
+    fprintf(vcd_file_log, "#%ld\n%d%c\n", current_time, gpio_get(pin),
+            Pin->index);
+    REACT_PROFILER_COUNT_LOG(gpio_flip, "(%s_%d)", Pin->name, Pin->number);
 }
 
 
@@ -322,16 +317,16 @@ static void gpio_pullup(void *pin)
     pin_t *Pin = get_pin((pin_t *)pin);
 
     bit_set(Pin->port.pin, Pin->number);
-    REACT_PROFILER_COUNT(gpio_pullup);
+    REACT_PROFILER_COUNT_LOG(gpio_pullup, "(%s_%d)", Pin->name, Pin->number);
 }
 
 static bool gpio_get(void *pin)
 {
     pin_t *Pin = get_pin((pin_t *)pin);
 
-    REACT_PROFILER_COUNT(gpio_get);
-    // printf("Pin PORT_%s_%d — get - %d - %d\r\n", Pin->name, Pin->number,
-    // Pin->port.port, 1 << Pin->number);
+    REACT_PROFILER_COUNT_LOG(gpio_get, "(%s_%d)=%d", Pin->name, Pin->number,
+            (Pin->port.pin) & (1 << Pin->number));
+
     return (Pin->port.pin) & (1 << Pin->number);
 }
 
@@ -430,7 +425,7 @@ static void timer_init(void *config)
     srand(time(NULL));
 }
 
-long tick = 0;
+long          tick = 0;
 unsigned long time_in_ns()
 {
     struct timespec now;
@@ -455,8 +450,8 @@ unsigned long timer_get_ns()
 static inline uint16_t timer_get()
 {
     clock_t tick = clock();
-    //printf("%ld - %ld\n", tick, timer_get_ns());
-    REACT_PROFILER_COUNT(timer_get);
+    // printf("%ld - %ld\n", tick, timer_get_ns());
+    REACT_PROFILER_COUNT_LOG(timer_get, "()=%d", tick);
     return tick;
     // printf("Timer get: %ld, %ld, %d\r\n", tick, CLOCKS_PER_SEC, tick /
     // CLOCKS_PER_SEC);
@@ -494,7 +489,7 @@ static void timer_set(uint16_t ticks, void (*callback)(void *args), void *args)
             *timer                                = timer_callback;
             pthread_create(&timer->thread, NULL, *timer_timeout, (void *)timer);
 
-            //printf("Timer #%ld set: %d\r\n", i, ticks);
+            // printf("Timer #%ld set: %d\r\n", i, ticks);
             break;
         }
     }
@@ -503,12 +498,11 @@ static void timer_set(uint16_t ticks, void (*callback)(void *args), void *args)
 static void timer_off()
 {
     REACT_PROFILER_COUNT(timer_off);
-    //printf("Timer off\r\n");
+    // printf("Timer off\r\n");
 }
 
 static uint16_t timer_usFromTicks(uint16_t ticks)
 {
-    REACT_PROFILER_COUNT(timer_usFromTicks);
+    REACT_PROFILER_COUNT_LOG(timer_usFromTicks, "(%d)=%d", ticks, ticks);
     return ticks / 1;
 }
-

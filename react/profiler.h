@@ -45,9 +45,17 @@
 
 #include "component.h"
 
+#define REACT_PROFILER_COUNT_LOG(func, format, ...)                            \
+    log_verbose("(%p:%d) " #func "" format, __builtin_return_address(0),       \
+                frame_depth(), __VA_ARGS__);                                   \
+    REACT_PROFILER_COUNTER(func)
+
 #define REACT_PROFILER_COUNT(func)                                             \
-    log_info("%p (%d) -> " #func "()", __builtin_return_address(0),            \
-             frame_depth());                                                   \
+    log_verbose("(%p:%d) " #func "()", __builtin_return_address(0),            \
+                frame_depth());                                                \
+    REACT_PROFILER_COUNTER(func)
+
+#define REACT_PROFILER_COUNTER(func)                                           \
     if (current_scope) {                                                       \
         current_scope->func += 1;                                              \
     } else {                                                                   \
@@ -57,7 +65,7 @@
 #define REACT_PROFILER_TICK(component, stage)                                  \
     clock_t begin, end, passed;                                                \
     current_scope = &(component)->instance.calls.stage;                        \
-    log_info("%s." #stage, (component)->instance.name);                        \
+    log_verbose("%s." #stage, (component)->instance.name);                     \
     begin = clock()
 
 #define REACT_PROFILER_TOCK(component, stage)                                  \
@@ -90,14 +98,22 @@
 #undef loop
 #define loop(...)                                                              \
     signal(SIGINT, sighandler);                                                \
-    log_init(); \
+    log_init();                                                                \
     vcd_init();                                                                \
     while (EVAL(MAP(loop_, __VA_ARGS__)) step())
 
-#define log_print(type, message, ...)                                          \
-    log_printf("%lld [" type "] " message "\n", steps, ##__VA_ARGS__)
-#define debug_print(type, message, ...)                                        \
-    log_print(type, message " (%s:%d)\n", ##__VA_ARGS__, __FILE__, __LINE__)
+#undef log_print
+#ifdef DEBUG
+    #define log_print(type, message, ...)                                      \
+        log_printf("%s\t" type "\t%lld\t" message "\n",                        \
+                   timer_formatted_time(), steps, ##__VA_ARGS__)
+#else
+    #define log_print(type, message, ...)
+#endif
+
+
+#define log_debug(message, ...)                                                \
+    log_print("DEBUG", "(%s:%d) " message, __FILE__, __LINE__, ##__VA_ARGS__)
 
 
 #define log_verbose(message, ...) log_print("VERBOSE", message, ##__VA_ARGS__)

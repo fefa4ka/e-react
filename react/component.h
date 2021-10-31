@@ -212,6 +212,10 @@
 
 #ifdef REACT_PROFILER
     #include "profiler.h"
+#else
+#define log_info(...)
+#define log_debug(...)
+#define log_print(...)
 #endif
 
 typedef struct {

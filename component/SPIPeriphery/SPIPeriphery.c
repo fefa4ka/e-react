@@ -18,7 +18,7 @@ shouldUpdate(SPIPeriphery)
 
     /* Component not selected */
     if (props->bus.chip_select_pin
-          && props->io->get(props->bus.chip_select_pin) == 0) {
+        && props->io->get(props->bus.chip_select_pin) == 0) {
         return false;
     }
 
@@ -44,10 +44,10 @@ release(SPIPeriphery)
     uint8_t *pointer;
     uint8_t  position;
 
-    if (state->bit_position <= 8) {
+    if (state->bit_position < 8) {
         pointer  = &state->address;
         position = state->bit_position;
-    } else if (state->bit_position > 8) {
+    } else if (state->bit_position >= 8) {
         pointer  = &state->data;
         position = state->bit_position - 8;
     }
@@ -58,11 +58,10 @@ release(SPIPeriphery)
         else
             bit_clear(*pointer, position);
     } else {
-        if (bit_value(state->sending, position)) {
+        if (bit_value(state->sending, position))
             props->io->on(props->bus.cipo_pin);
-        } else {
+        else
             props->io->off(props->bus.cipo_pin);
-        }
     }
 }
 
@@ -70,12 +69,14 @@ didMount(SPIPeriphery) {}
 
 didUpdate(SPIPeriphery)
 {
-    void (*callback)(Component *);
+    void (*callback)(Component *) = NULL;
 
-    if (state->bit_position == 8 && props->onStart)
+    log_debug("bit_position=%d", state->bit_position);
+
+    if (state->clk_level && state->bit_position == 7 && props->onStart)
         callback = props->onStart;
 
-    if (state->bit_position == 16) {
+    if (state->bit_position == 15) {
         state->bit_position = 0;
 
         if (props->onReceive)
@@ -86,7 +87,6 @@ didUpdate(SPIPeriphery)
         state->bit_position++;
     }
 
-    if (callback) {
-        callback(self);
-    }
+    if (callback)
+        (*callback)(self);
 }

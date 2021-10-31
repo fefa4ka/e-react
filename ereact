@@ -39,6 +39,7 @@ fi
 
 
 MAKE="make --debug=b -f Makefile.${ARCH}"
+LOG="build.log"
 echo "Building $1"
 
 cat BUILD.num | awk '{ print $1 + 1 }' | tee BUILD.num
@@ -68,7 +69,7 @@ build(){
     local product_name=$(echo $TARGET | sed "s/.*\///")
     local target_file
 
-    $MAKE ${TARGET}.d
+    $MAKE ${TARGET}.d 2>&1
 
     DEPS=`cat ${TARGET}.d | cut -d':' -f2`
     DEFS="ARCH=$ARCH PRODUCT_NAME=$product_name"
@@ -118,7 +119,7 @@ build(){
                 dependencies+=($dependency)
             fi
 
-            $MAKE $object $DEFS DEFINE_COMPUTED="$DEP_DEFS" PRODUCT_NAME="$product_name"
+            $MAKE $object $DEFS DEFINE_COMPUTED="$DEP_DEFS" PRODUCT_NAME="$product_name" 2>&1
             DEPENDENT_OBJECTS="${DEPENDENT_OBJECTS} ${object}"
         fi
     done
@@ -126,7 +127,7 @@ build(){
 
 
     if [ "$ARCH" == "AVR" ]; then
-        $MAKE "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
+        $MAKE "${TARGET}.hex" OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1
         if [[ -f "${TARGET}_test.c" ]]; then
             echo "Test exists"
             # mv ${TARGET}.elf ${TARGET}.fw
@@ -153,7 +154,7 @@ build(){
     fi
 
     if [ "$ARCH" == "STM8L" ]; then
-        $MAKE "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1 | tee log
+        $MAKE "${TARGET}.ihx" RELS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1
         if [ "$4" == "flash" ]; then
             sudo stm8flash -c stlinkv2 -p stm8l152k6 -w ${TARGET}.ihx
         fi
@@ -161,7 +162,7 @@ build(){
     fi
 
     if [ "$ARCH" == "x86" ]; then
-        $MAKE "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS"
+        $MAKE "${TARGET}" TARGET_DIR=$TARGET_DIR OBJECTS="$DEPENDENT_OBJECTS" $DEFS DEFINE_COMPUTED="$DEP_DEFS" 2>&1
         if [ "$4" == "flash" ]; then
             ${TARGET}
         fi

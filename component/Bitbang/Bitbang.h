@@ -37,7 +37,7 @@ typedef struct {
 
     uint8_t data[BITBANG_MAX_LINES]; /* Current sending and reading bytes
                                               for each data line */
-    uint8_t position;                /* Data bit index now operating */
+    int8_t position;                /* Data bit index now operating */
 
     uint16_t tick;
 } Bitbang_state_t;

@@ -72,6 +72,8 @@ willMount(Clock)
 {
     void *ptr = 0;
     props->timer->init(ptr);
+
+    state->tick = state->passed = props->timer->get();
 }
 
 ///

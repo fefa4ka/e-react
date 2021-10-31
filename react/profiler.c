@@ -25,6 +25,7 @@ uint64_t        step()
         dump_usage();
     } else {
         steps += 1;
+        log_info("");
         if (steps == 0) {
             return 1;
         }

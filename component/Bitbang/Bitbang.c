@@ -1,7 +1,7 @@
 #include "Bitbang.h"
 
 #define foreach_pins(pin, pins)                                                \
-    void **pin;                                                               \
+    void **pin;                                                                \
     for (pin = pins; *pin; pin++)
 
 unsigned char reverse(unsigned char b)
@@ -40,15 +40,19 @@ willMount(Bitbang)
 
 /**
  * \brief    Updates if output data available
- *           or if next operation scheduled
+ *           or if next operation scheduled.
+ *           Primary output data should be
+ *           on the first pin.
  */
 shouldUpdate(Bitbang)
 {
     /* Component free for operation */
-    if (state->data == 0) {
+    if (!state->sending) {
         // TODO: Check every OUTPUT pin
         if (lr_length_owned(props->buffer, lr_owner(*props->pins))) {
             /* Data available */
+            log_debug("pin=%x length=%d", lr_owner(*props->pins),
+                      lr_length_owned(props->buffer, lr_owner(*props->pins)));
             return true;
         }
 
@@ -56,40 +60,49 @@ shouldUpdate(Bitbang)
         return false;
     }
 
-    if (props->baudrate == 0) {
+    if (!props->baudrate) {
         return true;
     }
 
     // Change state on baudrate
-    unsigned long bit_duration = 1000000 / props->baudrate;
-    if (props->clock->us + props->clock->step_us - state->tick
-        >= bit_duration) {
-
+    uint16_t bit_duration_us = 1e6 / props->baudrate;
+    uint16_t probably_passed_us
+        = props->clock->us + props->clock->step_us - state->tick;
+    if (probably_passed_us >= bit_duration_us) {
+        log_debug("probably_passed_us=%d "
+                  "bit_duration_us=%d",
+                  probably_passed_us, bit_duration_us);
         return true;
     }
-
 
     return false;
 }
 
 /**
  * \brief    Prepare sending data and read input
+ *           Should be called with non zero clock->us
  */
 willUpdate(Bitbang)
 {
-    uint8_t *data    = state->data;
+    uint8_t *      data    = state->data;
     enum pin_mode *mode    = props->modes;
     bool           sending = state->sending;
 
     state->tick = props->clock->us;
 
+    log_debug("sending=%d output=%x position=%d baudrate=%d", state->sending,
+              *state->data, state->position, props->baudrate);
+
     foreach_pins(pin, props->pins)
     {
         if (*mode == PIN_MODE_INPUT) {
-            if (state->position == -1) {
+            if (-1 == state->position) {
                 /* Write full byte from input */
+                // TODO: if zero?
                 if (*data) {
                     lr_write(props->buffer, *data, lr_owner(*pin));
+
+                    log_debug("pin=%x read=%x", *pin, *data);
                 }
             } else {
                 /* Read bit */
@@ -100,13 +113,14 @@ willUpdate(Bitbang)
             }
         } else {
             /* Read new byte for output */
-            if (state->sending == false) {
+            if (!state->sending) {
                 if (lr_read(props->buffer, (lr_data_t *)data, lr_owner(*pin))
                     == ERROR_NONE) {
-                    if (props->msb_first) {
+                    if (props->msb_first)
                         *data = reverse(*data);
-                    }
                     sending = true;
+
+                    log_debug("pin=%x banging=%x", lr_owner(*pin), *data);
                 }
             }
         }
@@ -135,7 +149,7 @@ willUpdate(Bitbang)
  */
 release(Bitbang)
 {
-    uint8_t *data = state->data;
+    uint8_t *      data = state->data;
     enum pin_mode *mode = props->modes;
 
     foreach_pins(pin, props->pins)
@@ -167,6 +181,7 @@ didUpdate(Bitbang)
         if (state->position == 8) {
             /* Clear session */
             state->sending  = false;
+            state->tick     = 0;
             state->position = -1;
 
             if (props->clk_pin)
