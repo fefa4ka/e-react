@@ -177,11 +177,11 @@ unsigned int hash_pin(pin_t *pin)
     char *        word = pin->name;
 
     while (*word != '\0') {
-        hash += *word++;
+        hash = *word++ + 31 * hash;
     }
-
     hash += pin->number;
 
+    // log_info("%s_%d=%d", pin->name, pin->number, hash % MAX_TABLE_SIZE);
     return (hash % MAX_TABLE_SIZE);
 }
 

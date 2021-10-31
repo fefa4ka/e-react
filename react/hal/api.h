@@ -33,6 +33,16 @@ enum communication_mode {
     COMMUNICATION_MODE_RECEIVER
 };
 
+enum bit_order {
+    BIT_ORDER_LSB,
+    BIT_ORDER_MSB
+};
+
+enum io_level {
+    IO_LEVEL_LOW,
+    IO_LEVEL_HIGH
+};
+
 enum pin_mode {
     PIN_MODE_OFF,
     PIN_MODE_OUTPUT,

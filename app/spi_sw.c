@@ -7,16 +7,16 @@ struct linked_ring buffer             = {cells, BUFFER_SIZE};
 
 Clock(clk, &hw.timer, TIMESTAMP);
 
-pin_t copi_pin        = hw_pin(D, 0);
-pin_t cipo_pin        = hw_pin(D, 1);
-pin_t clk_pin         = hw_pin(D, 2);
-pin_t chip_select_pin = hw_pin(B, 0);
+pin_t copi_pin        = hw_pin(COPI, 0);
+pin_t cipo_pin        = hw_pin(CIPO, 0);
+pin_t clk_pin         = hw_pin(CLK, 0);
+pin_t chip_select_pin = hw_pin(CS, 0);
 
 pin_t debug_pin = hw_pin(B, 1);
 
 SPIComputer(spi, _({.io       = &hw.io,
                     .clock    = &clk.state.time,
-                    .baudrate = 9600,
+                    .baudrate = 600,
                     .buffer   = &buffer,
                     .bus      = {
                         .copi_pin = &copi_pin,
@@ -57,12 +57,14 @@ struct callback callback = {hello, world};
 
 int             main(void)
 {
+
     SPI_write(&spi, 1, 2, &chip_select_pin);
     SPI_read(&spi, 'c', &callback, &chip_select_pin);
 
     SPI_write(&spi, 'a', 'b', &chip_select_pin);
     SPI_read(&spi, 'c', &callback, &chip_select_pin);
-
+    lr_write(&buffer, 0x63, lr_owner(&cipo_pin));
+    printf("length=%d\n", lr_length_owned(&buffer, lr_owner(&cipo_pin)));
     printf("copi=%x cipo=%x clk=%x\n", lr_owner(&copi_pin), lr_owner(&cipo_pin),
               lr_owner(&clk_pin));
     loop(clk, mirror, spi);
