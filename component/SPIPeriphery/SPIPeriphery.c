@@ -36,7 +36,8 @@ shouldUpdate(SPIPeriphery)
 willUpdate(SPIPeriphery)
 {
     /* Data for sending available */
-    lr_read(props->buffer, (lr_data_t *)&state->sending, lr_owner(props->bus.cipo_pin));
+    if(!state->sending)
+        lr_read(props->buffer, (lr_data_t *)&state->sending, lr_owner(self));
 }
 
 release(SPIPeriphery)

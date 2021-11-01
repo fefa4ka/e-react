@@ -27,6 +27,9 @@ SPIComputer(spi, _({.io       = &hw.io,
 void mirror_echo(Component *instance) {
     SPIPeriphery_Component *mirror = (SPIPeriphery_Component *)instance;
     printf("addr: %x\n", mirror->state.address);
+    lr_write(&buffer, mirror->state.address, lr_owner(instance));
+
+    lr_dump(&buffer);
 }
 void mirror_receive(Component *instance) {
     SPIPeriphery_Component *mirror = (SPIPeriphery_Component *)instance;
@@ -63,9 +66,8 @@ int             main(void)
 
     SPI_write(&spi, 'a', 'b', &chip_select_pin);
     SPI_read(&spi, 'c', &callback, &chip_select_pin);
-    lr_write(&buffer, 0x63, lr_owner(&cipo_pin));
-    printf("length=%d\n", lr_length_owned(&buffer, lr_owner(&cipo_pin)));
     printf("copi=%x cipo=%x clk=%x\n", lr_owner(&copi_pin), lr_owner(&cipo_pin),
               lr_owner(&clk_pin));
+
     loop(clk, mirror, spi);
 }

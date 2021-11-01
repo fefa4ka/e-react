@@ -32,3 +32,4 @@ enum error   lr_write_string(struct linked_ring *lr, lr_data_t *data,
 enum error   lr_read(struct linked_ring *lr, lr_data_t *data, lr_owner_t owner);
 enum error   lr_read_cells(struct linked_ring *lr, unsigned int number,
                            lr_data_t *data, lr_owner_t owner);
+enum error   lr_dump(struct linked_ring *lr);
