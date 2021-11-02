@@ -42,8 +42,9 @@ didMount(SPIComputer) {}
 didUpdate(SPIComputer) { Bitbang_didUpdate(&state->bitbanger); }
 
 
-#define lr_owner_chip_select(owner, value) ((owner & 0xF0) | value)
-#define lr_owner_callback(owner, pointer)  ((owner & 0x0F) | lr_owner(pointer))
+#define lr_owner_chip_select(owner, value) ((owner << 4) | value)
+#define lr_owner_callback(owner, pointer)                                      \
+    ((owner & 0x0F) | (lr_owner(pointer) << 4))
 
 static void SPI_init(void *bitbanger_ptr, void *spi_ptr)
 {
@@ -57,7 +58,8 @@ static void SPI_init(void *bitbanger_ptr, void *spi_ptr)
     }
 
     if (lr_read(spi->props.buffer, (lr_data_t *)&spi->state.callback,
-                lr_owner_callback(copi_owner, *bitbanger->state.data)) == ERROR_BUFFER_EMPTY) {
+                lr_owner_callback(copi_owner, *bitbanger->state.data))
+        == ERROR_BUFFER_EMPTY) {
         spi->state.callback = NULL;
     }
 
@@ -68,10 +70,10 @@ static void SPI_init(void *bitbanger_ptr, void *spi_ptr)
 }
 
 /* TODO: Architecture dependent masking */
-void SPI_write(SPIComputer_Component *spi, unsigned char address, unsigned char value,
-               void *chip_select_pin)
+void SPI_write(SPIComputer_Component *spi, unsigned char address,
+               unsigned char value, void *chip_select_pin)
 {
-    lr_owner_t             copi_owner = lr_owner(spi->props.bus.copi_pin);
+    lr_owner_t copi_owner = lr_owner(spi->props.bus.copi_pin);
 
     lr_write(spi->props.buffer, address, copi_owner);
     lr_write(spi->props.buffer, (lr_data_t)chip_select_pin,
@@ -84,7 +86,7 @@ void SPI_write(SPIComputer_Component *spi, unsigned char address, unsigned char 
 void SPI_read(SPIComputer_Component *spi, unsigned char address,
               struct callback *callback, void *chip_select_pin)
 {
-    lr_owner_t             copi_owner = lr_owner(spi->props.bus.copi_pin);
+    lr_owner_t copi_owner = lr_owner(spi->props.bus.copi_pin);
 
     SPI_write(spi, address, 0, chip_select_pin);
     lr_write(spi->props.buffer, (lr_data_t)callback,
@@ -93,11 +95,12 @@ void SPI_read(SPIComputer_Component *spi, unsigned char address,
 
 static void SPI_receive(void *bitbanger_ptr, void *spi_ptr)
 {
-    Bitbang_Component *    bitbanger  = (Bitbang_Component *)bitbanger_ptr;
-    SPIComputer_Component *spi = (SPIComputer_Component *)spi_ptr;
+    lr_data_t              data      = 0;
+    Bitbang_Component *    bitbanger = (Bitbang_Component *)bitbanger_ptr;
+    SPIComputer_Component *spi       = (SPIComputer_Component *)spi_ptr;
 
-    lr_read(spi->props.buffer, (lr_data_t *)bitbanger->state.data,
-            lr_owner(spi->props.bus.cipo_pin));
+    lr_read(spi->props.buffer, &data, lr_owner(spi->props.bus.cipo_pin));
+    *bitbanger->state.data = data;
 
     if (spi->state.callback) {
         spi->state.callback->method(bitbanger->state.data,

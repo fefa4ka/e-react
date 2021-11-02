@@ -72,7 +72,8 @@ shouldUpdate(Bitbang)
                   "bit_duration_us=%d",
                   probably_passed_us, bit_duration_us);
         return true;
-    } else if(props->clk_pin && state->clock && probably_passed_us >= bit_duration_us / 2) {
+    } else if (props->clk_pin && state->clock
+               && probably_passed_us >= bit_duration_us / 2) {
         /* Clock tick fall */
         state->clock = false;
         props->io->off(props->clk_pin);
@@ -117,8 +118,10 @@ willUpdate(Bitbang)
         } else {
             /* Read new byte for output */
             if (!state->operating) {
-                if (lr_read(props->buffer, (lr_data_t *)data, lr_owner(*pin))
+                lr_data_t cell_data = 0;
+                if (lr_read(props->buffer, &cell_data, lr_owner(*pin))
                     == ERROR_NONE) {
+                    *data = (uint8_t)cell_data;
                     if (props->bit_order == BIT_ORDER_MSB)
                         *data = reverse(*data);
                     sending = true;
@@ -141,7 +144,6 @@ willUpdate(Bitbang)
         props->onStart->method(self, props->onStart->argument);
 
     state->operating = sending;
-
 }
 
 /**
@@ -180,9 +182,9 @@ didUpdate(Bitbang)
     if (state->operating) {
         if (state->position == 8) {
             /* Clear session */
-            state->operating  = false;
-            state->tick     = 0;
-            state->position = -1;
+            state->operating = false;
+            state->tick      = 0;
+            state->position  = -1;
 
             if (props->clk_pin)
                 /* Clock falling tick */

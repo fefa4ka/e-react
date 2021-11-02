@@ -36,8 +36,12 @@ shouldUpdate(SPIPeriphery)
 willUpdate(SPIPeriphery)
 {
     /* Data for sending available */
-    if(!state->sending)
-        lr_read(props->buffer, (lr_data_t *)&state->sending, lr_owner(self));
+    if (!state->sending && state->bit_position >= 8) {
+        lr_data_t sending;
+        lr_read(props->buffer, (lr_data_t *)&sending, lr_owner(self));
+        state->sending = (uint8_t)sending;
+        log_debug("cipo=%d", state->sending);
+    }
 }
 
 release(SPIPeriphery)
@@ -45,6 +49,7 @@ release(SPIPeriphery)
     uint8_t *pointer;
     uint8_t  position;
 
+    log_debug("bit_position=%d", state->bit_position);
     if (state->bit_position < 8) {
         pointer  = &state->address;
         position = state->bit_position;
@@ -60,15 +65,17 @@ release(SPIPeriphery)
         else
             bit_clear(*pointer, position);
 
-        log_debug("read=%d position=%d", bit_value(*pointer, position), position);
-    } else if(state->sending && state->bit_position >= 8) {
+        log_debug("read=%d position=%d", bit_value(*pointer, position),
+                  position);
+    } else if (state->sending && state->bit_position >= 8) {
         /* Sending */
         if (bit_value(state->sending, position))
             props->io->on(props->bus.cipo_pin);
         else
             props->io->off(props->bus.cipo_pin);
 
-        log_debug("send=%d position=%d", bit_value(state->sending, position), position);
+        log_debug("send=%d position=%d", bit_value(state->sending, position),
+                  position);
     }
 }
 
@@ -78,13 +85,13 @@ didUpdate(SPIPeriphery)
 {
     void (*callback)(Component *) = NULL;
 
-
     if (state->clk_level && state->bit_position == 7 && props->onStart)
         callback = props->onStart;
 
     if (state->bit_position == 16) {
+        log_debug("finish");
         state->bit_position = 0;
-        state->sending = 0;
+        state->sending      = 0;
 
         if (props->onReceive)
             callback = props->onReceive;

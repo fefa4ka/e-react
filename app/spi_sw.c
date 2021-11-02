@@ -16,7 +16,7 @@ pin_t debug_pin = hw_pin(B, 1);
 
 SPIComputer(spi, _({.io       = &hw.io,
                     .clock    = &clk.state.time,
-                    .baudrate = 600,
+                    .baudrate = 2400,
                     .buffer   = &buffer,
                     .bus      = {
                         .copi_pin = &copi_pin,
@@ -24,17 +24,19 @@ SPIComputer(spi, _({.io       = &hw.io,
                         .clk_pin  = &clk_pin,
                     }}));
 
-void mirror_echo(Component *instance) {
+void mirror_echo(Component *instance)
+{
     SPIPeriphery_Component *mirror = (SPIPeriphery_Component *)instance;
     printf("addr: %x\n", mirror->state.address);
     lr_write(&buffer, mirror->state.address, lr_owner(instance));
-
-    lr_dump(&buffer);
 }
-void mirror_receive(Component *instance) {
+
+void mirror_receive(Component *instance)
+{
     SPIPeriphery_Component *mirror = (SPIPeriphery_Component *)instance;
     printf("data: %x\n", mirror->state.data);
 }
+
 SPIPeriphery(mirror, _({
             .io = &hw.io,
             .buffer = &buffer,
@@ -58,16 +60,13 @@ void       hello(void *message, void *argument)
 
 struct callback callback = {hello, world};
 
-int             main(void)
+int main(void)
 {
-
     SPI_write(&spi, 1, 2, &chip_select_pin);
     SPI_read(&spi, 'c', &callback, &chip_select_pin);
 
     SPI_write(&spi, 'a', 'b', &chip_select_pin);
     SPI_read(&spi, 'c', &callback, &chip_select_pin);
-    printf("copi=%x cipo=%x clk=%x\n", lr_owner(&copi_pin), lr_owner(&cipo_pin),
-              lr_owner(&clk_pin));
 
     loop(clk, mirror, spi);
 }
