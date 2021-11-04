@@ -1,9 +1,6 @@
 #pragma once
 
 #include <Bitbang.h>
-#include <Clock.h>
-
-#include <linked_ring.h>
 
 #define SPIComputer(instance, props)                                           \
     define(SPIComputer, instance, _(props), 0)
@@ -12,7 +9,7 @@ typedef struct {
     io_handler *  io;
     struct Clock *clock;
 
-    unsigned int baudrate;
+    uint16_t baudrate;
 
     struct linked_ring *buffer;
 

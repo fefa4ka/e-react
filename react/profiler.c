@@ -74,6 +74,7 @@ unsigned int frame_depth()
         dump_call(stage, timer_set);                                           \
         dump_call(stage, timer_off);                                           \
         dump_call(stage, timer_usFromTicks);                                   \
+        dump_call(stage, lr_seek);                                             \
         dump_call(stage, lr_write);                                            \
         dump_call(stage, lr_read);                                             \
         dump_call(stage, lr_exists);                                           \
