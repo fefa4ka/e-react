@@ -50,8 +50,6 @@ shouldUpdate(Bitbang)
         // TODO: Check every OUTPUT pin
         if (lr_length_owned(props->buffer, lr_owner(*props->pins))) {
             /* Data available */
-            log_debug("pin=%x length=%d", lr_owner(*props->pins),
-                      lr_length_owned(props->buffer, lr_owner(*props->pins)));
             return true;
         }
 
@@ -64,19 +62,24 @@ shouldUpdate(Bitbang)
     }
 
     // Change state on baudrate
-    uint16_t bit_duration_us = 1e6 / props->baudrate;
-    uint16_t probably_passed_us
-        = props->clock->us + props->clock->step_us - state->tick;
-    if (probably_passed_us >= bit_duration_us) {
-        log_debug("probably_passed_us=%d "
-                  "bit_duration_us=%d",
-                  probably_passed_us, bit_duration_us);
-        return true;
-    } else if (props->clk_pin && state->clock
-               && probably_passed_us >= bit_duration_us / 2) {
+    uint16_t bit_duration_us    = 1e6 / props->baudrate;
+    uint16_t next_tick          = props->clock->us;
+    int16_t  probably_passed_us = next_tick - state->tick;
+    if (probably_passed_us < 0)
+        probably_passed_us = 65535 - state->tick + next_tick;
+
+    if (state->clock && probably_passed_us >= bit_duration_us / 2) {
         /* Clock tick fall */
         state->clock = false;
-        props->io->off(props->clk_pin);
+        if (props->clk_pin)
+            props->io->off(props->clk_pin);
+    }
+
+    if (probably_passed_us >= bit_duration_us) {
+        if (state->clock) {
+            printf("EERROR!\n");
+        }
+        return true;
     }
 
     return false;
@@ -94,20 +97,14 @@ willUpdate(Bitbang)
 
     state->tick = props->clock->us;
 
-    log_debug("sending=%d output=%x position=%d baudrate=%d", state->operating,
-              *state->data, state->position, props->baudrate);
-
     foreach_pins(pin, props->pins)
     {
         if (*mode == PIN_MODE_INPUT) {
-            if (-1 == state->position) {
+            if (8 == state->position) {
                 /* Write full byte from input */
                 // TODO: if zero?
-                if (*data) {
+                if (*data)
                     lr_write(props->buffer, *data, lr_owner(*pin));
-
-                    log_debug("pin=%x read=%x", *pin, *data);
-                }
             } else {
                 /* Read bit */
                 if (props->io->get(*pin))
@@ -121,12 +118,10 @@ willUpdate(Bitbang)
                 lr_data_t cell_data = 0;
                 if (lr_read(props->buffer, &cell_data, lr_owner(*pin))
                     == ERROR_NONE) {
-                    *data = (uint8_t)cell_data;
+                    sending = true;
+                    *data   = (uint8_t)cell_data;
                     if (props->bit_order == BIT_ORDER_MSB)
                         *data = reverse(*data);
-                    sending = true;
-
-                    log_debug("pin=%x banging=%x", lr_owner(*pin), *data);
                 }
             }
         }
@@ -135,15 +130,27 @@ willUpdate(Bitbang)
         mode++;
     }
 
-    if (state->position == -1)
-        state->position++;
 
     /* Callback with argument */
     if (sending && state->operating == false && props->onStart
         && props->onStart->method)
         props->onStart->method(self, props->onStart->argument);
 
+
     state->operating = sending;
+    if (state->position == 8) {
+        /* Clear session */
+        state->tick      = 0;
+        state->operating = false;
+        state->position  = 0;
+
+        if (props->clk_pin)
+            /* Clock falling tick */
+            props->io->off(props->clk_pin);
+
+        if (props->onTransmitted && props->onTransmitted->method)
+            props->onTransmitted->method(self, props->onTransmitted->argument);
+    }
 }
 
 /**
@@ -163,7 +170,7 @@ release(Bitbang)
                 props->io->off(*pin);
             }
 
-            if (state->position == 8) {
+            if (state->position == 7) {
                 *data = 0;
             }
         }
@@ -180,29 +187,13 @@ didMount(Bitbang) {}
 didUpdate(Bitbang)
 {
     if (state->operating) {
-        if (state->position == 8) {
-            /* Clear session */
-            state->operating = false;
-            state->tick      = 0;
-            state->position  = -1;
+        /* Increment bit position */
+        state->position++;
 
-            if (props->clk_pin)
-                /* Clock falling tick */
-                props->io->off(props->clk_pin);
-
-            if (props->onTransmitted && props->onTransmitted->method)
-                props->onTransmitted->method(self,
-                                             props->onTransmitted->argument);
-        } else {
-            /* Increment bit position */
-            state->position++;
-
-            /* Clock rise tick */
-            if (props->clk_pin)
-                props->io->on(props->clk_pin);
-
-            state->clock = true;
-        }
+        /* Clock rise tick */
+        state->clock = true;
+        if (props->clk_pin)
+            props->io->on(props->clk_pin);
     }
 }
 

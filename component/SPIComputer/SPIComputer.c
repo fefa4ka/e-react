@@ -98,12 +98,13 @@ static void SPI_receive(void *bitbanger_ptr, void *spi_ptr)
     lr_data_t              data      = 0;
     Bitbang_Component *    bitbanger = (Bitbang_Component *)bitbanger_ptr;
     SPIComputer_Component *spi       = (SPIComputer_Component *)spi_ptr;
+    uint8_t *buffer = bitbanger->state.data + 1;
 
     lr_read(spi->props.buffer, &data, lr_owner(spi->props.bus.cipo_pin));
-    *bitbanger->state.data = data;
+    *(buffer) = (uint8_t)data;
 
-    if (spi->state.callback) {
-        spi->state.callback->method(bitbanger->state.data,
+    if (spi->state.callback && spi->state.callback->method) {
+        spi->state.callback->method(buffer,
                                     spi->state.callback->argument);
     }
     if (spi->state.chip_select_pin) {

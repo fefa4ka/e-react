@@ -1,7 +1,7 @@
 #include <SPIComputer.h>
 #include <SPIPeriphery.h>
 
-#define BUFFER_SIZE 32
+#define BUFFER_SIZE 16
 struct lr_cell     cells[BUFFER_SIZE] = {0};
 struct linked_ring buffer             = {cells, BUFFER_SIZE};
 
@@ -16,7 +16,7 @@ pin_t debug_pin = hw_pin(B, 1);
 
 SPIComputer(spi, _({.io       = &hw.io,
                     .clock    = &clk.state.time,
-                    .baudrate = 2400,
+                    .baudrate = 1200,
                     .buffer   = &buffer,
                     .bus      = {
                         .copi_pin = &copi_pin,
@@ -27,14 +27,14 @@ SPIComputer(spi, _({.io       = &hw.io,
 void mirror_echo(Component *instance)
 {
     SPIPeriphery_Component *mirror = (SPIPeriphery_Component *)instance;
-    printf("addr: %x\n", mirror->state.address);
-    lr_write(&buffer, mirror->state.address, lr_owner(instance));
+    uint8_t address = mirror->state.address + 1;
+
+    lr_write(&buffer, address, lr_owner(instance));
 }
 
 void mirror_receive(Component *instance)
 {
     SPIPeriphery_Component *mirror = (SPIPeriphery_Component *)instance;
-    printf("data: %x\n", mirror->state.data);
 }
 
 SPIPeriphery(mirror, _({
@@ -52,10 +52,14 @@ SPIPeriphery(mirror, _({
 
 
 const char world[] = "world";
+extern struct callback callback;
 void       hello(void *message, void *argument)
 {
+    char address = *(char *)message;
+
     hw.io.flip(&debug_pin);
-    printf("hello %s %d\n", (char *)argument, *(char *)message);
+    printf("hello %s | address: %x buffer: %d\n", (char *)argument, address, lr_length(&buffer));
+    SPI_read(&spi, address, &callback, &chip_select_pin);
 }
 
 struct callback callback = {hello, world};
@@ -63,10 +67,7 @@ struct callback callback = {hello, world};
 int main(void)
 {
     SPI_write(&spi, 1, 2, &chip_select_pin);
-    SPI_read(&spi, 'c', &callback, &chip_select_pin);
-
-    SPI_write(&spi, 'a', 'b', &chip_select_pin);
-    SPI_read(&spi, 'c', &callback, &chip_select_pin);
+    SPI_read(&spi, 0x01, &callback, &chip_select_pin);
 
     loop(clk, mirror, spi);
 }
