@@ -5,7 +5,7 @@ void SIPO_spacer(void *pin) {}
 void SIPO_on(void *pin)
 {
     struct SIPO_pin *Pin = (struct SIPO_pin *)pin;
-    struct SIPO_Component *bus = Pin->bus;
+    SIPO_Component * bus = (SIPO_Component *)Pin->bus;
 
     bit_set(bus->state.pins_state, Pin->number);
 }
@@ -13,26 +13,23 @@ void SIPO_on(void *pin)
 void SIPO_off(void *pin)
 {
     struct SIPO_pin *Pin = (struct SIPO_pin *)pin;
-    SIPO_state_t *state
-        = React_Instance_State(SIPO, (Component *)(Pin->bus));
+    SIPO_Component * bus = (SIPO_Component *)Pin->bus;
 
-    bit_clear(state->pins_state, Pin->number);
+    bit_clear(bus->state.pins_state, Pin->number);
 }
 
 void SIPO_flip(void *pin)
 {
     struct SIPO_pin *Pin = (struct SIPO_pin *)pin;
-    SIPO_state_t *state
-        = React_Instance_State(SIPO, (Component *)(Pin->bus));
-    bit_flip(state->pins_state, Pin->number);
+    SIPO_Component * bus = (SIPO_Component *)Pin->bus;
+    bit_flip(bus->state.pins_state, Pin->number);
 }
 
 bool SIPO_get(void *pin)
 {
     struct SIPO_pin *Pin = (struct SIPO_pin *)pin;
-    SIPO_state_t *state
-        = React_Instance_State(SIPO, (Component *)(Pin->bus));
-    return state->pins_state & (1 << (Pin->number));
+    SIPO_Component * bus = (SIPO_Component *)Pin->bus;
+    return bus->state.pins_state & (1 << (Pin->number));
 }
 
 io_handler SIPO_handler = {.in     = SIPO_spacer,
@@ -47,56 +44,56 @@ static enum pin_mode SIPO_modes = PIN_MODE_OUTPUT;
 
 void SIPO_reset(void *instance, void *sipo)
 {
-    SIPO_state_t *state = React_Instance_State(SIPO, (Component *)sipo);
+    SIPO_Component *bus = (SIPO_Component *)sipo;
 
-    state->reseting = true;
+    bus->state.reseting = true;
+}
+
+void SIPO_next(void *instance, void *sipo)
+{
+    SIPO_Component *bus = (SIPO_Component *)sipo;
+
+    if (bus->state.pins_state != bus->state.released_state)
+        if (lr_write(bus->props.buffer, bus->state.pins_state,
+                     lr_owner(bus->props.bus.data_pin))
+            == ERROR_NONE)
+            bus->state.released_state = bus->state.pins_state;
 }
 
 willMount(SIPO)
 {
-    SIPO_state_t State = {.bitbanger_props = {.io            = props->io,
-                                                 .time          = props->time,
-                                                 .little_endian = true,
-                                                 .baudrate = props->baudrate,
-                                                 .clock    = props->clk_pin,
-                                                 .modes    = &SIPO_modes},
-                             .pins            = {props->data_pin, NULL},
-                             .SIPO_reset      = {SIPO_reset, self},
-                             .buffer          = {NULL, 2}};
-    *state                = State;
+    Bitbang(bitbanger, _({.io    = props->io,
+                          .clock = props->clock,
 
-    state->buffer.data = state->buffer_data;
+                          .baudrate = props->baudrate,
 
-    state->buffers[0] = &state->buffer;
-    state->buffers[1] = NULL;
+                          .pins   = (void **)&props->bus,
+                          .modes  = &SIPO_modes,
+                          .buffer = props->buffer,
 
-    state->pins[0] = props->data_pin;
-    state->pins[1] = NULL;
+                          .clk_pin = props->bus.clk_pin,
 
-    Bitbang_build(&State.bitbanger, &state->bitbanger_props,
-                  &state->bitbanger_state);
+                          .onStart       = &state->SIPO_reset,
+                          .onTransmitted = &state->SIPO_next}));
 
-    state->bitbanger_props.pins    = state->pins;
-    state->bitbanger_props.onStart = &state->SIPO_reset;
-    state->bitbanger_props.buffers = state->buffers;
+    state->bitbanger = bitbanger;
 
-    Bitbang_willMount(&state->bitbanger, &state->bitbanger_props);
+    state->SIPO_reset.method   = SIPO_reset;
+    state->SIPO_next.method    = SIPO_next;
+    state->SIPO_reset.argument = state->SIPO_next.argument = self;
 
-    props->io->out(props->reset_pin);
-    props->io->on(props->reset_pin);
+    Stage_Component((Component *)&state->bitbanger, 0);
+
+    props->io->out(props->bus.reset_pin);
+    props->io->on(props->bus.reset_pin);
 }
 
-shouldUpdate(SIPO)
-{
-    if (Bitbang_shouldUpdate(&state->bitbanger, &state->bitbanger_props)) {
-
-        return true;
-    }
-
-    struct ring_buffer *cb = &state->buffer;
-    if (state->pins_state != cb->data[(cb->read - 1) & (cb->size - 1)]
-        && rb_length(&state->buffer) == 0) {
-        return true;
+shouldUpdate(SIPO) {
+    if(state->bitbanger.state.operating) {
+        return Bitbang_shouldUpdate(&state->bitbanger, 0);
+    } else if(state->released_state != state->pins_state) {
+        // TODO: maybe extra adds
+        SIPO_next(&state->bitbanger, self);
     }
 
     return false;
@@ -104,27 +101,17 @@ shouldUpdate(SIPO)
 
 willUpdate(SIPO)
 {
-    struct ring_buffer *cb = &state->buffer;
-    if (state->pins_state != cb->data[(cb->read - 1) & (cb->size - 1)]
-        && rb_length(&state->buffer) == 0) {
-        rb_write(&state->buffer, state->pins_state);
-        self->stage = REACT_STAGE_RELEASED;
+    Bitbang_willUpdate(&state->bitbanger, 0);
 
-        return;
-    }
-
-    Bitbang_willUpdate(&state->bitbanger, &state->bitbanger_props);
-
-    if (state->reseting) {
-        props->io->off(props->reset_pin);
-    }
+    if (state->reseting)
+        props->io->off(props->bus.reset_pin);
 }
 
 release(SIPO)
 {
     if (state->reseting) {
         state->reseting = false;
-        props->io->on(props->reset_pin);
+        props->io->on(props->bus.reset_pin);
     }
 
     Bitbang_release(&state->bitbanger);
@@ -132,8 +119,4 @@ release(SIPO)
 
 didMount(SIPO) {}
 
-didUnmount(SIPO) {}
 didUpdate(SIPO) { Bitbang_didUpdate(&state->bitbanger); }
-
-
-React_Constructor(SIPO)
