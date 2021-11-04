@@ -1,55 +1,60 @@
 #include "linked_ring.h"
 
-enum error lr_length_owned(struct linked_ring *lr, lr_owner_t owner)
+uint16_t lr_length_limited_owned(struct linked_ring *lr, uint16_t limit,
+                                 lr_owner_t owner)
 {
     uint8_t         length  = 0;
     struct lr_cell *counter = lr->read;
 
     /* Empty buffer */
-    if (lr->read == 0) {
+    if (lr->read == 0)
         return 0;
-    }
 
-    if (owner && (lr->owners & owner) != owner) {
+    if (owner && (lr->owners & owner) != owner)
         return 0;
-    }
 
     /* Full buffer */
-    if (lr->write == 0) {
+    if (!owner && lr->write == 0)
         return lr->size;
-    }
 
     /* Iterate from read to cell with *next = &lr.write */
     do {
-        if (!owner || counter->owner == owner) {
+        if (!owner || counter->owner == owner)
             length++;
-        }
         counter = counter->next;
-    } while (counter->next && counter != lr->write);
+    } while ((counter->next && counter != lr->write)
+             && (!limit || limit == length));
 
     return length;
 }
 
-unsigned int lr_length(struct linked_ring *lr)
+uint16_t lr_length_owned(struct linked_ring *lr, lr_owner_t owner)
 {
-    return lr_length_owned(lr, 0);
+    return lr_length_limited_owned(lr, 0, owner);
 }
 
+bool lr_exists(struct linked_ring *lr, lr_owner_t owner)
+{
+    return lr_length_limited_owned(lr, 1, owner);
+}
+
+uint16_t lr_length(struct linked_ring *lr)
+{
+    return lr_length_limited_owned(lr, 0, 0);
+}
 
 enum error lr_write(struct linked_ring *lr, lr_data_t data, lr_owner_t owner)
 {
     struct lr_cell *recordable_cell;
 
-    if (lr_length(lr) == lr->size) {
+    if (lr_length(lr) == lr->size)
         return ERROR_BUFFER_FULL;
-    }
 
     /* If free buffer */
-    if (!lr->write) {
-        recordable_cell = lr->cells;
-    } else {
+    if (lr->write)
         recordable_cell = lr->write;
-    }
+    else
+        recordable_cell = lr->cells;
 
     recordable_cell->data  = data;
     recordable_cell->owner = owner;
@@ -59,13 +64,10 @@ enum error lr_write(struct linked_ring *lr, lr_data_t data, lr_owner_t owner)
     /* Initialize next pointer, if not set */
     if (!recordable_cell->next) {
         /* next = 0 if it is end of the buffer */
-        if (recordable_cell != (lr->cells + lr->size)) {
+        if (recordable_cell != (lr->cells + lr->size))
             recordable_cell->next = recordable_cell + 1;
-        } else if (lr->read) {
+        else if (lr->read)
             recordable_cell->next = lr->read;
-        } else {
-            recordable_cell->next = lr->cells;
-        }
     }
 
     if (recordable_cell->next == lr->read)
@@ -87,9 +89,8 @@ enum error lr_read(struct linked_ring *lr, lr_data_t *data, lr_owner_t owner)
     struct lr_cell *freed_cell    = 0;
     struct lr_cell *needle        = lr->write ? lr->write : lr->read;
 
-    if (lr_length_owned(lr, owner) == 0) {
+    if (lr_length_owned(lr, owner) == 0)
         return ERROR_BUFFER_EMPTY;
-    }
 
     /* Flush owners, and set again during buffer reading */
     /* O(n) = buffer_length */
@@ -130,12 +131,11 @@ enum error lr_read(struct linked_ring *lr, lr_data_t *data, lr_owner_t owner)
             }
 
             freed_cell = readable_cell;
-            if (lr->write) {
+            if (lr->write)
                 /* Add cell on top of the buffer */
                 freed_cell->next = lr->write;
-            } else {
+            else
                 freed_cell->next = lr->read;
-            }
         } else {
             /* All cells owners digest */
             lr->owners |= readable_cell->owner;
@@ -162,9 +162,8 @@ enum error lr_write_string(struct linked_ring *lr, lr_data_t *data,
                            lr_owner_t owner)
 {
     while (*data) {
-        if (lr_write(lr, *(data++), owner) == ERROR_BUFFER_FULL) {
+        if (lr_write(lr, *(data++), owner) == ERROR_BUFFER_FULL)
             return ERROR_BUFFER_FULL;
-        }
     };
 
     return ERROR_NONE;
@@ -172,9 +171,8 @@ enum error lr_write_string(struct linked_ring *lr, lr_data_t *data,
 
 enum error lr_dump(struct linked_ring *lr)
 {
-    if (lr_length(lr) == 0) {
+    if (lr_length(lr) == 0)
         return ERROR_BUFFER_EMPTY;
-    }
 
     printf("size=%d\n", lr_length(lr));
     struct lr_cell *readable_cell = lr->read;

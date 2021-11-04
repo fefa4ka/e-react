@@ -48,7 +48,7 @@ shouldUpdate(Bitbang)
     /* Component free for operation */
     if (!state->operating) {
         // TODO: Check every OUTPUT pin
-        if (lr_length_owned(props->buffer, lr_owner(*props->pins))) {
+        if (lr_exists(props->buffer, lr_owner(*props->pins))) {
             /* Data available */
             return true;
         }

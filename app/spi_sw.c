@@ -28,7 +28,6 @@ void mirror_echo(Component *instance)
 {
     SPIPeriphery_Component *mirror = (SPIPeriphery_Component *)instance;
     uint8_t address = mirror->state.address + 1;
-
     lr_write(&buffer, address, lr_owner(instance));
 }
 
