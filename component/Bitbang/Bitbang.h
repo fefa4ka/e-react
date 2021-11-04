@@ -20,10 +20,10 @@ typedef struct {
     // TODO: use macros and pack to uint8_t
     uint16_t baudrate;
 
-    enum io_level chip_select_polarity : 1;
+    enum io_level  chip_select_polarity : 1;
     enum bit_order bit_order : 1; /* Order in which sending and reading bits */
 
-    void **        pins;        /* List of pins used for lines */
+    void **        pins;  /* List of pins used for lines */
     enum pin_mode *modes; /* Related pins mapping for IO mode configuration */
     struct linked_ring *buffer;  /* Bitbang data buffers for each line */
     void *              clk_pin; /* Optional clock pin */
@@ -39,7 +39,7 @@ typedef struct {
     uint8_t data[BITBANG_MAX_LINES]; /* Current sending and reading bytes
                                               for each data line */
 
-    uint8_t position;     /* Data bit index now operating */
+    uint8_t position; /* Data bit index now operating */
 
     uint16_t tick;
 } Bitbang_state_t;

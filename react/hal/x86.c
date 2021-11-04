@@ -7,6 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
 
 static void gpio_in(void *pin);
 static void gpio_out(void *pin);
@@ -96,7 +97,7 @@ void log_init()
         log_file = fopen("profiler.log", "w");
 
     if (log_file == NULL) {
-        printf("Error: can't open profiler.log file");
+        printf("Error: can't open profiler.log file: %d %s", errno, strerror(errno));
         exit(1);
     }
 }
@@ -164,11 +165,15 @@ void vcd_clean()
                       "$enddefinitions $end"
                       "\n");
     fclose(vcd_file_log);
-    vcd_file_log = fopen("profiler_log.vcd", "r");
-    while ((c = fgetc(vcd_file_log)) != EOF)
-        fputc(c, vcd_file);
-    fclose(vcd_file_log);
-    remove("profiler_log.vcd");
+    vcd_file_log = fopen("profiler_log.vcd", "w");
+    if(vcd_file_log) {
+        while ((c = fgetc(vcd_file_log)) != EOF)
+            fputc(c, vcd_file);
+        fclose(vcd_file_log);
+        remove("profiler_log.vcd");
+    } else {
+        printf("Error on profile_log.vcd generation: %d %s\n", errno, strerror(errno));
+    }
     fclose(vcd_file);
 }
 

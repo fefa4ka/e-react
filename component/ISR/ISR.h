@@ -10,18 +10,18 @@
     union ISR_flag {                                                           \
         struct {                                                               \
             EVAL(MAP(ISR_system_flag, __VA_ARGS__))                           \
-            unsigned char is_UNDEFINED_fired : 1;                                   \
+            bool is_UNDEFINED_fired : 1;                                   \
         } states;                                                              \
-        unsigned int state;                                                    \
+        uint8_t state;                                                    \
     }
 
 union ISR_handler_flag {
     struct {
-        unsigned char is_processed : 1;
-        unsigned char is_enabled : 1;
-        unsigned char is_fired : 1;
+        bool is_processed : 1;
+        bool is_enabled : 1;
+        bool is_fired : 1;
     } states;
-    unsigned char state;
+    uint8_t state;
 };
 
 struct ISR_handler {
@@ -34,12 +34,11 @@ struct ISR_handler {
 typedef struct {
     struct ISR_handler *handlers;
     timer_handler *     timer;
-
 } ISR_props_t;
 
 typedef struct {
     void *       operation_hash;
-    unsigned int fired; /* ISR_flag with system fired bits */
+    uint8_t fired; /* ISR_flag with system fired bits */
 
 } ISR_state_t;
 

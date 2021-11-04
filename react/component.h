@@ -158,7 +158,7 @@
         .state    = instance_state,                                            \
     }
 
-#define React_Define(Type, name) React_Define_WithProps(Type, name, 0})
+#define React_Define(Type, name) React_Define_WithProps(Type, name, _({0}))
 
 #define define(Type, instance_name, instance_props, instance_state)            \
     Type##_Component instance_name = {                                         \
