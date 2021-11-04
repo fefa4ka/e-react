@@ -67,7 +67,7 @@ shouldUpdate(Bitbang)
     if (probably_passed_us < 0)
         probably_passed_us = 65535 - state->tick + next_tick;
 
-    if (state->clock && probably_passed_us >= bit_duration_us / 2) {
+    if (state->clock && probably_passed_us >= bit_duration_us >> 1) {
         /* Clock tick fall */
         state->clock = false;
         if (props->clk_pin)
@@ -95,7 +95,7 @@ willUpdate(Bitbang)
     foreach_pins(pin, props->pins)
     {
         if (*mode == PIN_MODE_INPUT) {
-            if (8 == state->position) {
+            if (state->position == 8) {
                 /* Write full byte from input */
                 // TODO: if zero?
                 if (*data)
@@ -127,17 +127,17 @@ willUpdate(Bitbang)
 
 
     /* Callback with argument */
-    if (sending && state->operating == false && props->onStart
-        && props->onStart->method)
-        props->onStart->method(self, props->onStart->argument);
-
+    if (sending && state->operating == false)
+        if (props->onStart && props->onStart->method)
+            props->onStart->method(self, props->onStart->argument);
 
     state->operating = sending;
+
     if (state->position == 8) {
         /* Clear session */
         state->tick      = 0;
-        state->operating = false;
         state->position  = 0;
+        state->operating = false;
 
         if (props->clk_pin)
             /* Clock falling tick */

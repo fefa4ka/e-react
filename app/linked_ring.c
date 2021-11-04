@@ -1,6 +1,6 @@
 #include "unit.h"
 
-
+#include <profiler.h>
 #include <linked_ring.h>
 #define BUFFER_SIZE 16
 
@@ -17,6 +17,7 @@ int main(void)
     unsigned char r_chr;
     uint16_t r_nbr;
 
+    log_init();
     printf("Owner letter: %x\n", lr_owner(&cells));
     printf("Owner number: %x\n", lr_owner(&number));
     printf("Owner pointers: %x\n", lr_owner(&pointer));

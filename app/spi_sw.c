@@ -67,6 +67,7 @@ struct callback callback = {hello, world};
 
 int main(void)
 {
+    log_init();
     SPI_write(&spi, 1, 2, &chip_select_pin);
     SPI_read(&spi, 0x01, &callback, &chip_select_pin);
 

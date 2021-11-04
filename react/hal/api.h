@@ -115,6 +115,13 @@ struct HAL_calls {
     uint64_t timer_set;
     uint64_t timer_off;
     uint64_t timer_usFromTicks;
+
+    uint64_t lr_seek;
+    uint64_t lr_write;
+    uint64_t lr_read;
+    uint64_t lr_exists;
+    uint64_t lr_length;
+    uint64_t lr_length_owned;
 };
 #endif
 

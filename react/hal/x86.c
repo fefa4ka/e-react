@@ -85,14 +85,15 @@ struct hash_table pins = {
     .used  = 0,
 };
 
-FILE *log_file;
+FILE *log_file = NULL;
 
 FILE *vcd_file;
 FILE *vcd_file_log;
 
 void log_init()
 {
-    log_file = fopen("profiler.log", "w");
+    if(!log_file)
+        log_file = fopen("profiler.log", "w");
 
     if (log_file == NULL) {
         printf("Error: can't open profiler.log file");

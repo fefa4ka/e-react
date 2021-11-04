@@ -1,14 +1,14 @@
 #include "hash.h"
-#include "profiler.h"
 #include "math.h"
+#include "profiler.h"
 #include <execinfo.h>
 
 unsigned int scope_index[128];
 Component *  scope_buffer[128];
 
-Component *current_component = 0;
-struct HAL_calls *current_scope = NULL;
-struct HAL_calls  calls         = {0};
+Component *       current_component = 0;
+struct HAL_calls *current_scope     = NULL;
+struct HAL_calls  calls             = {0};
 
 struct hash_table scope = {
     .index = scope_index,
@@ -19,7 +19,7 @@ struct hash_table scope = {
 clock_t  cpu_total = 0;
 uint64_t steps     = 0;
 
-uint64_t        step()
+uint64_t step()
 {
     if (stop) {
         dump_usage();
@@ -44,7 +44,7 @@ unsigned int frame_depth()
 
 
 #define dump_call(stage, call)                                                 \
-    if ((component)->calls.stage.call)                                           \
+    if ((component)->calls.stage.call)                                         \
     printf("   " #call " \t \t%llu\n", component->calls.stage.call)
 
 #define dump_stage(stage)                                                      \
@@ -74,6 +74,11 @@ unsigned int frame_depth()
         dump_call(stage, timer_set);                                           \
         dump_call(stage, timer_off);                                           \
         dump_call(stage, timer_usFromTicks);                                   \
+        dump_call(stage, lr_write);                                            \
+        dump_call(stage, lr_read);                                             \
+        dump_call(stage, lr_exists);                                           \
+        dump_call(stage, lr_length);                                           \
+        dump_call(stage, lr_length_owned);                                     \
     }
 
 
@@ -140,7 +145,7 @@ unsigned int hash_component(char *word)
 
     return (hash % MAX_TABLE_SIZE);
 }
- // Returns the local date/time formatted as 2014-03-19 11:11:52.132
+// Returns the local date/time formatted as 2014-03-19 11:11:52.132
 char *timer_formatted_time(void)
 {
     // Must be static, otherwise won't work
