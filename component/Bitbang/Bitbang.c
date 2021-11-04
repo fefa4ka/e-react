@@ -48,20 +48,19 @@ shouldUpdate(Bitbang)
     /* Component free for operation */
     if (!state->operating) {
         // TODO: Check every OUTPUT pin
-        if (lr_exists(props->buffer, lr_owner(*props->pins))) {
+        if (lr_exists(props->buffer, lr_owner(*props->pins)))
             /* Data available */
             return true;
-        }
 
         /* No data available */
         return false;
     }
 
-    if (!props->baudrate) {
+    if (!props->baudrate)
         return true;
-    }
 
-    // Change state on baudrate
+    /* Change state on baudrate */
+    // TODO: Optimize baudrate calculation
     uint16_t bit_duration_us    = 1e6 / props->baudrate;
     uint16_t next_tick          = props->clock->us;
     int16_t  probably_passed_us = next_tick - state->tick;
@@ -75,12 +74,8 @@ shouldUpdate(Bitbang)
             props->io->off(props->clk_pin);
     }
 
-    if (probably_passed_us >= bit_duration_us) {
-        if (state->clock) {
-            printf("EERROR!\n");
-        }
+    if (probably_passed_us >= bit_duration_us)
         return true;
-    }
 
     return false;
 }
@@ -164,15 +159,13 @@ release(Bitbang)
     foreach_pins(pin, props->pins)
     {
         if (*mode == PIN_MODE_OUTPUT) {
-            if (bit_value(*data, state->position)) {
+            if (bit_value(*data, state->position))
                 props->io->on(*pin);
-            } else {
+            else
                 props->io->off(*pin);
-            }
 
-            if (state->position == 7) {
+            if (state->position == 7)
                 *data = 0;
-            }
         }
         data++;
         mode++;

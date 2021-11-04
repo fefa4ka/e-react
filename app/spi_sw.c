@@ -28,6 +28,8 @@ void mirror_echo(Component *instance)
 {
     SPIPeriphery_Component *mirror = (SPIPeriphery_Component *)instance;
     uint8_t address = mirror->state.address + 1;
+    if(!address)
+        address = 1;
     lr_write(&buffer, address, lr_owner(instance));
 }
 
@@ -54,7 +56,7 @@ const char world[] = "world";
 extern struct callback callback;
 void       hello(void *message, void *argument)
 {
-    char address = *(char *)message;
+    uint8_t address = *(uint8_t *)message;
 
     hw.io.flip(&debug_pin);
     printf("hello %s | address: %x buffer: %d\n", (char *)argument, address, lr_length(&buffer));

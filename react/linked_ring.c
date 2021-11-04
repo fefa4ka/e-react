@@ -68,6 +68,10 @@ enum error lr_write(struct linked_ring *lr, lr_data_t data, lr_owner_t owner)
             recordable_cell->next = recordable_cell + 1;
         else if (lr->read)
             recordable_cell->next = lr->read;
+        /*
+        else
+            recordable_cell->next = lr->cells;
+        */
     }
 
     if (recordable_cell->next == lr->read)
